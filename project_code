@@ -1,0 +1,1064 @@
+Fichier: assets\styles\app.css
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\assets\styles\app.css
+-----
+body {
+    background-color: skyblue;
+}
+
+==================================================
+
+Fichier: Templates\base.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\base.html.twig
+-----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ESPRIT CV Generator{% endblock %}</title>
+
+    {% block stylesheets %}
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        {{ include('partials/_styles.html.twig') }}
+    {% endblock %}
+</head>
+<body>
+{% block header %}
+    {{ include('partials/_header.html.twig') }}
+{% endblock %}
+
+{% block body %}{% endblock %}
+
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center">
+        <small class="text-muted">
+            Current Date: {{ current_date|date('Y-m-d H:i:s') }} UTC |
+            User: {{ current_user }}
+        </small>
+    </div>
+</footer>
+
+{% block javascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+</body>
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\index.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\index.html.twig
+-----
+{% extends 'base.html.twig' %}
+
+{% block title %}CV Generator{% endblock %}
+
+{% block body %}
+    <div class="container-fluid p-0">
+        {# Header with logos #}
+        <div class="header-logos mb-4">
+            <div class="row m-0 p-3">
+                <div class="col-4">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid" style="max-height: 109px;">
+                </div>
+                <div class="col-4 text-center">
+                    <img src="{{ asset('images/tunisie-removebg-preview.png') }}" alt="Tunisia" class="img-fluid" style="max-height: 100px;">
+                </div>
+                <div class="col-4 text-end">
+                    <img src="{{ asset('images/esprim.png') }}" alt="ESPRIM" class="img-fluid" style="max-height: 46px;">
+                </div>
+            </div>
+        </div>
+
+        {# CV Form #}
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">CV Generator</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {# Personal Information #}
+                        <div class="mb-4">
+                            <h4 class="form-section-title">Personal Information</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="firstName" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lastName" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Education #}
+                        <div class="mb-4">
+                            <h4 class="form-section-title">Education</h4>
+                            <div id="educationContainer">
+                                <div class="education-entry border rounded p-3 mb-3">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Degree</label>
+                                            <input type="text" class="form-control" name="education[0][degree]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Institution</label>
+                                            <input type="text" class="form-control" name="education[0][institution]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" name="education[0][startDate]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">End Date</label>
+                                            <input type="date" class="form-control" name="education[0][endDate]">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="addEducation">
+                                Add More Education
+                            </button>
+                        </div>
+
+                        {# Experience #}
+                        <div class="mb-4">
+                            <h4 class="form-section-title">Work Experience</h4>
+                            <div id="experienceContainer">
+                                <div class="experience-entry border rounded p-3 mb-3">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Position</label>
+                                            <input type="text" class="form-control" name="experience[0][position]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Company</label>
+                                            <input type="text" class="form-control" name="experience[0][company]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" name="experience[0][startDate]" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">End Date</label>
+                                            <input type="date" class="form-control" name="experience[0][endDate]">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Description</label>
+                                            <textarea class="form-control" name="experience[0][description]" rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="addExperience">
+                                Add More Experience
+                            </button>
+                        </div>
+
+                        {# Skills #}
+                        <div class="mb-4">
+                            <h4 class="form-section-title">Skills</h4>
+                            <div id="skillsContainer">
+                                <div class="row g-3 mb-2">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" name="skills[]" placeholder="Enter a skill">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="addSkill">
+                                Add More Skills
+                            </button>
+                        </div>
+
+                        {# Submit Button #}
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Generate CV</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .header-logos {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-section-title {
+            color: #0d6efd;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .education-entry, .experience-entry {
+            background-color: #f8f9fa;
+        }
+        .btn-remove {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add Education Entry
+            document.getElementById('addEducation').addEventListener('click', function() {
+                const container = document.getElementById('educationContainer');
+                const index = container.children.length;
+                const template = `
+                    <div class="education-entry border rounded p-3 mb-3 position-relative">
+                        <button type="button" class="btn btn-danger btn-sm btn-remove" onclick="this.parentElement.remove()">×</button>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Degree</label>
+                                <input type="text" class="form-control" name="education[${index}][degree]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Institution</label>
+                                <input type="text" class="form-control" name="education[${index}][institution]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="education[${index}][startDate]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control" name="education[${index}][endDate]">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', template);
+            });
+
+            // Add Experience Entry
+            document.getElementById('addExperience').addEventListener('click', function() {
+                const container = document.getElementById('experienceContainer');
+                const index = container.children.length;
+                const template = `
+                    <div class="experience-entry border rounded p-3 mb-3 position-relative">
+                        <button type="button" class="btn btn-danger btn-sm btn-remove" onclick="this.parentElement.remove()">×</button>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Position</label>
+                                <input type="text" class="form-control" name="experience[${index}][position]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Company</label>
+                                <input type="text" class="form-control" name="experience[${index}][company]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="experience[${index}][startDate]" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control" name="experience[${index}][endDate]">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="experience[${index}][description]" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', template);
+            });
+
+            // Add Skill Field
+            document.getElementById('addSkill').addEventListener('click', function() {
+                const container = document.getElementById('skillsContainer');
+                const template = `
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="skills[]" placeholder="Enter a skill">
+                                <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">×</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', template);
+            });
+        });
+    </script>
+{% endblock %}
+==================================================
+
+Fichier: Templates\cv_generator\welcome.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\welcome.html.twig
+-----
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome - CV Generator{% endblock %}
+
+{% block body %}
+    <div class="welcome-container">
+        <div class="welcome-grid">
+            {# Column 3 - Small Logo #}
+            <div class="logo-item" style="grid-column: 3; grid-row: 1;">
+                <img src="{{ asset('images/unnamed-removebg-preview.png') }}" alt="Small Logo" style="max-height: 152px;">
+            </div>
+
+            {# Column 4 - Center Column with Multiple Logos #}
+            <div class="center-column" style="grid-column: 4; grid-row: 1 / span 7;">
+                <div class="logo-item">
+                    <img src="{{ asset('images/logo.png') }}" alt="Main Logo" style="max-height: 124px;">
+                </div>
+                <div class="logo-item">
+                    <img src="{{ asset('images/esprim.png') }}" alt="ESPRIM" style="max-height: 75px;">
+                </div>
+                <div class="logo-item">
+                    <img src="{{ asset('images/espritesb.png') }}" alt="ESPRIT ESB" style="max-height: 103px;">
+                </div>
+                <div class="logo-item">
+                    <img src="{{ asset('images/espritprepa-removebg-preview.png') }}" alt="ESPRIT Prepa" style="max-height: 213px;">
+                </div>
+                <div class="logo-item">
+                    <img src="{{ asset('images/esprit-removebg-preview.png') }}" alt="ESPRIT" style="max-height: 217px;">
+                </div>
+                <div class="logo-item">
+                    <img src="{{ asset('images/gear.png') }}" alt="Loading" class="loading-gear" style="max-height: 80px;">
+                </div>
+            </div>
+
+            {# Column 5 - Tunisia Logo #}
+            <div class="logo-item" style="grid-column: 5; grid-row: 1;">
+                <img src="{{ asset('images/tunisie-removebg-preview.png') }}" alt="Tunisia" style="max-height: 96px;">
+            </div>
+        </div>
+
+        {# Enter Button #}
+        <a href="{{ path('app_cv_generator') }}" class="enter-button">
+            <i class="fas fa-file-alt"></i>
+            Enter CV Generator
+        </a>
+
+        {# User Info #}
+        <div class="user-info position-fixed bottom-0 start-0 m-3">
+            <small class="text-muted">
+                {{ current_date|date('Y-m-d H:i:s') }} UTC | {{ current_user }}
+            </small>
+        </div>
+    </div>
+{% endblock %}
+==================================================
+
+Fichier: Templates\cv_generator\_additional.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_additional.html.twig
+-----
+<div class="form-section" id="additionalSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-plus-circle"></i>
+        Additional Information
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:05:57 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <label class="form-label">Languages</label>
+            <textarea class="form-control" name="languages" rows="2" placeholder="e.g. English (Fluent), French (Intermediate), Arabic (Native)"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Interests & Hobbies</label>
+            <textarea class="form-control" name="interests" rows="2" placeholder="e.g. Reading, Photography, Traveling"></textarea>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Publications/Projects/Certifications</label>
+            <textarea class="form-control" name="certifications" rows="4" placeholder="List any relevant certifications, publications, or notable projects"></textarea>
+        </div>
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_education.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_education.html.twig
+-----
+<div class="form-section" id="educationSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-graduation-cap"></i>
+        Education
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:00:42 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div id="educationContainer">
+        <div class="entry-container">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Degree / Certificate</label>
+                    <input type="text" class="form-control" name="education[0][degree]" placeholder="e.g. Bachelor of Science in Computer Science" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Institution</label>
+                    <input type="text" class="form-control" name="education[0][institution]" placeholder="e.g. ESPRIT School of Engineering" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="education[0][startDate]" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="education[0][endDate]">
+                        <div class="input-group-text">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="currentEducation0">
+                                <label class="form-check-label" for="currentEducation0">Present</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="education[0][description]" rows="2" placeholder="Include relevant coursework, honors, achievements, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-add" id="addEducation">
+        <i class="fas fa-plus"></i> Add Another Education
+    </button>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_experience.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_experience.html.twig
+-----
+<div class="form-section" id="experienceSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-briefcase"></i>
+        Work Experience
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:05:57 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div id="experienceContainer">
+        <!-- Les entrées d'expérience seront ajoutées ici -->
+    </div>
+    <button type="button" class="btn btn-add" id="addExperience">
+        <i class="fas fa-plus"></i> Add Another Experience
+    </button>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_personal_info.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_personal_info.html.twig
+-----
+<div class="form-section" id="personalSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-user"></i>
+        Personal Information
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:00:42 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter your first name" required>
+        </div>
+        <div class="col-md-6">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter your last name" required>
+        </div>
+        <div class="col-md-6">
+            <label for="jobTitle" class="form-label">Job Title</label>
+            <input type="text" class="form-control" id="jobTitle" name="jobTitle" placeholder="e.g. Software Engineer">
+        </div>
+        <div class="col-md-6">
+            <label for="photo" class="form-label">Profile Photo</label>
+            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+        </div>
+        <div class="col-md-6">
+            <label for="email" class="form-label">Email</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                <input type="email" class="form-control" id="email" name="email" placeholder="youremail@example.com" required>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label for="phone" class="form-label">Phone</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+216 XX XXX XXX" required>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label for="address" class="form-label">Address</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                <textarea class="form-control" id="address" name="address" rows="2" placeholder="Enter your full address"></textarea>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label for="summary" class="form-label">Professional Summary</label>
+            <textarea class="form-control" id="summary" name="summary" rows="4" placeholder="Write a brief professional summary highlighting your experience and expertise"></textarea>
+        </div>
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_preview.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_preview.html.twig
+-----
+<div class="form-section" id="skillsSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-tools"></i>
+        Skills
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:05:57 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Add Skills</label>
+            <div class="skills-input-group">
+                <input type="text" id="skillInput" class="form-control" placeholder="e.g. Programming, Leadership, Project Management">
+                <button type="button" id="addSkillBtn" class="btn btn-primary">Add</button>
+            </div>
+            <small class="text-muted">Press Enter or click Add button to add skills</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Your Skills</label>
+            <div id="skillsDisplay" class="pt-2">
+                <!-- Skills badges will appear here -->
+            </div>
+        </div>
+    </div>
+    <div id="skillsContainer" class="d-none">
+        <!-- Hidden input fields for skills -->
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_progress.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_progress.html.twig
+-----
+{# Progress Steps #}
+<div class="steps-container">
+    <div class="step-item {{ currentStep >= 1 ? 'active' : '' }} {{ currentStep > 1 ? 'completed' : '' }}">
+        <div class="step-number">1</div>
+        <div class="step-title">Personal Info</div>
+    </div>
+    <div class="step-item {{ currentStep >= 2 ? 'active' : '' }} {{ currentStep > 2 ? 'completed' : '' }}">
+        <div class="step-number">2</div>
+        <div class="step-title">Education</div>
+    </div>
+    <div class="step-item {{ currentStep >= 3 ? 'active' : '' }} {{ currentStep > 3 ? 'completed' : '' }}">
+        <div class="step-number">3</div>
+        <div class="step-title">Experience</div>
+    </div>
+    <div class="step-item {{ currentStep >= 4 ? 'active' : '' }} {{ currentStep > 4 ? 'completed' : '' }}">
+        <div class="step-number">4</div>
+        <div class="step-title">Skills</div>
+    </div>
+    <div class="step-item {{ currentStep >= 5 ? 'active' : '' }}">
+        <div class="step-number">5</div>
+        <div class="step-title">Review</div>
+    </div>
+</div>
+
+<div class="progress-container">
+    <div class="progress-bar" style="width: {{ currentStep * 20 }}%"></div>
+</div>
+
+<div class="text-muted text-end mb-3">
+    <small>Last updated: {{ current_date|date('Y-m-d H:i:s') }} UTC by {{ current_user }}</small>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_skills.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_skills.html.twig
+-----
+<div class="form-section" id="skillsSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-tools"></i>
+        Skills
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:05:57 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Add Skills</label>
+            <div class="skills-input-group">
+                <input type="text" id="skillInput" class="form-control" placeholder="e.g. Programming, Leadership, Project Management">
+                <button type="button" id="addSkillBtn" class="btn btn-primary">Add</button>
+            </div>
+            <small class="text-muted">Press Enter or click Add button to add skills</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Your Skills</label>
+            <div id="skillsDisplay" class="pt-2">
+                <!-- Skills badges will appear here -->
+            </div>
+        </div>
+    </div>
+    <div id="skillsContainer" class="d-none">
+        <!-- Hidden input fields for skills -->
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\partials\_header.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\partials\_header.html.twig
+-----
+<header class="header-container mb-4">
+    <div class="container">
+        <div class="logo-container py-2">
+            <div class="logo-item">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid" style="max-height: 60px;">
+            </div>
+            <div class="logo-item text-center">
+                <img src="{{ asset('images/tunisie-removebg-preview.png') }}" alt="Tunisia" class="img-fluid" style="max-height: 80px;">
+            </div>
+            <div class="logo-item text-end">
+                <img src="{{ asset('images/esprim.png') }}" alt="ESPRIM" class="img-fluid" style="max-height: 40px;">
+            </div>
+        </div>
+        <div class="text-end mt-2">
+            <small class="text-muted">
+                {{ current_date|date('Y-m-d H:i:s') }} UTC | {{ current_user }}
+            </small>
+        </div>
+    </div>
+</header>
+==================================================
+
+Fichier: Templates\partials\_styles.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\partials\_styles.html.twig
+-----
+<style>
+    :root {
+        --primary-red: #e30613;
+        --secondary-blue: #0066b3;
+        --dark-blue: #002e6d;
+        --light-gray: #f5f5f5;
+        --dark-gray: #333333;
+        --white: #ffffff;
+        --border-radius: 8px;
+        --box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        background-color: var(--light-gray);
+        color: var(--dark-gray);
+    }
+
+    .header-container {
+        background: linear-gradient(to right, var(--white), var(--light-gray));
+        box-shadow: var(--box-shadow);
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 1rem 0;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .logo-item {
+        transition: transform 0.3s;
+    }
+
+    .logo-item:hover {
+        transform: scale(1.05);
+    }
+
+    .main-title {
+        color: var(--dark-blue);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin: 2rem 0;
+        text-align: center;
+        font-size: 2.2rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .card-header {
+        background-color: var(--primary-red);
+        color: white;
+        font-weight: 600;
+        padding: 1.2rem 1.5rem;
+        border-bottom: none;
+    }
+
+    .card-body {
+        padding: 2rem;
+        background-color: white;
+    }
+
+    .form-section {
+        margin-bottom: 2.5rem;
+        position: relative;
+    }
+
+    .form-section-title {
+        color: var(--secondary-blue);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.7rem;
+        border-bottom: 2px solid #e5e7eb;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-section-title i {
+        margin-right: 0.7rem;
+        color: var(--primary-red);
+    }
+
+    .form-control, .form-select {
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: var(--border-radius);
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--secondary-blue);
+        box-shadow: 0 0 0 0.25rem rgba(0, 102, 179, 0.25);
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: var(--dark-blue);
+    }
+
+    .entry-container {
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .entry-container:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .btn-add {
+        background-color: #f0f9ff;
+        color: var(--secondary-blue);
+        border: 1px dashed var(--secondary-blue);
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--border-radius);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+
+    .btn-add i {
+        margin-right: 0.5rem;
+    }
+
+    .btn-add:hover {
+        background-color: #e0f2fe;
+        color: var(--dark-blue);
+    }
+
+    .btn-remove {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        background-color: #fee2e2;
+        color: var(--primary-red);
+        border: none;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .btn-remove:hover {
+        background-color: #fecaca;
+        transform: scale(1.05);
+    }
+
+    .skill-badge {
+        background-color: #e0f2fe;
+        color: var(--secondary-blue);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s;
+    }
+
+    .skill-badge button {
+        background: none;
+        border: none;
+        color: #64748b;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+
+    .skill-badge:hover {
+        background-color: rgba(227, 6, 19, 0.1);
+        color: var(--primary-red);
+    }
+
+    .skills-input-group {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .skills-input-group input {
+        flex-grow: 1;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .skills-input-group button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        background-color: var(--primary-red);
+        border-color: var(--primary-red);
+    }
+
+    .skills-input-group button:hover {
+        background-color: #c9050f;
+        border-color: #c9050f;
+    }
+
+    .btn-submit {
+        background-color: var(--primary-red);
+        border-color: var(--primary-red);
+        font-weight: 600;
+        padding: 0.8rem 2rem;
+        border-radius: var(--border-radius);
+        transition: all 0.3s;
+        box-shadow: 0 4px 6px rgba(227, 6, 19, 0.2);
+    }
+
+    .btn-submit:hover {
+        background-color: #c9050f;
+        border-color: #c9050f;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(227, 6, 19, 0.25);
+    }
+
+    .btn-preview {
+        color: var(--secondary-blue);
+        border-color: var(--secondary-blue);
+    }
+
+    .btn-preview:hover {
+        background-color: var(--secondary-blue);
+        border-color: var(--secondary-blue);
+        color: var(--white);
+    }
+
+    .cv-preview {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 380px;
+        background-color: var(--light-gray);
+        border-left: 1px solid #e5e7eb;
+        box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+        padding: 2rem;
+        overflow-y: auto;
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .cv-preview.show {
+        transform: translateX(0);
+    }
+
+    .preview-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: #64748b;
+        cursor: pointer;
+    }
+
+    .steps-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .step-item {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+
+    .step-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 1.5rem;
+        right: -50%;
+        width: 100%;
+        height: 2px;
+        background-color: #d1d5db;
+        z-index: 1;
+    }
+
+    .step-number {
+        background-color: #d1d5db;
+        color: white;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-weight: 600;
+        position: relative;
+        z-index: 2;
+    }
+
+    .step-title {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .step-item.active .step-number {
+        background-color: var(--primary-red);
+    }
+
+    .step-item.active .step-title {
+        color: var(--primary-red);
+        font-weight: 600;
+    }
+
+    .step-item.completed .step-number {
+        background-color: var(--secondary-blue);
+    }
+
+    .progress-container {
+        height: 4px;
+        background-color: #e5e7eb;
+        border-radius: 2px;
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: var(--primary-red);
+        width: 0;
+        transition: width 0.3s ease;
+    }
+
+    .input-group-text {
+        background-color: var(--secondary-blue);
+        color: var(--white);
+        border-color: var(--secondary-blue);
+    }
+
+    @media (max-width: 768px) {
+        .main-title {
+            font-size: 1.8rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .step-number {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .step-title {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+==================================================
+
+Fichier: src\Controller\CVGeneratorController.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Controller\CVGeneratorController.php
+-----
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class CVGeneratorController extends AbstractController
+{
+    #[Route('/', name: 'app_welcome')]
+    public function welcome(): Response
+    {
+        return $this->render('cv_generator/welcome.html.twig', [
+            'current_date' => '2025-04-18 20:54:36',
+            'current_user' => 'Mohamed-abidi-95'
+        ]);
+    }
+
+    #[Route('/cv', name: 'app_cv_generator')]
+    public function index(Request $request): Response
+    {
+        if ($request->isMethod('POST')) {
+            $formData = $request->request->all();
+            dd($formData);
+        }
+
+        return $this->render('cv_generator/index.html.twig', [
+            'currentStep' => 1,
+            'current_date' => '2025-04-18 20:54:36',
+            'current_user' => 'Mohamed-abidi-95'
+        ]);
+    }
+}
+==================================================
+
