@@ -1,0 +1,4605 @@
+Fichier: Templates\cv_generator\_education.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_education.html.twig
+-----
+<div class="form-section" id="educationSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-graduation-cap"></i>
+        Education
+    </h4>
+    <div id="educationContainer">
+        <div class="entry-container">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Degree / Certificate</label>
+                    <input type="text" class="form-control" name="education[0][degree]" placeholder="e.g. Bachelor of Science in Computer Science" data-required="true">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Institution</label>
+                    <input type="text" class="form-control" name="education[0][institution]" placeholder="e.g. ESPRIT School of Engineering" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="education[0][startDate]" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="education[0][endDate]">
+                        <div class="input-group-text">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="currentEducation0">
+                                <label class="form-check-label" for="currentEducation0">Present</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="education[0][description]" rows="2" placeholder="Include relevant coursework, honors, achievements, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-add" id="addEducation">
+        <i class="fas fa-plus"></i> Add Another Education
+    </button>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_additional.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_additional.html.twig
+-----
+<div class="form-section" id="additionalSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-plus-circle"></i>
+        Additional Information
+    </h4>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <label class="form-label">Languages</label>
+            <textarea class="form-control" name="languages" rows="2" placeholder="e.g. English (Fluent), French (Intermediate), Arabic (Native)"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Interests & Hobbies</label>
+            <textarea class="form-control" name="interests" rows="2" placeholder="e.g. Reading, Photography, Traveling"></textarea>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Publications/Projects/Certifications</label>
+            <textarea class="form-control" name="certifications" rows="4" placeholder="List any relevant certifications, publications, or notable projects"></textarea>
+        </div>
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_experience.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_experience.html.twig
+-----
+<div class="form-section" id="experienceSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-briefcase"></i>
+        Work Experience
+    </h4>
+    <div id="experienceContainer">
+        <div class="entry-container">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Position / Job Title</label>
+                    <input type="text" class="form-control" name="experience[0][position]" placeholder="e.g. Senior Developer" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Company / Organization</label>
+                    <input type="text" class="form-control" name="experience[0][company]" placeholder="e.g. Tech Solutions Inc." required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="experience[0][startDate]" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="experience[0][endDate]">
+                        <div class="input-group-text">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="currentPosition0">
+                                <label class="form-check-label" for="currentPosition0">Present</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="experience[0][description]" rows="4" placeholder="Describe your responsibilities, achievements, projects, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-add" id="addExperience">
+        <i class="fas fa-plus"></i> Add Another Experience
+    </button>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_form_scripts.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_form_scripts.html.twig
+-----
+document.addEventListener('DOMContentLoaded', function() {
+// Form Section Navigation
+function initFormNavigation() {
+const sections = document.querySelectorAll('.form-section-page');
+const nextButtons = document.querySelectorAll('.next-section');
+const prevButtons = document.querySelectorAll('.prev-section');
+const reviewButton = document.querySelector('.btn-submit-review');
+const progressBar = document.querySelector('.progress-bar');
+const stepItems = document.querySelectorAll('.step-item');
+
+// Show section
+function showSection(sectionId) {
+// Hide all sections
+sections.forEach(section => {
+section.classList.remove('active');
+});
+
+// Show the target section
+const targetSection = document.getElementById('section-' + sectionId);
+if (targetSection) {
+targetSection.classList.add('active');
+
+// Update progress bar
+if (progressBar) {
+progressBar.style.width = ((sectionId - 1) * 20) + '%';
+}
+
+// Update step items
+stepItems.forEach((step, index) => {
+if (index + 1 < sectionId) {
+step.classList.add('completed');
+step.classList.remove('active');
+} else if (index + 1 === parseInt(sectionId)) {
+step.classList.add('active');
+step.classList.remove('completed');
+} else {
+step.classList.remove('active', 'completed');
+}
+});
+
+// Scroll to top of form
+const formCard = document.querySelector('.card');
+if (formCard) {
+formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+}
+}
+
+// Next button click
+nextButtons.forEach(button => {
+button.addEventListener('click', function() {
+const nextSection = this.getAttribute('data-next');
+if (nextSection) {
+// Validate current section here if needed
+showSection(nextSection);
+}
+});
+});
+
+// Previous button click
+prevButtons.forEach(button => {
+button.addEventListener('click', function() {
+const prevSection = this.getAttribute('data-prev');
+if (prevSection) {
+showSection(prevSection);
+}
+});
+});
+
+// Review button click
+if (reviewButton) {
+reviewButton.addEventListener('click', function() {
+// Generate review content
+generateReview();
+showSection('6');
+});
+}
+
+// Generate review content
+function generateReview() {
+const reviewContent = document.getElementById('reviewContent');
+if (!reviewContent) return;
+
+const firstName = document.getElementById('firstName')?.value || 'First Name';
+const lastName = document.getElementById('lastName')?.value || 'Last Name';
+
+// Generate comprehensive review HTML with all form data
+let reviewHTML = `
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h5>Personal Information</h5>
+        <table class="table table-bordered table-sm">
+            <tbody>
+            <tr>
+                <th>Name</th>
+                <td>${firstName} ${lastName}</td>
+            </tr>
+            <tr>
+                <th>Job Title</th>
+                <td>${document.getElementById('jobTitle')?.value || '-'}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>${document.getElementById('email')?.value || '-'}</td>
+            </tr>
+            <tr>
+                <th>Phone</th>
+                <td>${document.getElementById('phone')?.value || '-'}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-12 mb-4">
+        <h5>Education</h5>
+        <ul class="list-group">
+            `;
+
+            // Add education entries
+            const educationEntries = document.querySelectorAll('#educationContainer .entry-container');
+            if (educationEntries.length > 0) {
+            educationEntries.forEach((entry, index) => {
+            const degree = entry.querySelector('input[name$="[degree]"]')?.value || '-';
+            const institution = entry.querySelector('input[name$="[institution]"]')?.value || '-';
+
+            reviewHTML += `
+            <li class="list-group-item">
+                <strong>${degree}</strong> at ${institution}
+            </li>
+            `;
+            });
+            } else {
+            reviewHTML += `
+            <li class="list-group-item text-muted">No education entries added</li>
+            `;
+            }
+
+            reviewHTML += `
+        </ul>
+    </div>
+    <div class="col-md-12 mb-4">
+        <h5>Experience</h5>
+        <ul class="list-group">
+            `;
+
+            // Add experience entries
+            const experienceEntries = document.querySelectorAll('#experienceContainer .entry-container');
+            if (experienceEntries.length > 0) {
+            experienceEntries.forEach((entry, index) => {
+            const position = entry.querySelector('input[name$="[position]"]')?.value || '-';
+            const company = entry.querySelector('input[name$="[company]"]')?.value || '-';
+
+            reviewHTML += `
+            <li class="list-group-item">
+                <strong>${position}</strong> at ${company}
+            </li>
+            `;
+            });
+            } else {
+            reviewHTML += `
+            <li class="list-group-item text-muted">No experience entries added</li>
+            `;
+            }
+
+            reviewHTML += `
+        </ul>
+    </div>
+    <div class="col-md-12">
+        <h5>Skills</h5>
+        <div>
+            `;
+
+            // Add skills
+            const skills = document.querySelectorAll('.skill-badge');
+            if (skills.length > 0) {
+            skills.forEach(skill => {
+            const skillText = skill.textContent.replace('×', '').trim();
+            reviewHTML += `<span class="badge bg-secondary m-1">${skillText}</span>`;
+            });
+            } else {
+            reviewHTML += `<p class="text-muted">No skills added</p>`;
+            }
+
+            reviewHTML += `
+        </div>
+    </div>
+</div>
+`;
+
+reviewContent.innerHTML = reviewHTML;
+}
+}
+
+// Autofill functionality
+function setupAutofill() {
+const autofillBtn = document.getElementById('autofillBtn');
+if (!autofillBtn) return;
+
+autofillBtn.addEventListener('click', function() {
+// Get sample data
+const sampleDataElement = document.getElementById('sampleData');
+if (!sampleDataElement) return;
+
+try {
+const sampleData = JSON.parse(sampleDataElement.dataset.sample);
+
+// Fill Personal Information
+if (sampleData.firstName) document.getElementById('firstName').value = sampleData.firstName;
+if (sampleData.lastName) document.getElementById('lastName').value = sampleData.lastName;
+if (sampleData.jobTitle) document.getElementById('jobTitle').value = sampleData.jobTitle;
+if (sampleData.email) document.getElementById('email').value = sampleData.email;
+if (sampleData.phone) document.getElementById('phone').value = sampleData.phone;
+if (sampleData.address) document.getElementById('address').value = sampleData.address;
+if (sampleData.summary) document.getElementById('summary').value = sampleData.summary;
+
+// Fill Education (remove existing and add new ones from sample data)
+const educationContainer = document.getElementById('educationContainer');
+if (educationContainer && sampleData.education && Array.isArray(sampleData.education)) {
+// Clear existing entries except the first one
+while (educationContainer.children.length > 1) {
+educationContainer.removeChild(educationContainer.lastChild);
+}
+
+// Fill the first education entry
+if (sampleData.education.length > 0) {
+const firstEntry = educationContainer.children[0];
+fillEducationEntry(firstEntry, sampleData.education[0]);
+
+// Add additional education entries
+for (let i = 1; i < sampleData.education.length; i++) {
+// Trigger click on "Add Another Education" button
+document.getElementById('addEducation').click();
+// Fill the newly added entry
+const newEntry = educationContainer.lastChild;
+fillEducationEntry(newEntry, sampleData.education[i]);
+}
+}
+}
+
+// Fill Experience (remove existing and add new ones from sample data)
+const experienceContainer = document.getElementById('experienceContainer');
+if (experienceContainer && sampleData.experience && Array.isArray(sampleData.experience)) {
+// Clear existing entries
+experienceContainer.innerHTML = '';
+
+// Add experience entries
+sampleData.experience.forEach((exp, index) => {
+// Create template for the experience entry
+const template = `
+<div class="entry-container">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Position / Job Title</label>
+            <input type="text" class="form-control" name="experience[${index}][position]" placeholder="e.g. Senior Developer" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Company / Organization</label>
+            <input type="text" class="form-control" name="experience[${index}][company]" placeholder="e.g. Tech Solutions Inc." required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" name="experience[${index}][startDate]" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">End Date</label>
+            <div class="input-group">
+                <input type="date" class="form-control" name="experience[${index}][endDate]">
+                <div class="input-group-text">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="currentPosition${index}">
+                        <label class="form-check-label" for="currentPosition${index}">Present</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="experience[${index}][description]" rows="4" placeholder="Describe your responsibilities, achievements, projects, etc."></textarea>
+        </div>
+    </div>
+</div>
+`;
+
+experienceContainer.insertAdjacentHTML('beforeend', template);
+const newEntry = experienceContainer.lastChild;
+
+// Fill the experience entry
+if (exp.position) newEntry.querySelector('input[name$="[position]"]').value = exp.position;
+if (exp.company) newEntry.querySelector('input[name$="[company]"]').value = exp.company;
+if (exp.startDate) newEntry.querySelector('input[name$="[startDate]"]').value = exp.startDate;
+
+if (exp.endDate) {
+newEntry.querySelector('input[name$="[endDate]"]').value = exp.endDate;
+} else {
+// Check the "Present" checkbox if endDate is empty
+const checkbox = newEntry.querySelector(`#currentPosition${index}`);
+if (checkbox) checkbox.checked = true;
+}
+
+if (exp.description) newEntry.querySelector('textarea[name$="[description]"]').value = exp.description;
+});
+}
+
+// Fill Skills
+if (sampleData.skills && Array.isArray(sampleData.skills)) {
+// Clear existing skills
+const skillsDisplay = document.getElementById('skillsDisplay');
+if (skillsDisplay) {
+skillsDisplay.innerHTML = '';
+}
+
+// Add skills
+sampleData.skills.forEach(skill => {
+addSkill(skill);
+});
+}
+
+// Fill Additional Information
+if (sampleData.languages) document.querySelector('textarea[name="languages"]').value = sampleData.languages;
+if (sampleData.interests) document.querySelector('textarea[name="interests"]').value = sampleData.interests;
+if (sampleData.certifications) document.querySelector('textarea[name="certifications"]').value = sampleData.certifications;
+
+// Show success message
+alert('Form autofilled with sample data!');
+
+} catch (error) {
+console.error('Error autofilling form:', error);
+alert('Could not autofill the form. Please try again.');
+}
+});
+
+// Helper function to fill education entry
+function fillEducationEntry(entry, educationData) {
+if (educationData.degree) entry.querySelector('input[name$="[degree]"]').value = educationData.degree;
+if (educationData.institution) entry.querySelector('input[name$="[institution]"]').value = educationData.institution;
+if (educationData.startDate) entry.querySelector('input[name$="[startDate]"]').value = educationData.startDate;
+
+if (educationData.endDate) {
+entry.querySelector('input[name$="[endDate]"]').value = educationData.endDate;
+} else {
+// Check the "Present" checkbox if endDate is empty
+const checkboxId = entry.querySelector('.form-check-input').id;
+document.getElementById(checkboxId).checked = true;
+}
+
+if (educationData.description) entry.querySelector('textarea[name$="[description]"]').value = educationData.description;
+}
+}
+
+// Initialize form navigation
+initFormNavigation();
+
+// Initialize autofill functionality
+setupAutofill();
+
+// Add Education Entry
+document.getElementById('addEducation').addEventListener('click', function() {
+const container = document.getElementById('educationContainer');
+const index = container.children.length;
+const template = `
+<div class="entry-container position-relative">
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Degree / Certificate</label>
+            <input type="text" class="form-control" name="education[${index}][degree]" placeholder="e.g. Bachelor of Science in Computer Science" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Institution</label>
+            <input type="text" class="form-control" name="education[${index}][institution]" placeholder="e.g. ESPRIT School of Engineering" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" name="education[${index}][startDate]" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">End Date</label>
+            <div class="input-group">
+                <input type="date" class="form-control" name="education[${index}][endDate]">
+                <div class="input-group-text">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="currentEducation${index}">
+                        <label class="form-check-label" for="currentEducation${index}">Present</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="education[${index}][description]" rows="2" placeholder="Include relevant coursework, honors, achievements, etc."></textarea>
+        </div>
+    </div>
+</div>
+`;
+container.insertAdjacentHTML('beforeend', template);
+});
+
+// Add Experience Entry
+document.getElementById('addExperience').addEventListener('click', function() {
+const container = document.getElementById('experienceContainer');
+const index = container.children.length;
+const template = `
+<div class="entry-container position-relative">
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Position / Job Title</label>
+            <input type="text" class="form-control" name="experience[${index}][position]" placeholder="e.g. Senior Developer" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Company / Organization</label>
+            <input type="text" class="form-control" name="experience[${index}][company]" placeholder="e.g. Tech Solutions Inc." required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" name="experience[${index}][startDate]" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">End Date</label>
+            <div class="input-group">
+                <input type="date" class="form-control" name="experience[${index}][endDate]">
+                <div class="input-group-text">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="currentPosition${index}">
+                        <label class="form-check-label" for="currentPosition${index}">Present</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="experience[${index}][description]" rows="4" placeholder="Describe your responsibilities, achievements, projects, etc."></textarea>
+        </div>
+    </div>
+</div>
+`;
+container.insertAdjacentHTML('beforeend', template);
+});
+
+// Skills Management
+const skillInput = document.getElementById('skillInput');
+const addSkillBtn = document.getElementById('addSkillBtn');
+const skillsDisplay = document.getElementById('skillsDisplay');
+const skillsContainer = document.getElementById('skillsContainer');
+
+function addSkill(skillText) {
+if(!skillText) return;
+
+// Create badge
+const badge = document.createElement('span');
+badge.className = 'skill-badge';
+badge.textContent = skillText;
+
+// Remove button
+const removeBtn = document.createElement('button');
+removeBtn.textContent = '×';
+removeBtn.onclick = function() {
+badge.remove();
+updateHiddenInputs();
+};
+
+badge.appendChild(removeBtn);
+skillsDisplay.appendChild(badge);
+
+// Update hidden inputs
+updateHiddenInputs();
+
+// Clear input
+if (skillInput) skillInput.value = '';
+}
+
+function updateHiddenInputs() {
+// Clear container
+skillsContainer.innerHTML = '';
+
+// Get all skills
+const badges = skillsDisplay.querySelectorAll('.skill-badge');
+
+// Create hidden inputs
+badges.forEach((badge, index) => {
+const input = document.createElement('input');
+input.type = 'hidden';
+input.name = `skills[]`;
+input.value = badge.textContent.replace('×', '').trim();
+
+skillsContainer.appendChild(input);
+});
+}
+
+// Add skill button click
+if (addSkillBtn) {
+addSkillBtn.addEventListener('click', function() {
+addSkill(skillInput.value.trim());
+});
+}
+
+// Enter key press
+if (skillInput) {
+skillInput.addEventListener('keypress', function(e) {
+if(e.key === 'Enter') {
+e.preventDefault();
+addSkill(this.value.trim());
+}
+});
+}
+
+// Preview functionality
+const previewBtn = document.querySelector('.btn-preview');
+const cvPreview = document.getElementById('cvPreview');
+const closePreview = document.getElementById('closePreview');
+const previewContent = document.getElementById('previewContent');
+
+if(previewBtn && cvPreview && closePreview) {
+previewBtn.addEventListener('click', function() {
+// Generate preview content
+generatePreview();
+
+// Show preview panel
+cvPreview.classList.add('show');
+});
+
+closePreview.addEventListener('click', function() {
+cvPreview.classList.remove('show');
+});
+}
+
+function generatePreview() {
+if (!previewContent) return;
+
+const firstName = document.getElementById('firstName')?.value || 'First Name';
+const lastName = document.getElementById('lastName')?.value || 'Last Name';
+const jobTitle = document.getElementById('jobTitle')?.value || 'Job Title';
+const email = document.getElementById('email')?.value || 'email@example.com';
+const phone = document.getElementById('phone')?.value || 'Phone Number';
+const address = document.getElementById('address')?.value || 'Address';
+const summary = document.getElementById('summary')?.value || 'Professional Summary';
+
+let previewHTML = `
+<div class="preview-section">
+    <h5>${firstName} ${lastName}</h5>
+    <p class="text-muted">${jobTitle}</p>
+    <div class="small mb-3">
+        <div><i class="fas fa-envelope me-2"></i>${email}</div>
+        <div><i class="fas fa-phone me-2"></i>${phone}</div>
+        <div><i class="fas fa-map-marker-alt me-2"></i>${address}</div>
+    </div>
+    <p>${summary}</p>
+</div>
+`;
+
+// Add education
+previewHTML += `
+<div class="preview-section mt-3">
+    <h6 class="border-bottom pb-2 mb-2"><i class="fas fa-graduation-cap me-2"></i>Education</h6>
+    `;
+
+    const educationContainers = document.querySelectorAll('#educationContainer .entry-container');
+    educationContainers.forEach(container => {
+    const degree = container.querySelector('input[name$="[degree]"]')?.value || 'Degree';
+    const institution = container.querySelector('input[name$="[institution]"]')?.value || 'Institution';
+    const startDate = container.querySelector('input[name$="[startDate]"]')?.value || '';
+    const endDate = container.querySelector('input[name$="[endDate]"]')?.value || 'Present';
+
+    // Check if "Present" checkbox is checked
+    const checkboxId = container.querySelector('.form-check-input')?.id;
+    const isPresent = checkboxId ? document.getElementById(checkboxId).checked : false;
+
+    const endDateDisplay = isPresent ? 'Present' : (endDate !== 'Present' ? new Date(endDate).getFullYear() : '');
+
+    previewHTML += `
+    <div class="mb-2">
+        <div class="fw-bold">${degree}</div>
+        <div>${institution} (${startDate ? new Date(startDate).getFullYear() : ''} - ${endDateDisplay})</div>
+    </div>
+    `;
+    });
+
+    previewHTML += `</div>`;
+
+// Add experience
+previewHTML += `
+<div class="preview-section mt-3">
+    <h6 class="border-bottom pb-2 mb-2"><i class="fas fa-briefcase me-2"></i>Experience</h6>
+    `;
+
+    const experienceContainers = document.querySelectorAll('#experienceContainer .entry-container');
+    experienceContainers.forEach(container => {
+    const position = container.querySelector('input[name$="[position]"]')?.value || 'Position';
+    const company = container.querySelector('input[name$="[company]"]')?.value || 'Company';
+    const description = container.querySelector('textarea[name$="[description]"]')?.value || '';
+    const startDate = container.querySelector('input[name$="[startDate]"]')?.value || '';
+    const endDate = container.querySelector('input[name$="[endDate]"]')?.value || '';
+
+    // Check if "Present" checkbox is checked
+    const checkboxId = container.querySelector('.form-check-input')?.id;
+    const isPresent = checkboxId ? document.getElementById(checkboxId).checked : false;
+
+    const startDateFormatted = startDate ? new Date(startDate).toLocaleDateString() : '';
+    const endDateFormatted = isPresent ? 'Present' : (endDate ? new Date(endDate).toLocaleDateString() : '');
+    const dateRange = startDateFormatted || endDateFormatted ? `${startDateFormatted} - ${endDateFormatted}` : '';
+
+    previewHTML += `
+    <div class="mb-3">
+        <div class="fw-bold">${position}</div>
+        <div class="d-flex justify-content-between">
+            <span>${company}</span>
+            <small class="text-muted">${dateRange}</small>
+        </div>
+        <div class="small mt-1">${description}</div>
+    </div>
+    `;
+    });
+
+    previewHTML += `</div>`;
+
+// Add skills
+previewHTML += `
+<div class="preview-section mt-3">
+    <h6 class="border-bottom pb-2 mb-2"><i class="fas fa-tools me-2"></i>Skills</h6>
+    <div class="d-flex flex-wrap">
+        `;
+
+        const skills = document.querySelectorAll('.skill-badge');
+        skills.forEach(skill => {
+        const skillText = skill.textContent.replace('×', '').trim();
+        previewHTML += `<span class="badge bg-light text-dark m-1">${skillText}</span>`;
+        });
+
+        previewHTML += `
+    </div>
+</div>
+`;
+
+// Add additional information if available
+const languages = document.querySelector('textarea[name="languages"]')?.value;
+const interests = document.querySelector('textarea[name="interests"]')?.value;
+const certifications = document.querySelector('textarea[name="certifications"]')?.value;
+
+if (languages || interests || certifications) {
+previewHTML += `
+<div class="preview-section mt-3">
+    <h6 class="border-bottom pb-2 mb-2"><i class="fas fa-plus-circle me-2"></i>Additional Information</h6>
+    `;
+
+    if (languages) {
+    previewHTML += `
+    <div class="mb-2">
+        <div class="fw-bold">Languages</div>
+        <div>${languages}</div>
+    </div>
+    `;
+    }
+
+    if (interests) {
+    previewHTML += `
+    <div class="mb-2">
+        <div class="fw-bold">Interests & Hobbies</div>
+        <div>${interests}</div>
+    </div>
+    `;
+    }
+
+    if (certifications) {
+    previewHTML += `
+    <div class="mb-2">
+        <div class="fw-bold">Publications/Projects/Certifications</div>
+        <div>${certifications.replace(/\n/g, '<br>')}</div>
+    </div>
+    `;
+    }
+
+    previewHTML += `</div>`;
+}
+
+previewContent.innerHTML = previewHTML;
+}
+});
+==================================================
+
+Fichier: Templates\cv_generator\_languages.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_languages.html.twig
+-----
+<div class="section-title">
+    <i class="fas fa-language"></i>
+    <h3>Languages</h3>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Add languages you speak and indicate your proficiency level (e.g., "English (Fluent)", "French (Intermediate)").
+</div>
+
+<div id="languagesContainer" class="mb-4">
+    <!-- Languages will be added here dynamically -->
+</div>
+
+<div class="input-group mb-3">
+    <input type="text" class="form-control" id="languageInput" placeholder="Enter a language and proficiency (e.g., English (Native))">
+    <button class="btn btn-primary" type="button" id="addLanguageBtn">
+        <i class="fas fa-plus me-2"></i>Add
+    </button>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_personal_info.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_personal_info.html.twig
+-----
+<div class="section-title">
+    <i class="fas fa-user-circle"></i>
+    <h3>Personal Information</h3>
+</div>
+
+<div class="upload-container mb-4 text-center">
+    <div class="profile-photo-wrapper d-inline-block">
+        <img id="photoPreview" src="{{ asset('images/default-profile.png') }}" alt="Profile Photo Preview" class="profile-photo">
+    </div>
+    <div class="mt-3">
+        <label for="photoInput" class="btn btn-outline-secondary">
+            <i class="fas fa-camera me-2"></i>Upload Photo
+        </label>
+        <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="firstName" class="form-label">First Name</label>
+        <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter your first name" required>
+    </div>
+    <div class="col-md-6">
+        <label for="lastName" class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter your last name" required>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <label for="position" class="form-label">Professional Title</label>
+        <input type="text" class="form-control" id="position" name="position" placeholder="e.g. Software Developer, Project Manager, etc.">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+    </div>
+    <div class="col-md-6">
+        <label for="phone" class="form-label">Phone</label>
+        <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g. +216 12 345 678">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <label for="address" class="form-label">Address</label>
+        <input type="text" class="form-control" id="address" name="address" placeholder="Street Address">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="city" class="form-label">City</label>
+        <input type="text" class="form-control" id="city" name="city" placeholder="City">
+    </div>
+    <div class="col-md-6">
+        <label for="country" class="form-label">Country</label>
+        <input type="text" class="form-control" id="country" name="country" placeholder="Country">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="github" class="form-label">GitHub</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="fab fa-github"></i></span>
+            <input type="text" class="form-control" id="github" name="github" placeholder="github.com/username">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <label for="linkedin" class="form-label">LinkedIn</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="fab fa-linkedin"></i></span>
+            <input type="text" class="form-control" id="linkedin" name="linkedin" placeholder="linkedin.com/in/username">
+        </div>
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_preview.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_preview.html.twig
+-----
+<div class="form-section" id="skillsSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-tools"></i>
+        Skills
+        <small class="float-end fs-6 text-muted">
+            Last updated: 2025-04-18 21:05:57 by Mohamed-abidi-95
+        </small>
+    </h4>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Add Skills</label>
+            <div class="skills-input-group">
+                <input type="text" id="skillInput" class="form-control" placeholder="e.g. Programming, Leadership, Project Management">
+                <button type="button" id="addSkillBtn" class="btn btn-primary">Add</button>
+            </div>
+            <small class="text-muted">Press Enter or click Add button to add skills</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Your Skills</label>
+            <div id="skillsDisplay" class="pt-2">
+                <!-- Skills badges will appear here -->
+            </div>
+        </div>
+    </div>
+    <div id="skillsContainer" class="d-none">
+        <!-- Hidden input fields for skills -->
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_progress.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_progress.html.twig
+-----
+<div class="steps-container mb-4">
+    <div class="step-item {% if currentStep >= 1 %}active{% endif %}">
+        <div class="step-number">1</div>
+        <div class="step-title">Personal</div>
+    </div>
+    <div class="step-item {% if currentStep >= 2 %}active{% endif %}">
+        <div class="step-number">2</div>
+        <div class="step-title">Education</div>
+    </div>
+    <div class="step-item {% if currentStep >= 3 %}active{% endif %}">
+        <div class="step-number">3</div>
+        <div class="step-title">Experience</div>
+    </div>
+    <div class="step-item {% if currentStep >= 4 %}active{% endif %}">
+        <div class="step-number">4</div>
+        <div class="step-title">Skills</div>
+    </div>
+    <div class="step-item {% if currentStep >= 5 %}active{% endif %}">
+        <div class="step-number">5</div>
+        <div class="step-title">Languages</div>
+    </div>
+    <div class="step-item {% if currentStep >= 6 %}active{% endif %}">
+        <div class="step-number">6</div>
+        <div class="step-title">Additional</div>
+    </div>
+    <div class="step-item {% if currentStep >= 7 %}active{% endif %}">
+        <div class="step-number">7</div>
+        <div class="step-title">Review</div>
+    </div>
+</div>
+
+<div class="progress-container">
+    <div class="progress-bar" style="width: {{ (currentStep / 7) * 100 }}%"></div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\_review.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_review.html.twig
+-----
+<div class="section-title">
+    <i class="fas fa-check-circle"></i>
+    <h3>Review Your CV</h3>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    Please review your CV information before generating the final document.
+</div>
+
+<div id="reviewContent" class="p-3 border rounded bg-light">
+    <!-- Review content will be generated here -->
+</div>
+
+<div class="mt-4">
+    <h4>Choose Template</h4>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">Green Professional Template</div>
+                <div class="card-body text-center">
+                    <img src="{{ asset('images/template_green.jpg') }}" class="img-fluid mb-3" style="max-height: 200px;" alt="Green Template Preview">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="template" id="template-green" value="green" checked>
+                        <label class="form-check-label" for="template-green">
+                            Select Green Template
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">Blue Modern Template</div>
+                <div class="card-body text-center">
+                    <img src="{{ asset('images/template_blue.jpg') }}" class="img-fluid mb-3" style="max-height: 200px;" alt="Blue Template Preview">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="template" id="template-blue" value="blue">
+                        <label class="form-check-label" for="template-blue">
+                            Select Blue Template
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" name="photoData" id="photoDataField" value="">
+
+<!-- Section Navigation -->
+<div class="form-navigation-buttons">
+    <button type="button" class="btn btn-secondary prev-section" data-prev="5">
+        <i class="fas fa-arrow-left"></i> Previous
+    </button>
+    <button type="submit" class="btn btn-primary btn-submit">
+        <i class="fas fa-file-download"></i> Generate CV
+    </button>
+</div>
+
+<script>
+    // When the form is submitted, include the photo data if available
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoDataField = document.getElementById('photoDataField');
+        const savedPhotoData = localStorage.getItem('cvProfilePhoto');
+
+        if (photoDataField && savedPhotoData) {
+            photoDataField.value = savedPhotoData;
+        }
+    });
+</script>
+==================================================
+
+Fichier: Templates\cv_generator\_skills.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\_skills.html.twig
+-----
+<div class="form-section" id="skillsSection">
+    <h4 class="form-section-title">
+        <i class="fas fa-tools"></i>
+        Skills
+    </h4>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Add Skills</label>
+            <div class="skills-input-group">
+                <input type="text" id="skillInput" class="form-control" placeholder="e.g. Programming, Leadership, Project Management">
+                <button type="button" id="addSkillBtn" class="btn btn-primary">Add</button>
+            </div>
+            <small class="text-muted">Press Enter or click Add button to add skills</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Your Skills</label>
+            <div id="skillsDisplay" class="pt-2">
+                <!-- Skills badges will appear here -->
+            </div>
+        </div>
+    </div>
+    <div id="skillsContainer" class="d-none">
+        <!-- Hidden input fields for skills -->
+    </div>
+</div>
+==================================================
+
+Fichier: Templates\cv_generator\cv_template.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template.html.twig
+-----
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ data.firstName }} {{ data.lastName }} - CV</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 20px;
+        }
+
+        .photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 5px;
+            color: #ee3124;
+        }
+
+        .contact-info {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #ee3124;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .entry {
+            margin-bottom: 15px;
+        }
+
+        .entry-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .entry-subtitle {
+            font-style: italic;
+            margin-bottom: 3px;
+        }
+
+        .entry-period {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .skill-item {
+            background-color: #f5f5f5;
+            padding: 5px 10px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        {% if photoData is defined and photoData %}
+            <div class="photo">
+                <img src="{{ photoData }}" alt="Profile Photo">
+            </div>
+        {% endif %}
+
+        <h1>{{ data.firstName }} {{ data.lastName }}</h1>
+
+        <div class="contact-info">
+            {% if data.email %}
+                {{ data.email }}{% if data.phone %} | {% endif %}
+            {% endif %}
+
+            {% if data.phone %}
+                {{ data.phone }}
+            {% endif %}
+        </div>
+
+        {% if data.address or data.city or data.country %}
+            <div class="contact-info">
+                {{ [data.address, data.city, data.country]|filter(v => v is not empty)|join(', ') }}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if data.education is defined and data.education|length > 0 %}
+        <div class="section">
+            <h2>Education</h2>
+
+            {% for education in data.education %}
+                <div class="entry">
+                    <div class="entry-title">{{ education.degree }}</div>
+                    <div class="entry-subtitle">{{ education.institution }}{% if education.location %}, {{ education.location }}{% endif %}</div>
+                    <div class="entry-period">{{ education.startDate }}{% if education.startDate and education.endDate %} - {% endif %}{{ education.endDate }}</div>
+                    {% if education.description %}
+                        <div>{{ education.description }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if data.experience is defined and data.experience|length > 0 %}
+        <div class="section">
+            <h2>Professional Experience</h2>
+
+            {% for experience in data.experience %}
+                <div class="entry">
+                    <div class="entry-title">{{ experience.position }}</div>
+                    <div class="entry-subtitle">{{ experience.company }}{% if experience.location %}, {{ experience.location }}{% endif %}</div>
+                    <div class="entry-period">{{ experience.startDate }}{% if experience.startDate and experience.endDate %} - {% endif %}{{ experience.endDate }}</div>
+                    {% if experience.description %}
+                        <div>{{ experience.description }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if data.skills is defined and data.skills|length > 0 %}
+        <div class="section">
+            <h2>Skills</h2>
+
+            <div class="skills-list">
+                {% for skill in data.skills %}
+                    <div class="skill-item">{{ skill }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if data.additionalInfo %}
+        <div class="section">
+            <h2>Additional Information</h2>
+
+            <div>{{ data.additionalInfo }}</div>
+        </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>CV generated on {{ generatedDate|date('F d, Y') }} using ESPRIT CV Generator</p>
+    </div>
+</div>
+</body>
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\cv_template_blue.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template_blue.html.twig
+-----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ data.firstName }} {{ data.lastName }} - CV</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent: #1abc9c;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            color: var(--dark);
+            background-color: var(--light);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cv-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            overflow: hidden;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 60px 40px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            right: -100px;
+            top: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            left: -50px;
+            bottom: -100px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .profile-title {
+            position: relative;
+            z-index: 1;
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .position {
+            font-size: 22px;
+            opacity: 0.9;
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .contact-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 30px;
+        }
+
+        .contact-icon {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 24px;
+            margin-bottom: 30px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 50%;
+            height: 4px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        .about-text {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            height: calc(100% - 8px);
+            width: 2px;
+            background-color: var(--primary);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -30px;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--white);
+            border: 3px solid var(--primary);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-company {
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .timeline-period {
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .skill-tag {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .language-item {
+            margin-bottom: 15px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .col-8 {
+            width: 70%;
+        }
+
+        .col-4 {
+            width: 30%;
+        }
+
+        .profile-img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.2);
+            margin-left: auto;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+            }
+
+            .cv-container {
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="cv-container">
+    <!-- Header Section -->
+    <header>
+        <div class="row">
+            <div class="col-8 profile-title">
+                <h1 class="name">{{ data.firstName }} {{ data.lastName }}</h1>
+                <div class="position">{{ data.position }}</div>
+                {% if data.additionalInfo %}
+                    <p>{{ data.additionalInfo }}</p>
+                {% endif %}
+
+                <div class="contact-list">
+                    {% if data.email %}
+                        <div class="contact-item">
+                            <span class="contact-icon">@</span>
+                            <span>{{ data.email }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.phone %}
+                        <div class="contact-item">
+                            <span class="contact-icon">☏</span>
+                            <span>{{ data.phone }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.address or data.city or data.country %}
+                        <div class="contact-item">
+                            <span class="contact-icon">⌂</span>
+                            <span>{{ [data.city, data.country]|filter(v => v is not empty)|join(', ') }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.github %}
+                        <div class="contact-item">
+                            <span class="contact-icon">GH</span>
+                            <span>{{ data.github }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-4" style="text-align: right;">
+                {% if photoData is defined and photoData %}
+                    <img src="{{ photoData|raw }}" alt="Profile Image" class="profile-img">
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Experience -->
+        {% if data.experience is defined and data.experience|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Experience</h2>
+
+                <div class="timeline">
+                    {% for experience in data.experience %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-title">{{ experience.position }}</div>
+                            <div class="timeline-company">{{ experience.company }}{% if experience.location %}, {{ experience.location }}{% endif %}</div>
+                            <div class="timeline-period">{{ experience.startDate }}{% if experience.startDate and experience.endDate %} - {% endif %}{{ experience.endDate }}</div>
+                            {% if experience.description %}
+                                <p>{{ experience.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Education -->
+        {% if data.education is defined and data.education|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Education</h2>
+
+                <div class="timeline">
+                    {% for education in data.education %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-title">{{ education.degree }}</div>
+                            <div class="timeline-company">{{ education.institution }}{% if education.location %}, {{ education.location }}{% endif %}</div>
+                            <div class="timeline-period">{{ education.startDate }}{% if education.startDate and education.endDate %} - {% endif %}{{ education.endDate }}</div>
+                            {% if education.description %}
+                                <p>{{ education.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Skills -->
+        {% if data.skills is defined and data.skills|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Skills</h2>
+
+                <div class="skills-grid">
+                    {% for skill in data.skills %}
+                        <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Languages -->
+        {% if data.languages is defined and data.languages|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Languages</h2>
+
+                {% for language in data.languages %}
+                    <div class="language-item">
+                        <strong>{{ language }}</strong>
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777;">
+            CV generated on {{ generatedDate|date('F d, Y') }} using ESPRIT CV Generator
+        </div>
+    </main>
+</div>
+{% if app is defined and app.debug is defined and app.debug %}
+    <div style="background: #f5f5f5; border: 1px solid #ddd; padding: 20px; margin-top: 30px; font-family: monospace;">
+        <h2>Debug Data</h2>
+        <pre>{{ dump(data) }}</pre>
+    </div>
+{% endif %}
+</body>
+
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\cv_template_green.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template_green.html.twig
+-----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ data.firstName }} {{ data.lastName }} - CV</title>
+    <style>
+        :root {
+            --primary: #27ae60;
+            --secondary: #2c3e50;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --text: #495057;
+            --border: #dee2e6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', 'Segoe UI', Roboto, sans-serif;
+            color: var(--text);
+            background-color: var(--light);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cv-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--white);
+        }
+
+        .sidebar {
+            background-color: var(--secondary);
+            color: var(--white);
+            padding: 40px;
+            height: 100%;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .profile-img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.2);
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        .name {
+            font-size: 32px;
+            font-weight: 700;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            color: var(--dark);
+            text-align: center;
+        }
+
+        .position {
+            font-size: 20px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .contact-icon {
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .experience-item, .education-item {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .experience-item:last-child, .education-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .job-title, .degree {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .company, .university {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .period {
+            color: var(--primary);
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .skill-progress {
+            height: 6px;
+            background-color: rgba(39, 174, 96, 0.2);
+            border-radius: 3px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .skill-progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 3px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .skill-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .skill-name {
+            color: var(--dark);
+        }
+
+        .skill-percentage {
+            color: var(--primary);
+        }
+
+        .language-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .language-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 40px;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--secondary);
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .col-4 {
+            width: 33.333333%;
+        }
+
+        .col-8 {
+            width: 66.666667%;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+            }
+
+            .cv-container {
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="cv-container">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-4 sidebar">
+            <div style="text-align: center; margin-bottom: 40px;">
+                {% if photoData is defined and photoData %}
+                    <img src="{{ photoData|raw }}" alt="Profile Image" class="profile-img">
+                {% endif %}
+                <h1 class="name" style="color: white;">{{ data.firstName }} {{ data.lastName }}</h1>
+                <div class="position" style="color: rgba(255, 255, 255, 0.8);">{{ data.position }}</div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Contact</h3>
+                {% if data.email %}
+                    <div class="contact-item">
+                        <div class="contact-icon">@</div>
+                        <div>{{ data.email }}</div>
+                    </div>
+                {% endif %}
+
+                {% if data.phone %}
+                    <div class="contact-item">
+                        <div class="contact-icon">☏</div>
+                        <div>{{ data.phone }}</div>
+                    </div>
+                {% endif %}
+
+                {% if data.address or data.city or data.country %}
+                    <div class="contact-item">
+                        <div class="contact-icon">⌂</div>
+                        <div>{{ [data.address, data.city, data.country]|filter(v => v is not empty)|join(', ') }}</div>
+                    </div>
+                {% endif %}
+
+                {% if data.github %}
+                    <div class="contact-item">
+                        <div class="contact-icon">GH</div>
+                        <div>{{ data.github }}</div>
+                    </div>
+                {% endif %}
+
+                {% if data.linkedin %}
+                    <div class="contact-item">
+                        <div class="contact-icon">in</div>
+                        <div>{{ data.linkedin }}</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if data.skills is defined and data.skills|length > 0 %}
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Skills</h3>
+                    {% for skill in data.skills %}
+                        <div class="skill-item">
+                            <div class="skill-title">
+                                <span class="skill-name">{{ skill }}</span>
+                            </div>
+                            <div class="skill-progress">
+                                <div class="skill-progress-bar" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if data.languages is defined and data.languages|length > 0 %}
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Languages</h3>
+                    {% for language in data.languages %}
+                        <div class="language-item">
+                            <div class="language-dot"></div>
+                            <div>{{ language }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-8 main-content">
+            {% if data.additionalInfo %}
+                <section style="margin-bottom: 30px;">
+                    <h2 class="section-title">About Me</h2>
+                    <p>{{ data.additionalInfo }}</p>
+                </section>
+            {% endif %}
+
+            {% if data.experience is defined and data.experience|length > 0 %}
+                <section style="margin-bottom: 30px;">
+                    <h2 class="section-title">Work Experience</h2>
+
+                    {% for experience in data.experience %}
+                        <div class="experience-item">
+                            <div class="job-title">{{ experience.position }}</div>
+                            <div class="company">{{ experience.company }}{% if experience.location %}, {{ experience.location }}{% endif %}</div>
+                            <div class="period">{{ experience.startDate }}{% if experience.startDate and experience.endDate %} - {% endif %}{{ experience.endDate }}</div>
+                            {% if experience.description %}
+                                <p>{{ experience.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+
+            {% if data.education is defined and data.education|length > 0 %}
+                <section style="margin-bottom: 30px;">
+                    <h2 class="section-title">Education</h2>
+
+                    {% for education in data.education %}
+                        <div class="education-item">
+                            <div class="degree">{{ education.degree }}</div>
+                            <div class="university">{{ education.institution }}{% if education.location %}, {{ education.location }}{% endif %}</div>
+                            <div class="period">{{ education.startDate }}{% if education.startDate and education.endDate %} - {% endif %}{{ education.endDate }}</div>
+                            {% if education.description %}
+                                <p>{{ education.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+
+            <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777;">
+                CV generated on {{ generatedDate|date('F d, Y') }} using ESPRIT CV Generator
+            </div>
+        </div>
+    </div>
+</div>
+{% if app is defined and app.debug is defined and app.debug %}
+    <div style="background: #f5f5f5; border: 1px solid #ddd; padding: 20px; margin-top: 30px; font-family: monospace;">
+        <h2>Debug Data</h2>
+        <pre>{{ dump(data) }}</pre>
+    </div>
+{% endif %}
+</body>
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\index.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\index.html.twig
+-----
+{% extends 'base.html.twig' %}
+
+{% block title %}CV Generator{% endblock %}
+
+{% block body %}
+    <div class="container-fluid p-0">
+        {# Header with logos #}
+        <div class="header-logos">
+            <div class="row m-0 p-3">
+                <div class="col-4">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid" style="max-height: 109px;">
+                </div>
+                <div class="col-4 text-center">
+                    <img src="{{ asset('images/tunisie-removebg-preview.png') }}" alt="Tunisia" class="img-fluid" style="max-height: 100px;">
+                </div>
+                <div class="col-4 text-end">
+                    <img src="{{ asset('images/esprim.png') }}" alt="ESPRIM" class="img-fluid" style="max-height: 46px;">
+                </div>
+            </div>
+        </div>
+
+        {# Content will go here #}
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .header-logos {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+{% endblock %}
+==================================================
+
+Fichier: Templates\base.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\base.html.twig
+-----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ESPRIT CV Generator{% endblock %}</title>
+
+    {% block stylesheets %}
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        {{ include('partials/_styles.html.twig') }}
+    {% endblock %}
+</head>
+<body>
+{% block header %}
+    {{ include('partials/_header.html.twig') }}
+{% endblock %}
+
+{% block body %}{% endblock %}
+
+{% block footer %}
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <small class="text-muted">
+                ESPRIT CV Generator | Made with <i class="fas fa-heart text-danger"></i> by ESPRIT
+            </small>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+</body>
+</html>
+==================================================
+
+Fichier: public\js\cv-form-fix.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\cv-form-fix.js
+-----
+/**
+ * CV Form Fix Script
+ * Author: Mohamed-abidi-95ok
+ * Last updated: 2025-04-20 21:59:06
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('CV Form Fix script loaded');
+
+    // Make sure templates are selectable and visually indicated
+    initTemplateSelection();
+
+    // Fix form submission to include template data
+    fixFormSubmission();
+
+    // Add test buttons to help diagnose issues
+    addTestButtons();
+
+    // Add debug buttons to help troubleshoot
+    addDebugButton();
+
+    console.log('CV Form Fix initialization completed');
+});
+
+/**
+ * Initialize template selection with visual feedback
+ */
+function initTemplateSelection() {
+    const templateRadios = document.querySelectorAll('input[name="template"]');
+
+    // Make sure green template is selected by default
+    let hasSelected = false;
+    templateRadios.forEach(radio => {
+        if (radio.checked) hasSelected = true;
+
+        radio.addEventListener('change', function() {
+            console.log('Template changed to:', this.value);
+
+            // Add visual indication of selection
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected-template');
+                card.classList.remove('selected-template-green');
+                card.classList.remove('selected-template-blue');
+            });
+
+            const card = this.closest('.template-card');
+            if (card) {
+                card.classList.add('selected-template');
+                card.classList.add('selected-template-' + this.value);
+
+                // Add a border highlight for extra visual feedback
+                document.querySelectorAll('.card.h-100').forEach(c => {
+                    c.style.borderWidth = '1px';
+                    c.style.boxShadow = 'none';
+                });
+
+                if (this.value === 'blue') {
+                    card.querySelector('.card').style.borderWidth = '3px';
+                    card.querySelector('.card').style.borderColor = '#3498db';
+                    card.querySelector('.card').style.boxShadow = '0 0 15px rgba(52, 152, 219, 0.3)';
+                } else if (this.value === 'green') {
+                    card.querySelector('.card').style.borderWidth = '3px';
+                    card.querySelector('.card').style.borderColor = '#27ae60';
+                    card.querySelector('.card').style.boxShadow = '0 0 15px rgba(39, 174, 96, 0.3)';
+                }
+            }
+        });
+    });
+
+    // Ensure at least one template is selected
+    if (!hasSelected) {
+        const defaultTemplate = document.querySelector('input[name="template"]#template-green');
+        if (defaultTemplate) {
+            defaultTemplate.checked = true;
+            console.log('Set default template (green) as selected');
+            // Trigger change event to apply visual styling
+            const event = new Event('change');
+            defaultTemplate.dispatchEvent(event);
+        }
+    } else {
+        // Trigger event on already selected one for styling
+        const selectedTemplate = document.querySelector('input[name="template"]:checked');
+        if (selectedTemplate) {
+            const event = new Event('change');
+            selectedTemplate.dispatchEvent(event);
+        }
+    }
+}
+
+/**
+ * Fix form submission to ensure all necessary data is included
+ */
+function fixFormSubmission() {
+    const cvForm = document.getElementById('cvForm');
+    if (!cvForm) {
+        console.error('CV Form not found!');
+        return;
+    }
+
+    console.log('Found CV form, adding submission handler');
+
+    // Update form action and method to ensure proper submission
+    cvForm.action = '/cv-generator/generate';
+    cvForm.method = 'post';
+
+    // Add new submit handler
+    cvForm.addEventListener('submit', function(e) {
+        console.log('Form is being submitted');
+
+        // For debugging - uncomment to see submission details
+        // e.preventDefault();
+        // console.log('Form submission prevented for debugging');
+        // return false;
+
+        // Ensure photo data is included
+        const photoDataField = document.getElementById('photoDataField');
+        if (photoDataField) {
+            const photoData = localStorage.getItem('cvProfilePhoto');
+            if (photoData) {
+                photoDataField.value = photoData;
+                console.log('Photo data added to form submission');
+            }
+        }
+
+        // Ensure template selection is included
+        let templateValue = 'green'; // Default value
+        const selectedTemplate = document.querySelector('input[name="template"]:checked');
+
+        if (selectedTemplate) {
+            templateValue = selectedTemplate.value;
+            console.log('Template selected:', templateValue);
+        } else {
+            console.log('No template explicitly selected, using default:', templateValue);
+
+            // Create hidden input for template if none is selected
+            const existingTemplateField = cvForm.querySelector('input[name="template"][type="hidden"]');
+            if (!existingTemplateField) {
+                const hiddenTemplate = document.createElement('input');
+                hiddenTemplate.type = 'hidden';
+                hiddenTemplate.name = 'template';
+                hiddenTemplate.value = templateValue;
+                cvForm.appendChild(hiddenTemplate);
+            }
+        }
+
+        // Log submission details for debugging
+        console.log('Form submission details:');
+        console.log('- Action:', cvForm.action);
+        console.log('- Method:', cvForm.method);
+        console.log('- Template:', templateValue);
+        console.log('- Has photo data:', photoDataField && photoDataField.value ? 'Yes' : 'No');
+    });
+}
+
+/**
+ * Add test buttons to help diagnose PDF generation issues
+ */
+function addTestButtons() {
+    // Add test area to the review section
+    const reviewSection = document.getElementById('section-7');
+    if (reviewSection) {
+        const testArea = document.createElement('div');
+        testArea.className = 'mt-4 p-3 border rounded bg-light';
+        testArea.innerHTML = `
+            <h5>Template Selection Test</h5>
+            <p>If you're having trouble with PDF generation, use these test options:</p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn btn-success template-test-btn" data-template="green">
+                    <i class="fas fa-file-pdf me-2"></i> Test Green Template
+                </button>
+                <button type="button" class="btn btn-primary template-test-btn" data-template="blue">
+                    <i class="fas fa-file-pdf me-2"></i> Test Blue Template
+                </button>
+                <a href="/cv-generator/test-pdf" class="btn btn-warning" target="_blank">
+                    <i class="fas fa-vial me-2"></i> Basic PDF Test
+                </a>
+            </div>
+        `;
+
+        reviewSection.appendChild(testArea);
+
+        // Add event listeners to test buttons
+        document.querySelectorAll('.template-test-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const template = this.dataset.template;
+
+                // First select the corresponding radio
+                const radioBtn = document.getElementById('template-' + template);
+                if (radioBtn) {
+                    radioBtn.checked = true;
+                    console.log(`Template set to ${template} via test button`);
+
+                    // Trigger change event to update visual styling
+                    const event = new Event('change');
+                    radioBtn.dispatchEvent(event);
+                }
+
+                // Create temporary hidden form
+                const tempForm = document.createElement('form');
+                tempForm.method = 'post';
+                tempForm.action = '/cv-generator/generate';
+                tempForm.style.display = 'none';
+
+                // Add template field
+                const templateField = document.createElement('input');
+                templateField.type = 'hidden';
+                templateField.name = 'template';
+                templateField.value = template;
+                tempForm.appendChild(templateField);
+
+                // Add required fields to avoid errors
+                const requiredFields = [
+                    { name: 'firstName', value: 'Test' },
+                    { name: 'lastName', value: 'User' },
+                    { name: 'email', value: 'test@example.com' },
+                    { name: 'position', value: 'Test Position' }
+                ];
+
+                requiredFields.forEach(field => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field.name;
+                    input.value = field.value;
+                    tempForm.appendChild(input);
+                });
+
+                // Add photo data
+                const photoData = localStorage.getItem('cvProfilePhoto');
+                if (photoData) {
+                    const photoField = document.createElement('input');
+                    photoField.type = 'hidden';
+                    photoField.name = 'photoData';
+                    photoField.value = photoData;
+                    tempForm.appendChild(photoField);
+                }
+
+                // Add to document and submit
+                document.body.appendChild(tempForm);
+                console.log(`Submitting form with template: ${template}`);
+                tempForm.submit();
+
+                // Remove after submission
+                setTimeout(() => {
+                    document.body.removeChild(tempForm);
+                }, 1000);
+            });
+        });
+    }
+}
+
+/**
+ * Add debugging buttons to help troubleshoot issues
+ */
+function addDebugButton() {
+    // Add debug button only in development
+    const debugArea = document.createElement('div');
+    debugArea.className = 'mt-4 p-3 border rounded bg-danger text-white';
+    debugArea.innerHTML = `
+        <h5>Debug Tools</h5>
+        <p>These tools are only for development/testing:</p>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            <button type="button" class="btn btn-light btn-sm debug-form-btn">
+                <i class="fas fa-bug me-1"></i> Debug Form Data
+            </button>
+            <a href="/cv-generator/generate?debug=1" target="_blank" class="btn btn-light btn-sm">
+                <i class="fas fa-code me-1"></i> View Template HTML
+            </a>
+            <button type="button" class="btn btn-light btn-sm direct-submit-btn">
+                <i class="fas fa-paper-plane me-1"></i> Direct Submit Test
+            </button>
+        </div>
+    `;
+
+    // Add the debug area to the review section
+    const reviewSection = document.getElementById('section-7');
+    if (reviewSection) {
+        reviewSection.appendChild(debugArea);
+
+        // Add event listener for form debug
+        document.querySelector('.debug-form-btn').addEventListener('click', function() {
+            // Get form data
+            const form = document.getElementById('cvForm');
+            if (!form) return;
+
+            // Create a clone for debugging
+            const debugForm = document.createElement('form');
+            debugForm.action = '/cv-generator/debug-form';
+            debugForm.method = 'post';
+            debugForm.target = '_blank';
+
+            // Copy all form inputs
+            const formData = new FormData(form);
+            for (const [name, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                debugForm.appendChild(input);
+            }
+
+            // Add photo data
+            const photoData = localStorage.getItem('cvProfilePhoto');
+            if (photoData) {
+                const photoField = document.createElement('input');
+                photoField.type = 'hidden';
+                photoField.name = 'photoData';
+                photoField.value = photoData;
+                debugForm.appendChild(photoField);
+            }
+
+            // Submit the debug form
+            document.body.appendChild(debugForm);
+            debugForm.submit();
+            document.body.removeChild(debugForm);
+        });
+
+        // Add direct submit test button handler
+        document.querySelector('.direct-submit-btn').addEventListener('click', function() {
+            // Create simple form with minimal data
+            const simpleForm = document.createElement('form');
+            simpleForm.method = 'post';
+            simpleForm.action = '/cv-generator/generate';
+            simpleForm.target = '_blank';
+
+            // Add minimal required fields
+            const fields = [
+                { name: 'firstName', value: 'Direct' },
+                { name: 'lastName', value: 'Test' },
+                { name: 'email', value: 'direct@test.com' },
+                { name: 'position', value: 'Test Position' },
+                { name: 'template', value: 'green' }
+            ];
+
+            fields.forEach(field => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = field.name;
+                input.value = field.value;
+                simpleForm.appendChild(input);
+            });
+
+            // Submit the test form
+            document.body.appendChild(simpleForm);
+            console.log('Submitting direct test form...');
+            simpleForm.submit();
+
+            // Remove after submission
+            setTimeout(() => {
+                document.body.removeChild(simpleForm);
+            }, 1000);
+        });
+    }
+}
+==================================================
+
+Fichier: public\js\cv-generator.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\cv-generator.js
+-----
+/**
+ * CV Generator - Core Functionality
+ * Handles form navigation, dynamic entries, preview generation, and form submission
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form navigation
+    initNavigation();
+
+    // Initialize dynamic form elements
+    initDynamicForms();
+
+    // Setup photo upload preview
+    setupPhotoUpload();
+
+    // Initialize preview panel
+    initPreview();
+
+    // Setup autofill for testing
+    setupAutofill();
+
+    console.log('CV Generator initialized successfully');
+});
+
+/**
+ * Initialize form navigation between steps
+ */
+function initNavigation() {
+    // Handle next section buttons
+    document.querySelectorAll('.next-section').forEach(button => {
+        button.addEventListener('click', function() {
+            const nextSection = this.dataset.next;
+            if (nextSection && validateCurrentSection()) {
+                navigateToSection(nextSection);
+                updateProgressBar(nextSection);
+            }
+        });
+    });
+
+    // Handle previous section buttons
+    document.querySelectorAll('.prev-section').forEach(button => {
+        button.addEventListener('click', function() {
+            const prevSection = this.dataset.prev;
+            if (prevSection) {
+                navigateToSection(prevSection);
+                updateProgressBar(prevSection);
+            }
+        });
+    });
+
+    // Handle review button click
+    const reviewButton = document.querySelector('.btn-submit-review');
+    if (reviewButton) {
+        reviewButton.addEventListener('click', function() {
+            if (validateCurrentSection()) {
+                generateReviewContent();
+                navigateToSection(7);
+                updateProgressBar(7);
+            }
+        });
+    }
+}
+
+/**
+ * Navigate to specific form section
+ */
+function navigateToSection(sectionNumber) {
+    // Hide all sections
+    document.querySelectorAll('.form-section-page').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Show target section
+    const targetSection = document.getElementById('section-' + sectionNumber);
+    if (targetSection) {
+        targetSection.classList.add('active');
+
+        // Update active step in progress
+        updateStepIndicators(parseInt(sectionNumber));
+
+        // Scroll to top of form
+        window.scrollTo({
+            top: document.querySelector('.card').offsetTop - 20,
+            behavior: 'smooth'
+        });
+    }
+}
+
+/**
+ * Update progress bar based on current step
+ */
+function updateProgressBar(currentStep) {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const totalSteps = 7; // Total number of steps (including review)
+        const percentage = (currentStep / totalSteps) * 100;
+        progressBar.style.width = percentage + '%';
+    }
+}
+
+/**
+ * Update step indicators based on current step
+ */
+function updateStepIndicators(currentStep) {
+    document.querySelectorAll('.step-item').forEach((step, index) => {
+        const stepNumber = step.querySelector('.step-number');
+
+        // Reset classes
+        step.classList.remove('active', 'completed');
+
+        // Set active or completed based on current step
+        if (index + 1 === currentStep) {
+            step.classList.add('active');
+        } else if (index + 1 < currentStep) {
+            step.classList.add('completed');
+        }
+    });
+}
+
+/**
+ * Initialize dynamic form elements
+ */
+function initDynamicForms() {
+    // Education section
+    const addEducationBtn = document.getElementById('addEducationBtn');
+    if (addEducationBtn) {
+        addEducationBtn.addEventListener('click', function() {
+            addEducationEntry();
+        });
+    }
+
+    // Experience section
+    const addExperienceBtn = document.getElementById('addExperienceBtn');
+    if (addExperienceBtn) {
+        addExperienceBtn.addEventListener('click', function() {
+            addExperienceEntry();
+        });
+    }
+
+    // Skills section
+    const addSkillBtn = document.getElementById('addSkillBtn');
+    if (addSkillBtn) {
+        addSkillBtn.addEventListener('click', function() {
+            addSkill();
+        });
+    }
+
+    // Setup skill input for enter key press
+    const skillInput = document.getElementById('skillInput');
+    if (skillInput) {
+        skillInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill();
+            }
+        });
+    }
+
+    // Languages section
+    const addLanguageBtn = document.getElementById('addLanguageBtn');
+    if (addLanguageBtn) {
+        addLanguageBtn.addEventListener('click', function() {
+            addLanguage();
+        });
+    }
+
+    // Setup language input for enter key press
+    const languageInput = document.getElementById('languageInput');
+    if (languageInput) {
+        languageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addLanguage();
+            }
+        });
+    }
+
+    // Set up existing remove buttons
+    setupRemoveButtons();
+}
+
+/**
+ * Add new education entry
+ */
+function addEducationEntry() {
+    const container = document.getElementById('educationContainer');
+    if (!container) return;
+
+    const entryCount = container.querySelectorAll('.education-entry').length;
+    const entryId = new Date().getTime(); // Unique ID for the new entry
+
+    const entryHTML = `
+        <div class="entry-container education-entry" data-id="${entryId}">
+            <button type="button" class="btn-remove remove-education"><i class="fas fa-times"></i></button>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="edu-degree-${entryId}" class="form-label">Degree/Certification</label>
+                    <input type="text" class="form-control" id="edu-degree-${entryId}" name="education[degree][]" placeholder="e.g. Bachelor of Science in Computer Science" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="edu-institution-${entryId}" class="form-label">Institution</label>
+                    <input type="text" class="form-control" id="edu-institution-${entryId}" name="education[institution][]" placeholder="e.g. University Name" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="edu-location-${entryId}" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="edu-location-${entryId}" name="education[location][]" placeholder="e.g. City, Country">
+                </div>
+                <div class="col-md-4">
+                    <label for="edu-startdate-${entryId}" class="form-label">Start Date</label>
+                    <input type="text" class="form-control" id="edu-startdate-${entryId}" name="education[startDate][]" placeholder="e.g. 09/2018">
+                </div>
+                <div class="col-md-4">
+                    <label for="edu-enddate-${entryId}" class="form-label">End Date</label>
+                    <input type="text" class="form-control" id="edu-enddate-${entryId}" name="education[endDate][]" placeholder="e.g. 06/2022 or Present">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label for="edu-description-${entryId}" class="form-label">Description</label>
+                    <textarea class="form-control" id="edu-description-${entryId}" name="education[description][]" rows="3" placeholder="Describe your studies, achievements, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', entryHTML);
+    setupRemoveButtons();
+}
+
+/**
+ * Add new experience entry
+ */
+function addExperienceEntry() {
+    const container = document.getElementById('experienceContainer');
+    if (!container) return;
+
+    const entryCount = container.querySelectorAll('.experience-entry').length;
+    const entryId = new Date().getTime(); // Unique ID for the new entry
+
+    const entryHTML = `
+        <div class="entry-container experience-entry" data-id="${entryId}">
+            <button type="button" class="btn-remove remove-experience"><i class="fas fa-times"></i></button>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="exp-position-${entryId}" class="form-label">Position/Title</label>
+                    <input type="text" class="form-control" id="exp-position-${entryId}" name="experience[position][]" placeholder="e.g. Software Engineer" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="exp-company-${entryId}" class="form-label">Company/Organization</label>
+                    <input type="text" class="form-control" id="exp-company-${entryId}" name="experience[company][]" placeholder="e.g. Company Name" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="exp-location-${entryId}" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="exp-location-${entryId}" name="experience[location][]" placeholder="e.g. City, Country">
+                </div>
+                <div class="col-md-4">
+                    <label for="exp-startdate-${entryId}" class="form-label">Start Date</label>
+                    <input type="text" class="form-control" id="exp-startdate-${entryId}" name="experience[startDate][]" placeholder="e.g. 01/2020">
+                </div>
+                <div class="col-md-4">
+                    <label for="exp-enddate-${entryId}" class="form-label">End Date</label>
+                    <input type="text" class="form-control" id="exp-enddate-${entryId}" name="experience[endDate][]" placeholder="e.g. 12/2022 or Present">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label for="exp-description-${entryId}" class="form-label">Responsibilities & Achievements</label>
+                    <textarea class="form-control" id="exp-description-${entryId}" name="experience[description][]" rows="3" placeholder="Describe your key responsibilities and achievements"></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', entryHTML);
+    setupRemoveButtons();
+}
+
+/**
+ * Add a new skill badge
+ */
+function addSkill() {
+    const skillInput = document.getElementById('skillInput');
+    if (!skillInput) return;
+
+    const skill = skillInput.value.trim();
+    if (!skill) return;
+
+    const skillsContainer = document.getElementById('skillsContainer');
+    if (!skillsContainer) return;
+
+    // Check for duplicate skills
+    const existingSkills = Array.from(skillsContainer.querySelectorAll('.skill-badge span'))
+        .map(span => span.textContent.toLowerCase());
+
+    if (existingSkills.includes(skill.toLowerCase())) {
+        showNotification('This skill already exists', 'warning');
+        skillInput.value = '';
+        skillInput.focus();
+        return;
+    }
+
+    const skillId = new Date().getTime();
+    const skillHTML = `
+        <div class="skill-badge" data-id="${skillId}">
+            <span>${skill}</span>
+            <button type="button" class="remove-skill" data-id="${skillId}">&times;</button>
+            <input type="hidden" name="skills[]" value="${skill}">
+        </div>
+    `;
+
+    skillsContainer.insertAdjacentHTML('beforeend', skillHTML);
+
+    // Add event listener to the new remove button
+    const removeBtn = skillsContainer.querySelector(`.remove-skill[data-id="${skillId}"]`);
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            this.closest('.skill-badge').remove();
+        });
+    }
+
+    // Clear input and focus back on it
+    skillInput.value = '';
+    skillInput.focus();
+}
+
+/**
+ * Add a new language badge
+ */
+function addLanguage() {
+    const languageInput = document.getElementById('languageInput');
+    if (!languageInput) return;
+
+    const language = languageInput.value.trim();
+    if (!language) return;
+
+    const languagesContainer = document.getElementById('languagesContainer');
+    if (!languagesContainer) return;
+
+    // Check for duplicate languages
+    const existingLanguages = Array.from(languagesContainer.querySelectorAll('.language-badge span'))
+        .map(span => span.textContent.toLowerCase());
+
+    if (existingLanguages.includes(language.toLowerCase())) {
+        showNotification('This language already exists', 'warning');
+        languageInput.value = '';
+        languageInput.focus();
+        return;
+    }
+
+    const languageId = new Date().getTime();
+    const languageHTML = `
+        <div class="language-badge skill-badge" data-id="${languageId}">
+            <span>${language}</span>
+            <button type="button" class="remove-language" data-id="${languageId}">&times;</button>
+            <input type="hidden" name="languages[]" value="${language}">
+        </div>
+    `;
+
+    languagesContainer.insertAdjacentHTML('beforeend', languageHTML);
+
+    // Add event listener to the new remove button
+    const removeBtn = languagesContainer.querySelector(`.remove-language[data-id="${languageId}"]`);
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            this.closest('.language-badge').remove();
+        });
+    }
+
+    // Clear input and focus back on it
+    languageInput.value = '';
+    languageInput.focus();
+}
+
+/**
+ * Set up remove buttons for dynamic entries
+ */
+function setupRemoveButtons() {
+    // Education remove buttons
+    document.querySelectorAll('.remove-education').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.education-entry').remove();
+        });
+    });
+
+    // Experience remove buttons
+    document.querySelectorAll('.remove-experience').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.experience-entry').remove();
+        });
+    });
+
+    // Skill remove buttons
+    document.querySelectorAll('.remove-skill').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.skill-badge').remove();
+        });
+    });
+
+    // Language remove buttons
+    document.querySelectorAll('.remove-language').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.language-badge').remove();
+        });
+    });
+}
+
+/**
+ * Set up photo upload and preview
+ */
+function setupPhotoUpload() {
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoContainer = document.querySelector('.profile-photo-wrapper');
+
+    if (photoInput && photoPreview) {
+        // Check if there's a saved photo in localStorage
+        const savedPhoto = localStorage.getItem('cvProfilePhoto');
+        if (savedPhoto) {
+            photoPreview.src = savedPhoto;
+            photoPreview.style.display = 'block';
+            if (photoContainer) {
+                photoContainer.classList.add('has-photo');
+            }
+        }
+
+        photoInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+
+                // File type validation
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    showNotification('Please select a valid image file (JPEG or PNG)', 'error');
+                    return;
+                }
+
+                // File size validation (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    showNotification('Image file is too large. Maximum size is 2MB', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+
+                    if (photoContainer) {
+                        photoContainer.classList.add('has-photo');
+                    }
+
+                    // Store the image data in localStorage
+                    localStorage.setItem('cvProfilePhoto', e.target.result);
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
+/**
+ * Initialize CV Preview panel
+ */
+function initPreview() {
+    // Preview button
+    const previewBtn = document.querySelector('.btn-preview');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', togglePreview);
+    }
+
+    // Close preview button
+    const closePreviewBtn = document.getElementById('closePreview');
+    if (closePreviewBtn) {
+        closePreviewBtn.addEventListener('click', togglePreview);
+    }
+}
+
+/**
+ * Toggle CV Preview panel
+ */
+function togglePreview() {
+    const previewPanel = document.getElementById('cvPreview');
+    if (!previewPanel) return;
+
+    if (previewPanel.classList.contains('show')) {
+        previewPanel.classList.remove('show');
+    } else {
+        generatePreview();
+        previewPanel.classList.add('show');
+    }
+}
+
+/**
+ * Generate CV preview content
+ */
+function generatePreview() {
+    const previewContent = document.getElementById('previewContent');
+    if (!previewContent) return;
+
+    // Collect form data
+    const formData = collectFormData();
+
+    // Build preview HTML
+    let previewHTML = '';
+
+    // Add profile photo if available
+    const profilePhotoData = localStorage.getItem('cvProfilePhoto');
+    if (profilePhotoData) {
+        previewHTML += `
+            <div class="text-center mb-4">
+                <img src="${profilePhotoData}" alt="Profile Photo" class="preview-profile-photo">
+            </div>
+        `;
+    }
+
+    // Add personal info
+    previewHTML += `
+        <div class="preview-section">
+            <h4 class="fw-bold mb-2">${formData.firstName || ''} ${formData.lastName || ''}</h4>
+            ${formData.position ? `<div class="text-muted mb-2">${formData.position}</div>` : ''}
+            <div class="text-muted">
+                ${formData.email ? `<div><i class="fas fa-envelope"></i> ${formData.email}</div>` : ''}
+                ${formData.phone ? `<div><i class="fas fa-phone"></i> ${formData.phone}</div>` : ''}
+                ${formData.address || formData.city || formData.country ?
+        `<div><i class="fas fa-map-marker-alt"></i> ${[formData.address, formData.city, formData.country].filter(Boolean).join(', ')}</div>` : ''}
+                ${formData.github ? `<div><i class="fab fa-github"></i> ${formData.github}</div>` : ''}
+                ${formData.linkedin ? `<div><i class="fab fa-linkedin"></i> ${formData.linkedin}</div>` : ''}
+            </div>
+        </div>
+    `;
+
+    // Add education section if available
+    if (formData.education && formData.education.length > 0) {
+        previewHTML += `
+            <div class="preview-section">
+                <h5 class="fw-bold mb-3">Education</h5>
+        `;
+
+        formData.education.forEach(edu => {
+            previewHTML += `
+                <div class="mb-3">
+                    <h6 class="mb-1">${edu.degree || 'Degree'}</h6>
+                    <div>${edu.institution || 'Institution'}${edu.location ? ` | ${edu.location}` : ''}</div>
+                    <div class="text-muted">${edu.startDate || ''}${edu.startDate && edu.endDate ? ' - ' : ''}${edu.endDate || ''}</div>
+                    ${edu.description ? `<div class="mt-1">${edu.description}</div>` : ''}
+                </div>
+            `;
+        });
+
+        previewHTML += '</div>';
+    }
+
+    // Add experience section if available
+    if (formData.experience && formData.experience.length > 0) {
+        previewHTML += `
+            <div class="preview-section">
+                <h5 class="fw-bold mb-3">Professional Experience</h5>
+        `;
+
+        formData.experience.forEach(exp => {
+            previewHTML += `
+                <div class="mb-3">
+                    <h6 class="mb-1">${exp.position || 'Position'}</h6>
+                    <div>${exp.company || 'Company'}${exp.location ? ` | ${exp.location}` : ''}</div>
+                    <div class="text-muted">${exp.startDate || ''}${exp.startDate && exp.endDate ? ' - ' : ''}${exp.endDate || ''}</div>
+                    ${exp.description ? `<div class="mt-1">${exp.description}</div>` : ''}
+                </div>
+            `;
+        });
+
+        previewHTML += '</div>';
+    }
+
+    // Add skills section if available
+    if (formData.skills && formData.skills.length > 0) {
+        previewHTML += `
+            <div class="preview-section">
+                <h5 class="fw-bold mb-2">Skills</h5>
+                <div class="d-flex flex-wrap gap-2">
+        `;
+
+        formData.skills.forEach(skill => {
+            previewHTML += `<span class="badge bg-light text-dark p-2">${skill}</span>`;
+        });
+
+        previewHTML += `
+                </div>
+            </div>
+        `;
+    }
+
+    // Add languages section if available
+    if (formData.languages && formData.languages.length > 0) {
+        previewHTML += `
+            <div class="preview-section">
+                <h5 class="fw-bold mb-2">Languages</h5>
+                <div class="d-flex flex-wrap gap-2">
+        `;
+
+        formData.languages.forEach(language => {
+            previewHTML += `<span class="badge bg-light text-dark p-2">${language}</span>`;
+        });
+
+        previewHTML += `
+                </div>
+            </div>
+        `;
+    }
+
+    // Add additional information if available
+    if (formData.additionalInfo) {
+        previewHTML += `
+            <div class="preview-section">
+                <h5 class="fw-bold mb-2">Additional Information</h5>
+                <div>${formData.additionalInfo}</div>
+            </div>
+        `;
+    }
+
+    // Update the preview content
+    previewContent.innerHTML = previewHTML;
+}
+
+/**
+ * Generate CV review content before submission
+ */
+function generateReviewContent() {
+    const reviewContent = document.getElementById('reviewContent');
+    if (!reviewContent) return;
+
+    // Collect form data
+    const formData = collectFormData();
+
+    // Build review HTML
+    let reviewHTML = '<div class="p-3">';
+
+    // Add profile photo if available
+    const profilePhotoData = localStorage.getItem('cvProfilePhoto');
+    if (profilePhotoData) {
+        reviewHTML += `
+            <div class="text-center mb-4">
+                <div class="mx-auto" style="width: 100px; height: 100px; overflow: hidden; border-radius: 50%;">
+                    <img src="${profilePhotoData}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+        `;
+    }
+
+    // Personal Information section
+    reviewHTML += `
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>First Name:</strong> ${formData.firstName || 'Not provided'}</p>
+                    <p><strong>Last Name:</strong> ${formData.lastName || 'Not provided'}</p>
+                    <p><strong>Position:</strong> ${formData.position || 'Not provided'}</p>
+                    <p><strong>Email:</strong> ${formData.email || 'Not provided'}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Phone:</strong> ${formData.phone || 'Not provided'}</p>
+                    <p><strong>Address:</strong> ${formData.address || 'Not provided'}</p>
+                    <p><strong>City:</strong> ${formData.city || 'Not provided'}</p>
+                    <p><strong>Country:</strong> ${formData.country || 'Not provided'}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>GitHub:</strong> ${formData.github || 'Not provided'}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>LinkedIn:</strong> ${formData.linkedin || 'Not provided'}</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Education section
+    reviewHTML += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Education</h5>';
+
+    if (formData.education && formData.education.length > 0) {
+        formData.education.forEach((edu, index) => {
+            reviewHTML += `
+                <div class="p-3 mb-3 bg-light rounded">
+                    <p><strong>Degree:</strong> ${edu.degree || 'Not provided'}</p>
+                    <p><strong>Institution:</strong> ${edu.institution || 'Not provided'}</p>
+                    <p><strong>Location:</strong> ${edu.location || 'Not provided'}</p>
+                    <p><strong>Period:</strong> ${edu.startDate || ''}${edu.startDate && edu.endDate ? ' to ' : ''}${edu.endDate || ''}</p>
+                    <p><strong>Description:</strong> ${edu.description || 'Not provided'}</p>
+                </div>
+            `;
+        });
+    } else {
+        reviewHTML += '<p class="fst-italic">No education entries added</p>';
+    }
+
+    reviewHTML += '</div>';
+
+    // Experience section
+    reviewHTML += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Work Experience</h5>';
+
+    if (formData.experience && formData.experience.length > 0) {
+        formData.experience.forEach((exp, index) => {
+            reviewHTML += `
+                <div class="p-3 mb-3 bg-light rounded">
+                    <p><strong>Position:</strong> ${exp.position || 'Not provided'}</p>
+                    <p><strong>Company:</strong> ${exp.company || 'Not provided'}</p>
+                    <p><strong>Location:</strong> ${exp.location || 'Not provided'}</p>
+                    <p><strong>Period:</strong> ${exp.startDate || ''}${exp.startDate && exp.endDate ? ' to ' : ''}${exp.endDate || ''}</p>
+                    <p><strong>Description:</strong> ${exp.description || 'Not provided'}</p>
+                </div>
+            `;
+        });
+    } else {
+        reviewHTML += '<p class="fst-italic">No work experience entries added</p>';
+    }
+
+    reviewHTML += '</div>';
+
+    // Skills section
+    reviewHTML += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Skills</h5>';
+
+    if (formData.skills && formData.skills.length > 0) {
+        reviewHTML += '<div class="d-flex flex-wrap gap-2">';
+
+        formData.skills.forEach(skill => {
+            reviewHTML += `<span class="badge bg-light text-dark p-2">${skill}</span>`;
+        });
+
+        reviewHTML += '</div>';
+    } else {
+        reviewHTML += '<p class="fst-italic">No skills added</p>';
+    }
+
+    reviewHTML += '</div>';
+
+    // Languages section
+    reviewHTML += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Languages</h5>';
+
+    if (formData.languages && formData.languages.length > 0) {
+        reviewHTML += '<div class="d-flex flex-wrap gap-2">';
+
+        formData.languages.forEach(language => {
+            reviewHTML += `<span class="badge bg-light text-dark p-2">${language}</span>`;
+        });
+
+        reviewHTML += '</div>';
+    } else {
+        reviewHTML += '<p class="fst-italic">No languages added</p>';
+    }
+
+    reviewHTML += '</div>';
+
+    // Additional Information section
+    reviewHTML += `
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">Additional Information</h5>
+            <p>${formData.additionalInfo || 'No additional information provided'}</p>
+        </div>
+    `;
+
+    reviewHTML += '</div>';
+
+    // Update the review content
+    reviewContent.innerHTML = reviewHTML;
+}
+
+/**
+ * Collect all form data
+ */
+function collectFormData() {
+    return {
+        firstName: document.getElementById('firstName')?.value || '',
+        lastName: document.getElementById('lastName')?.value || '',
+        position: document.getElementById('position')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        phone: document.getElementById('phone')?.value || '',
+        address: document.getElementById('address')?.value || '',
+        city: document.getElementById('city')?.value || '',
+        country: document.getElementById('country')?.value || '',
+        github: document.getElementById('github')?.value || '',
+        linkedin: document.getElementById('linkedin')?.value || '',
+        education: collectEducationData(),
+        experience: collectExperienceData(),
+        skills: collectSkillsData(),
+        languages: collectLanguagesData(),
+        additionalInfo: document.getElementById('additionalInfo')?.value || ''
+    };
+}
+
+/**
+ * Collect education entries data
+ */
+function collectEducationData() {
+    const educationEntries = document.querySelectorAll('.education-entry');
+    const educationData = [];
+
+    educationEntries.forEach(entry => {
+        educationData.push({
+            degree: entry.querySelector('[name="education[degree][]"]')?.value || '',
+            institution: entry.querySelector('[name="education[institution][]"]')?.value || '',
+            location: entry.querySelector('[name="education[location][]"]')?.value || '',
+            startDate: entry.querySelector('[name="education[startDate][]"]')?.value || '',
+            endDate: entry.querySelector('[name="education[endDate][]"]')?.value || '',
+            description: entry.querySelector('[name="education[description][]"]')?.value || ''
+        });
+    });
+
+    return educationData;
+}
+
+/**
+ * Collect experience entries data
+ */
+function collectExperienceData() {
+    const experienceEntries = document.querySelectorAll('.experience-entry');
+    const experienceData = [];
+
+    experienceEntries.forEach(entry => {
+        experienceData.push({
+            position: entry.querySelector('[name="experience[position][]"]')?.value || '',
+            company: entry.querySelector('[name="experience[company][]"]')?.value || '',
+            location: entry.querySelector('[name="experience[location][]"]')?.value || '',
+            startDate: entry.querySelector('[name="experience[startDate][]"]')?.value || '',
+            endDate: entry.querySelector('[name="experience[endDate][]"]')?.value || '',
+            description: entry.querySelector('[name="experience[description][]"]')?.value || ''
+        });
+    });
+
+    return experienceData;
+}
+
+/**
+ * Collect skills data
+ */
+function collectSkillsData() {
+    const skillBadges = document.querySelectorAll('.skill-badge:not(.language-badge)');
+    const skillsData = [];
+
+    skillBadges.forEach(badge => {
+        const skillText = badge.querySelector('span')?.textContent;
+        if (skillText) {
+            skillsData.push(skillText);
+        }
+    });
+
+    return skillsData;
+}
+
+/**
+ * Collect languages data
+ */
+function collectLanguagesData() {
+    const languageBadges = document.querySelectorAll('.language-badge');
+    const languagesData = [];
+
+    languageBadges.forEach(badge => {
+        const languageText = badge.querySelector('span')?.textContent;
+        if (languageText) {
+            languagesData.push(languageText);
+        }
+    });
+
+    return languagesData;
+}
+
+/**
+ * Setup autofill button functionality
+ */
+function setupAutofill() {
+    const autofillBtn = document.getElementById('autofillBtn');
+    if (autofillBtn) {
+        autofillBtn.addEventListener('click', function() {
+            const sampleDataElement = document.getElementById('sampleData');
+            if (sampleDataElement) {
+                try {
+                    const sampleData = JSON.parse(sampleDataElement.dataset.sample);
+                    autofillFormWithData(sampleData);
+                    showNotification('Form has been filled with sample data!', 'success');
+                } catch (error) {
+                    console.error('Error autofilling form:', error);
+                    showNotification('Error loading sample data', 'error');
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Autofill form with sample data
+ */
+function autofillFormWithData(data) {
+    // Fill personal information
+    document.getElementById('firstName')?.setAttribute('value', data.firstName || '');
+    document.getElementById('lastName')?.setAttribute('value', data.lastName || '');
+    document.getElementById('position')?.setAttribute('value', data.position || '');
+    document.getElementById('email')?.setAttribute('value', data.email || '');
+    document.getElementById('phone')?.setAttribute('value', data.phone || '');
+    document.getElementById('address')?.setAttribute('value', data.address || '');
+    document.getElementById('city')?.setAttribute('value', data.city || '');
+    document.getElementById('country')?.setAttribute('value', data.country || '');
+    document.getElementById('github')?.setAttribute('value', data.github || '');
+    document.getElementById('linkedin')?.setAttribute('value', data.linkedin || '');
+
+    // Fill additional info
+    if (document.getElementById('additionalInfo')) {
+        document.getElementById('additionalInfo').innerHTML = data.additionalInfo || '';
+    }
+
+    // Fill education entries
+    if (data.education && Array.isArray(data.education)) {
+        // Clear existing entries
+        document.querySelectorAll('.education-entry').forEach(entry => entry.remove());
+
+        // Add new entries from sample data
+        data.education.forEach(eduData => {
+            addEducationEntry();
+            const entries = document.querySelectorAll('.education-entry');
+            const lastEntry = entries[entries.length - 1];
+
+            lastEntry.querySelector('[name="education[degree][]"]').value = eduData.degree || '';
+            lastEntry.querySelector('[name="education[institution][]"]').value = eduData.institution || '';
+            lastEntry.querySelector('[name="education[location][]"]').value = eduData.location || '';
+            lastEntry.querySelector('[name="education[startDate][]"]').value = eduData.startDate || '';
+            lastEntry.querySelector('[name="education[endDate][]"]').value = eduData.endDate || '';
+            lastEntry.querySelector('[name="education[description][]"]').value = eduData.description || '';
+        });
+    }
+
+    // Fill experience entries
+    if (data.experience && Array.isArray(data.experience)) {
+        // Clear existing entries
+        document.querySelectorAll('.experience-entry').forEach(entry => entry.remove());
+
+        // Add new entries from sample data
+        data.experience.forEach(expData => {
+            addExperienceEntry();
+            const entries = document.querySelectorAll('.experience-entry');
+            const lastEntry = entries[entries.length - 1];
+
+            lastEntry.querySelector('[name="experience[position][]"]').value = expData.position || '';
+            lastEntry.querySelector('[name="experience[company][]"]').value = expData.company || '';
+            lastEntry.querySelector('[name="experience[location][]"]').value = expData.location || '';
+            lastEntry.querySelector('[name="experience[startDate][]"]').value = expData.startDate || '';
+            lastEntry.querySelector('[name="experience[endDate][]"]').value = expData.endDate || '';
+            lastEntry.querySelector('[name="experience[description][]"]').value = expData.description || '';
+        });
+    }
+
+    // Fill skills
+    if (data.skills && Array.isArray(data.skills)) {
+        // Clear existing skills
+        document.querySelectorAll('.skill-badge:not(.language-badge)').forEach(badge => badge.remove());
+
+        // Add skills from sample data
+        data.skills.forEach(skill => {
+            if (skill) {
+                const skillInput = document.getElementById('skillInput');
+                if (skillInput) {
+                    skillInput.value = skill;
+                    addSkill();
+                }
+            }
+        });
+    }
+
+    // Fill languages
+    if (data.languages && Array.isArray(data.languages)) {
+        // Clear existing languages
+        document.querySelectorAll('.language-badge').forEach(badge => badge.remove());
+
+        // Add languages from sample data
+        data.languages.forEach(language => {
+            if (language) {
+                const languageInput = document.getElementById('languageInput');
+                if (languageInput) {
+                    languageInput.value = language;
+                    addLanguage();
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Validate current form section
+ */
+function validateCurrentSection() {
+    const activeSection = document.querySelector('.form-section-page.active');
+    if (!activeSection) return true;
+
+    // Find all required inputs in active section
+    const requiredInputs = activeSection.querySelectorAll('input[required], select[required], textarea[required]');
+
+    let valid = true;
+
+    // Check each required field
+    requiredInputs.forEach(input => {
+        if (!input.value.trim()) {
+            valid = false;
+            input.classList.add('is-invalid');
+
+            // Add validation message
+            let feedbackElement = input.nextElementSibling;
+            if (!feedbackElement || !feedbackElement.classList.contains('invalid-feedback')) {
+                feedbackElement = document.createElement('div');
+                feedbackElement.className = 'invalid-feedback';
+                feedbackElement.textContent = 'This field is required';
+                input.insertAdjacentElement('afterend', feedbackElement);
+            }
+
+            // Add event listener to remove validation error on input
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            }, { once: true });
+        }
+    });
+
+    if (!valid) {
+        showNotification('Please fill in all required fields', 'warning');
+    }
+
+    return valid;
+}
+
+/**
+ * Show notification message
+ */
+function showNotification(message, type = 'info') {
+    // Check if notification container exists, create if not
+    let notificationContainer = document.getElementById('notificationContainer');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notificationContainer';
+        notificationContainer.style.position = 'fixed';
+        notificationContainer.style.top = '20px';
+        notificationContainer.style.right = '20px';
+        notificationContainer.style.zIndex = '1050';
+        document.body.appendChild(notificationContainer);
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} shadow-sm`;
+    notification.style.minWidth = '250px';
+    notification.style.marginBottom = '10px';
+    notification.style.transition = 'all 0.3s ease';
+    notification.style.transform = 'translateX(100%)';
+    notification.style.opacity = '0';
+
+    // Add appropriate icon based on type
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'warning') icon = 'exclamation-triangle';
+    if (type === 'danger' || type === 'error') {
+        icon = 'exclamation-circle';
+        type = 'danger';
+    }
+
+    // Set notification content
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${icon} me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-auto" aria-label="Close"></button>
+        </div>
+    `;
+
+    // Add notification to container
+    notificationContainer.appendChild(notification);
+
+    // Add close button handler
+    const closeButton = notification.querySelector('.btn-close');
+    closeButton.addEventListener('click', function() {
+        removeNotification(notification);
+    });
+
+    // Animate notification in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
+    }, 10);
+
+    // Auto remove notification after 5 seconds
+    setTimeout(() => {
+        removeNotification(notification);
+    }, 5000);
+}
+
+/**
+ * Remove notification with animation
+ */
+function removeNotification(notification) {
+    notification.style.transform = 'translateX(100%)';
+    notification.style.opacity = '0';
+
+    setTimeout(() => {
+        notification.remove();
+    }, 300);
+}
+==================================================
+
+Fichier: public\js\cv-generator-main.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\cv-generator-main.js
+-----
+/**
+ * CV Generator Main Functionality
+ * Author: Mohamed-abidi-95
+ * Last updated: 2025-04-20 21:10:39 UTC
+ */
+
+// Initialize form functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Progress tracking
+    updateProgressBar();
+
+    // Autofill functionality
+    document.getElementById('autofillBtn').addEventListener('click', function() {
+        autofillForm();
+    });
+
+    // Section navigation
+    document.querySelectorAll('.next-section').forEach(button => {
+        button.addEventListener('click', function() {
+            const nextSection = this.dataset.next;
+            if (nextSection) {
+                goToSection(nextSection);
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-section').forEach(button => {
+        button.addEventListener('click', function() {
+            const prevSection = this.dataset.prev;
+            if (prevSection) {
+                goToSection(prevSection);
+            }
+        });
+    });
+
+    // Preview functionality
+    document.querySelector('.btn-preview').addEventListener('click', function() {
+        console.log('Preview button clicked');
+        togglePreview();
+    });
+
+    document.getElementById('closePreview').addEventListener('click', function() {
+        togglePreview();
+    });
+
+    // Review button
+    document.querySelector('.btn-submit-review').addEventListener('click', function() {
+        generateReview();
+        goToSection(7);
+    });
+
+    // Dynamic form elements
+    initDynamicFormElements();
+
+    // Setup photo preview
+    setupPhotoUpload();
+
+    // Setup photo data for submission
+    setupPhotoDataForSubmission();
+
+    // Add debug info
+    console.log('CV Generator initialized');
+});
+
+// Setup photo upload preview
+function setupPhotoUpload() {
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+
+    if (photoInput && photoPreview) {
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+
+                    // Store the image data in local storage for preview/review
+                    localStorage.setItem('cvProfilePhoto', e.target.result);
+                };
+
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+}
+
+// Setup photo data for submission
+function setupPhotoDataForSubmission() {
+    // When the form is submitted, include the photo data
+    document.getElementById('cvForm').addEventListener('submit', function() {
+        const photoDataField = document.getElementById('photoDataField');
+        const savedPhotoData = localStorage.getItem('cvProfilePhoto');
+
+        if (photoDataField && savedPhotoData) {
+            photoDataField.value = savedPhotoData;
+        }
+    });
+}
+
+// Navigation between form sections
+function goToSection(sectionNumber) {
+    // Hide all sections
+    document.querySelectorAll('.form-section-page').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Show target section
+    document.getElementById('section-' + sectionNumber).classList.add('active');
+
+    // Update progress
+    updateProgressBar(sectionNumber);
+
+    // Scroll to top of form
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Update progress bar and step indicators
+function updateProgressBar(currentSection = 1) {
+    const totalSections = 7; // Updated to 7 sections including languages
+    const progress = ((currentSection - 1) / (totalSections - 1)) * 100;
+
+    document.querySelector('.progress-bar').style.width = progress + '%';
+
+    // Update step indicators
+    document.querySelectorAll('.step-item').forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+
+        if (index + 1 < currentSection) {
+            step.classList.add('completed');
+        } else if (index + 1 == currentSection) {
+            step.classList.add('active');
+        }
+    });
+}
+
+// Toggle CV preview panel
+function togglePreview() {
+    const previewPanel = document.getElementById('cvPreview');
+
+    if (previewPanel.classList.contains('show')) {
+        previewPanel.classList.remove('show');
+    } else {
+        generatePreview(); // Generate preview content before showing the panel
+        previewPanel.classList.add('show');
+    }
+}
+
+// Generate preview content
+function generatePreview() {
+    console.log('Generating preview...');
+
+    const previewContent = document.getElementById('previewContent');
+    const formData = collectFormData();
+
+    // Debug log to check data
+    console.log('Preview data:', formData);
+
+    // Clear previous content
+    previewContent.innerHTML = '';
+
+    try {
+        // Add profile photo if available
+        const profilePhotoData = localStorage.getItem('cvProfilePhoto');
+        if (profilePhotoData) {
+            const photoElement = document.createElement('img');
+            photoElement.src = profilePhotoData;
+            photoElement.className = 'preview-profile-photo';
+            photoElement.alt = 'Profile Photo';
+            previewContent.appendChild(photoElement);
+        }
+
+        // Personal info section
+        const personalSection = document.createElement('div');
+        personalSection.className = 'preview-section';
+        personalSection.innerHTML = `
+            <h4 class="mb-3">${formData.firstName || ''} ${formData.lastName || ''}</h4>
+            ${formData.position ? `<p class="text-muted">${formData.position}</p>` : ''}
+            <p>${formData.email || ''} ${formData.phone ? '| ' + formData.phone : ''}</p>
+            <p>${formData.address || ''} ${formData.city ? ', ' + formData.city : ''} ${formData.country ? ', ' + formData.country : ''}</p>
+            ${formData.github ? `<p><i class="fab fa-github"></i> ${formData.github}</p>` : ''}
+            ${formData.linkedin ? `<p><i class="fab fa-linkedin"></i> ${formData.linkedin}</p>` : ''}
+        `;
+        previewContent.appendChild(personalSection);
+
+        // Education section
+        if (formData.education && formData.education.length > 0) {
+            const educationSection = document.createElement('div');
+            educationSection.className = 'preview-section';
+
+            educationSection.innerHTML = '<h5 class="mb-3">Education</h5>';
+
+            formData.education.forEach(edu => {
+                educationSection.innerHTML += `
+                    <div class="mb-2">
+                        <h6>${edu.degree || 'Degree'}</h6>
+                        <p>${edu.institution || 'Institution'}${edu.location ? ', ' + edu.location : ''}</p>
+                        <p>${edu.startDate || ''} ${(edu.startDate && edu.endDate) ? ' - ' : ''} ${edu.endDate || ''}</p>
+                        ${edu.description ? `<p>${edu.description}</p>` : ''}
+                    </div>
+                `;
+            });
+
+            previewContent.appendChild(educationSection);
+        }
+
+        // Experience section
+        if (formData.experience && formData.experience.length > 0) {
+            const experienceSection = document.createElement('div');
+            experienceSection.className = 'preview-section';
+
+            experienceSection.innerHTML = '<h5 class="mb-3">Experience</h5>';
+
+            formData.experience.forEach(exp => {
+                experienceSection.innerHTML += `
+                    <div class="mb-2">
+                        <h6>${exp.position || 'Position'}</h6>
+                        <p>${exp.company || 'Company'}${exp.location ? ', ' + exp.location : ''}</p>
+                        <p>${exp.startDate || ''} ${(exp.startDate && exp.endDate) ? ' - ' : ''} ${exp.endDate || ''}</p>
+                        ${exp.description ? `<p>${exp.description}</p>` : ''}
+                    </div>
+                `;
+            });
+
+            previewContent.appendChild(experienceSection);
+        }
+
+        // Skills section
+        if (formData.skills && formData.skills.length > 0) {
+            const skillsSection = document.createElement('div');
+            skillsSection.className = 'preview-section';
+
+            skillsSection.innerHTML = '<h5 class="mb-3">Skills</h5><p>';
+
+            formData.skills.forEach((skill, index) => {
+                skillsSection.innerHTML += `${skill}${index < formData.skills.length - 1 ? ', ' : ''}`;
+            });
+
+            skillsSection.innerHTML += '</p>';
+
+            previewContent.appendChild(skillsSection);
+        }
+
+        // Languages section
+        if (formData.languages && formData.languages.length > 0) {
+            const languagesSection = document.createElement('div');
+            languagesSection.className = 'preview-section';
+
+            languagesSection.innerHTML = '<h5 class="mb-3">Languages</h5><p>';
+
+            formData.languages.forEach((language, index) => {
+                languagesSection.innerHTML += `${language}${index < formData.languages.length - 1 ? ', ' : ''}`;
+            });
+
+            languagesSection.innerHTML += '</p>';
+
+            previewContent.appendChild(languagesSection);
+        }
+
+        // Additional info section
+        if (formData.additionalInfo) {
+            const additionalSection = document.createElement('div');
+            additionalSection.className = 'preview-section';
+            additionalSection.innerHTML = `
+                <h5 class="mb-3">Additional Information</h5>
+                <p>${formData.additionalInfo}</p>
+            `;
+            previewContent.appendChild(additionalSection);
+        }
+
+        console.log('Preview generated successfully');
+    } catch (error) {
+        console.error('Error generating preview:', error);
+        previewContent.innerHTML = '<div class="alert alert-danger">An error occurred while generating the preview. Please try again.</div>';
+    }
+}
+
+// Generate review content
+function generateReview() {
+    const reviewContent = document.getElementById('reviewContent');
+    const formData = collectFormData();
+
+    let html = '<div class="review-content">';
+
+    // Add profile photo if available
+    const profilePhotoData = localStorage.getItem('cvProfilePhoto');
+    if (profilePhotoData) {
+        html += `
+            <div class="profile-photo-container mb-4 text-center">
+                <div class="profile-photo-wrapper d-inline-block">
+                    <img src="${profilePhotoData}" alt="Profile Photo" class="profile-photo">
+                </div>
+            </div>
+        `;
+    }
+
+    // Personal info
+    html += `
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
+            <p><strong>Name:</strong> ${formData.firstName || ''} ${formData.lastName || ''}</p>
+            ${formData.position ? `<p><strong>Position:</strong> ${formData.position}</p>` : ''}
+            <p><strong>Email:</strong> ${formData.email || ''}</p>
+            <p><strong>Phone:</strong> ${formData.phone || ''}</p>
+            <p><strong>Address:</strong> ${formData.address || ''}${formData.city ? ', ' + formData.city : ''}${formData.country ? ', ' + formData.country : ''}</p>
+            ${formData.github ? `<p><strong>GitHub:</strong> ${formData.github}</p>` : ''}
+            ${formData.linkedin ? `<p><strong>LinkedIn:</strong> ${formData.linkedin}</p>` : ''}
+        </div>
+    `;
+
+    // Education
+    html += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Education</h5>';
+    if (formData.education && formData.education.length > 0) {
+        formData.education.forEach((edu, index) => {
+            html += `
+                <div class="mb-3 p-2 ${index % 2 ? 'bg-light' : ''}">
+                    <p><strong>Degree:</strong> ${edu.degree || ''}</p>
+                    <p><strong>Institution:</strong> ${edu.institution || ''}</p>
+                    <p><strong>Location:</strong> ${edu.location || ''}</p>
+                    <p><strong>Period:</strong> ${edu.startDate || ''} ${(edu.startDate && edu.endDate) ? ' - ' : ''} ${edu.endDate || ''}</p>
+                    <p><strong>Description:</strong> ${edu.description || ''}</p>
+                </div>
+            `;
+        });
+    } else {
+        html += '<p><em>No education entries added.</em></p>';
+    }
+    html += '</div>';
+
+    // Experience
+    html += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Work Experience</h5>';
+    if (formData.experience && formData.experience.length > 0) {
+        formData.experience.forEach((exp, index) => {
+            html += `
+                <div class="mb-3 p-2 ${index % 2 ? 'bg-light' : ''}">
+                    <p><strong>Position:</strong> ${exp.position || ''}</p>
+                    <p><strong>Company:</strong> ${exp.company || ''}</p>
+                    <p><strong>Location:</strong> ${exp.location || ''}</p>
+                    <p><strong>Period:</strong> ${exp.startDate || ''} ${(exp.startDate && exp.endDate) ? ' - ' : ''} ${exp.endDate || ''}</p>
+                    <p><strong>Description:</strong> ${exp.description || ''}</p>
+                </div>
+            `;
+        });
+    } else {
+        html += '<p><em>No experience entries added.</em></p>';
+    }
+    html += '</div>';
+
+    // Skills
+    html += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Skills</h5>';
+    if (formData.skills && formData.skills.length > 0) {
+        html += '<p>';
+        formData.skills.forEach((skill, index) => {
+            html += `<span class="badge bg-light text-dark me-2 mb-2 p-2">${skill}</span>`;
+        });
+        html += '</p>';
+    } else {
+        html += '<p><em>No skills added.</em></p>';
+    }
+    html += '</div>';
+
+    // Languages
+    html += '<div class="mb-4"><h5 class="border-bottom pb-2 mb-3">Languages</h5>';
+    if (formData.languages && formData.languages.length > 0) {
+        html += '<p>';
+        formData.languages.forEach((language, index) => {
+            html += `<span class="badge bg-light text-dark me-2 mb-2 p-2">${language}</span>`;
+        });
+        html += '</p>';
+    } else {
+        html += '<p><em>No languages added.</em></p>';
+    }
+    html += '</div>';
+
+    // Additional info
+    html += `
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">Additional Information</h5>
+            <p>${formData.additionalInfo || '<em>No additional information provided.</em>'}</p>
+        </div>
+    `;
+
+    html += '</div>';
+    reviewContent.innerHTML = html;
+}
+
+// Collect all form data
+function collectFormData() {
+    const formData = {
+        firstName: document.getElementById('firstName')?.value || '',
+        lastName: document.getElementById('lastName')?.value || '',
+        position: document.getElementById('position')?.value || '',
+        email: document.getElementById('email')?.value || '',
+        phone: document.getElementById('phone')?.value || '',
+        address: document.getElementById('address')?.value || '',
+        city: document.getElementById('city')?.value || '',
+        country: document.getElementById('country')?.value || '',
+        github: document.getElementById('github')?.value || '',
+        linkedin: document.getElementById('linkedin')?.value || '',
+        education: [],
+        experience: [],
+        skills: [],
+        languages: [],
+        additionalInfo: document.getElementById('additionalInfo')?.value || ''
+    };
+
+    // Collect education entries
+    document.querySelectorAll('.education-entry').forEach(entry => {
+        const degreeField = entry.querySelector('[name="education[degree][]"]');
+        const institutionField = entry.querySelector('[name="education[institution][]"]');
+        const locationField = entry.querySelector('[name="education[location][]"]');
+        const startDateField = entry.querySelector('[name="education[startDate][]"]');
+        const endDateField = entry.querySelector('[name="education[endDate][]"]');
+        const descriptionField = entry.querySelector('[name="education[description][]"]');
+
+        formData.education.push({
+            degree: degreeField ? degreeField.value : '',
+            institution: institutionField ? institutionField.value : '',
+            location: locationField ? locationField.value : '',
+            startDate: startDateField ? startDateField.value : '',
+            endDate: endDateField ? endDateField.value : '',
+            description: descriptionField ? descriptionField.value : ''
+        });
+    });
+
+    // Collect experience entries
+    document.querySelectorAll('.experience-entry').forEach(entry => {
+        const positionField = entry.querySelector('[name="experience[position][]"]');
+        const companyField = entry.querySelector('[name="experience[company][]"]');
+        const locationField = entry.querySelector('[name="experience[location][]"]');
+        const startDateField = entry.querySelector('[name="experience[startDate][]"]');
+        const endDateField = entry.querySelector('[name="experience[endDate][]"]');
+        const descriptionField = entry.querySelector('[name="experience[description][]"]');
+
+        formData.experience.push({
+            position: positionField ? positionField.value : '',
+            company: companyField ? companyField.value : '',
+            location: locationField ? locationField.value : '',
+            startDate: startDateField ? startDateField.value : '',
+            endDate: endDateField ? endDateField.value : '',
+            description: descriptionField ? descriptionField.value : ''
+        });
+    });
+
+    // Collect skills
+    document.querySelectorAll('.skill-badge:not(.language-badge) span').forEach(skill => {
+        if (skill && skill.textContent) {
+            formData.skills.push(skill.textContent.trim());
+        }
+    });
+
+    // Collect languages
+    document.querySelectorAll('.language-badge span').forEach(language => {
+        if (language && language.textContent) {
+            formData.languages.push(language.textContent.trim());
+        }
+    });
+
+    return formData;
+}
+
+// Initialize dynamic form elements
+function initDynamicFormElements() {
+    // Initialize skills functionality
+    const addSkillBtn = document.getElementById('addSkillBtn');
+    if (addSkillBtn) {
+        addSkillBtn.addEventListener('click', function() {
+            addSkill();
+        });
+    }
+
+    const skillInput = document.getElementById('skillInput');
+    if (skillInput) {
+        skillInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill();
+            }
+        });
+    }
+
+    // Initialize languages functionality
+    const addLanguageBtn = document.getElementById('addLanguageBtn');
+    if (addLanguageBtn) {
+        addLanguageBtn.addEventListener('click', function() {
+            addLanguage();
+        });
+    }
+
+    const languageInput = document.getElementById('languageInput');
+    if (languageInput) {
+        languageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addLanguage();
+            }
+        });
+    }
+
+    // Education add button
+    const addEducationBtn = document.getElementById('addEducationBtn');
+    if (addEducationBtn) {
+        addEducationBtn.addEventListener('click', function() {
+            addEducationEntry();
+        });
+    }
+
+    // Experience add button
+    const addExperienceBtn = document.getElementById('addExperienceBtn');
+    if (addExperienceBtn) {
+        addExperienceBtn.addEventListener('click', function() {
+            addExperienceEntry();
+        });
+    }
+
+    // Set up existing remove buttons
+    setupRemoveButtons();
+}
+
+// Add a skill badge
+function addSkill() {
+    const skillInput = document.getElementById('skillInput');
+    if (!skillInput) return;
+
+    const skill = skillInput.value.trim();
+
+    if (skill) {
+        const skillsContainer = document.getElementById('skillsContainer');
+        if (!skillsContainer) return;
+
+        const badge = document.createElement('div');
+        badge.className = 'skill-badge';
+        badge.innerHTML = `
+            <span>${skill}</span>
+            <button type="button" class="remove-skill">&times;</button>
+            <input type="hidden" name="skills[]" value="${skill}">
+        `;
+
+        const removeButton = badge.querySelector('.remove-skill');
+        if (removeButton) {
+            removeButton.addEventListener('click', function() {
+                badge.remove();
+            });
+        }
+
+        skillsContainer.appendChild(badge);
+        skillInput.value = '';
+        skillInput.focus();
+    }
+}
+
+// Add a language
+function addLanguage() {
+    const languageInput = document.getElementById('languageInput');
+    if (!languageInput) return;
+
+    const language = languageInput.value.trim();
+
+    if (language) {
+        const languagesContainer = document.getElementById('languagesContainer');
+        if (!languagesContainer) return;
+
+        const badge = document.createElement('div');
+        badge.className = 'language-badge';
+        badge.innerHTML = `
+            <span>${language}</span>
+            <button type="button" class="remove-language">&times;</button>
+            <input type="hidden" name="languages[]" value="${language}">
+        `;
+
+        const removeButton = badge.querySelector('.remove-language');
+        if (removeButton) {
+            removeButton.addEventListener('click', function() {
+                badge.remove();
+            });
+        }
+
+        languagesContainer.appendChild(badge);
+        languageInput.value = '';
+        languageInput.focus();
+    }
+}
+
+// Add education entry
+function addEducationEntry() {
+    const container = document.getElementById('educationContainer');
+    if (!container) return;
+
+    const entryIndex = document.querySelectorAll('.education-entry').length;
+
+    const entryHtml = `
+        <div class="entry-container education-entry">
+            <button type="button" class="btn-remove remove-education"><i class="fas fa-times"></i></button>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Degree/Certification</label>
+                    <input type="text" name="education[degree][]" class="form-control" placeholder="Bachelor of Science in Computer Science" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Institution</label>
+                    <input type="text" name="education[institution][]" class="form-control" placeholder="University Name" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="education[location][]" class="form-control" placeholder="City, Country">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Start Date</label>
+                    <input type="text" name="education[startDate][]" class="form-control" placeholder="MM/YYYY">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">End Date</label>
+                    <input type="text" name="education[endDate][]" class="form-control" placeholder="MM/YYYY or Present">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="form-label">Description</label>
+                    <textarea name="education[description][]" class="form-control" rows="2" placeholder="Briefly describe your studies, achievements, etc."></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insert new entry HTML
+    container.insertAdjacentHTML('beforeend', entryHtml);
+
+    // Setup remove button for new entry
+    setupRemoveButtons();
+}
+
+// Add experience entry
+function addExperienceEntry() {
+    const container = document.getElementById('experienceContainer');
+    if (!container) return;
+
+    const entryIndex = document.querySelectorAll('.experience-entry').length;
+
+    const entryHtml = `
+        <div class="entry-container experience-entry">
+            <button type="button" class="btn-remove remove-experience"><i class="fas fa-times"></i></button>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Position/Title</label>
+                    <input type="text" name="experience[position][]" class="form-control" placeholder="Software Engineer" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Company/Organization</label>
+                    <input type="text" name="experience[company][]" class="form-control" placeholder="Company Name" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="experience[location][]" class="form-control" placeholder="City, Country">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Start Date</label>
+                    <input type="text" name="experience[startDate][]" class="form-control" placeholder="MM/YYYY">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">End Date</label>
+                    <input type="text" name="experience[endDate][]" class="form-control" placeholder="MM/YYYY or Present">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="form-label">Responsibilities & Achievements</label>
+                    <textarea name="experience[description][]" class="form-control" rows="3" placeholder="Describe your key responsibilities and achievements"></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insert new entry HTML
+    container.insertAdjacentHTML('beforeend', entryHtml);
+
+    // Setup remove button for new entry
+    setupRemoveButtons();
+}
+
+// Setup all remove buttons
+function setupRemoveButtons() {
+    // Education remove buttons
+    document.querySelectorAll('.remove-education').forEach(button => {
+        button.addEventListener('click', function() {
+            const entry = this.closest('.education-entry');
+            if (entry) entry.remove();
+        });
+    });
+
+    // Experience remove buttons
+    document.querySelectorAll('.remove-experience').forEach(button => {
+        button.addEventListener('click', function() {
+            const entry = this.closest('.experience-entry');
+            if (entry) entry.remove();
+        });
+    });
+
+    // Language remove buttons
+    document.querySelectorAll('.remove-language').forEach(button => {
+        button.addEventListener('click', function() {
+            const badge = this.closest('.language-badge');
+            if (badge) badge.remove();
+        });
+    });
+}
+
+// Auto-fill form with sample data
+function autofillForm() {
+    const sampleDataElement = document.getElementById('sampleData');
+    if (!sampleDataElement) {
+        console.error('Sample data element not found');
+        return;
+    }
+
+    try {
+        const sampleData = JSON.parse(sampleDataElement.dataset.sample);
+        console.log('Loaded sample data:', sampleData);
+
+        // Fill personal information
+        const fields = {
+            'firstName': sampleData.firstName || '',
+            'lastName': sampleData.lastName || '',
+            'position': sampleData.position || '',
+            'email': sampleData.email || '',
+            'phone': sampleData.phone || '',
+            'address': sampleData.address || '',
+            'city': sampleData.city || '',
+            'country': sampleData.country || '',
+            'github': sampleData.github || '',
+            'linkedin': sampleData.linkedin || '',
+            'additionalInfo': sampleData.additionalInfo || ''
+        };
+
+        // Set field values safely
+        Object.keys(fields).forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = fields[fieldId];
+            }
+        });
+
+        // Handle education entries
+        if (sampleData.education && Array.isArray(sampleData.education) && sampleData.education.length > 0) {
+            // Clear existing entries
+            document.querySelectorAll('.education-entry').forEach(entry => entry.remove());
+
+            // Add new entries from sample data
+            sampleData.education.forEach(edu => {
+                addEducationEntry();
+                const entries = document.querySelectorAll('.education-entry');
+                if (entries.length > 0) {
+                    const lastEntry = entries[entries.length - 1];
+
+                    // Safely set field values
+                    const fields = [
+                        { name: '[name="education[degree][]"]', value: edu.degree || '' },
+                        { name: '[name="education[institution][]"]', value: edu.institution || '' },
+                        { name: '[name="education[location][]"]', value: edu.location || '' },
+                        { name: '[name="education[startDate][]"]', value: edu.startDate || '' },
+                        { name: '[name="education[endDate][]"]', value: edu.endDate || '' },
+                        { name: '[name="education[description][]"]', value: edu.description || '' }
+                    ];
+
+                    fields.forEach(field => {
+                        const element = lastEntry.querySelector(field.name);
+                        if (element) {
+                            element.value = field.value;
+                        }
+                    });
+                }
+            });
+        }
+
+        // Handle experience entries
+        if (sampleData.experience && Array.isArray(sampleData.experience) && sampleData.experience.length > 0) {
+            // Clear existing entries
+            document.querySelectorAll('.experience-entry').forEach(entry => entry.remove());
+
+            // Add new entries from sample data
+            sampleData.experience.forEach(exp => {
+                addExperienceEntry();
+                const entries = document.querySelectorAll('.experience-entry');
+                if (entries.length > 0) {
+                    const lastEntry = entries[entries.length - 1];
+
+                    // Safely set field values
+                    const fields = [
+                        { name: '[name="experience[position][]"]', value: exp.position || '' },
+                        { name: '[name="experience[company][]"]', value: exp.company || '' },
+                        { name: '[name="experience[location][]"]', value: exp.location || '' },
+                        { name: '[name="experience[startDate][]"]', value: exp.startDate || '' },
+                        { name: '[name="experience[endDate][]"]', value: exp.endDate || '' },
+                        { name: '[name="experience[description][]"]', value: exp.description || '' }
+                    ];
+
+                    fields.forEach(field => {
+                        const element = lastEntry.querySelector(field.name);
+                        if (element) {
+                            element.value = field.value;
+                        }
+                    });
+                }
+            });
+        }
+
+        // Handle skills
+        if (sampleData.skills && Array.isArray(sampleData.skills) && sampleData.skills.length > 0) {
+            // Clear existing skills
+            document.querySelectorAll('.skill-badge:not(.language-badge)').forEach(badge => badge.remove());
+
+            // Add skills from sample data
+            const skillInput = document.getElementById('skillInput');
+            if (skillInput) {
+                sampleData.skills.forEach(skill => {
+                    if (skill) {
+                        skillInput.value = skill;
+                        addSkill();
+                    }
+                });
+            }
+        }
+
+        // Handle languages
+        if (sampleData.languages && Array.isArray(sampleData.languages) && sampleData.languages.length > 0) {
+            // Clear existing languages
+            document.querySelectorAll('.language-badge').forEach(badge => badge.remove());
+
+            // Add languages from sample data
+            const languageInput = document.getElementById('languageInput');
+            if (languageInput) {
+                sampleData.languages.forEach(language => {
+                    if (language) {
+                        languageInput.value = language;
+                        addLanguage();
+                    }
+                });
+            }
+        }
+
+        // Show success message
+        alert('Form has been filled with sample data!');
+        console.log('Autofill complete');
+
+    } catch (error) {
+        console.error('Error autofilling form:', error);
+        alert('An error occurred while autofilling the form. Please check the console for more information.');
+    }
+}
+==================================================
+
+Fichier: public\js\sidebar.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\sidebar.js
+-----
+document.addEventListener('DOMContentLoaded', function() {
+    // Récupération des éléments DOM
+    const sidebar = document.getElementById('templateSidebar');
+    const mainContent = document.querySelector('.main-content') || document.body;
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const templateItems = document.querySelectorAll('.template-item');
+    const filterOptions = document.querySelectorAll('.filter-option');
+
+    // Fonction pour afficher/masquer la sidebar sur mobile
+    function toggleSidebar() {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        document.body.classList.toggle('sidebar-open');
+    }
+
+    // Écouteurs d'événements pour la sidebar
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+
+    if (closeSidebar) {
+        closeSidebar.addEventListener('click', toggleSidebar);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    }
+
+    // Sélection d'un template
+    templateItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Supprimer la classe selected de tous les templates
+            templateItems.forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Ajouter la classe selected au template cliqué
+            this.classList.add('selected');
+
+            // Récupérer l'identifiant du template sélectionné
+            const templateId = this.getAttribute('data-template');
+
+            // Stocker la sélection (dans localStorage ou autre)
+            localStorage.setItem('selectedTemplate', templateId);
+
+            // Déclencher un événement personnalisé pour informer d'autres scripts de la sélection
+            const event = new CustomEvent('templateSelected', { detail: { templateId: templateId } });
+            document.dispatchEvent(event);
+
+            // Sur mobile, fermer la sidebar après la sélection
+            if (window.innerWidth < 992) {
+                toggleSidebar();
+            }
+        });
+    });
+
+    // Filtrage des templates
+    filterOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const filterValue = this.getAttribute('data-filter');
+            const filterGroup = this.closest('.filter-group');
+
+            // Supprimer la classe active des autres options du même groupe
+            if (filterGroup) {
+                const groupOptions = filterGroup.querySelectorAll('.filter-option');
+                groupOptions.forEach(opt => {
+                    opt.classList.remove('active');
+                });
+            }
+
+            // Ajouter la classe active à l'option cliquée
+            this.classList.add('active');
+
+            // Filtrer les templates
+            filterTemplates();
+        });
+    });
+
+    // Fonction pour filtrer les templates en fonction des options sélectionnées
+    function filterTemplates() {
+        const activeFilters = [];
+
+        // Récupérer tous les filtres actifs
+        document.querySelectorAll('.filter-option.active').forEach(option => {
+            const filter = option.getAttribute('data-filter');
+            if (filter !== 'all') {
+                activeFilters.push(filter);
+            }
+        });
+
+        // Si aucun filtre actif, ou seulement des "all", afficher tous les templates
+        if (activeFilters.length === 0) {
+            templateItems.forEach(item => {
+                item.style.display = 'block';
+            });
+            return;
+        }
+
+        // Appliquer les filtres
+        templateItems.forEach(item => {
+            const categories = item.getAttribute('data-category').split(' ');
+            let shouldShow = false;
+
+            // Si un template correspond à au moins un des filtres actifs, l'afficher
+            for (let filter of activeFilters) {
+                if (categories.includes(filter)) {
+                    shouldShow = true;
+                    break;
+                }
+            }
+
+            item.style.display = shouldShow ? 'block' : 'none';
+        });
+    }
+
+    // Vérifier s'il y a un template sélectionné en localStorage
+    const savedTemplate = localStorage.getItem('selectedTemplate');
+    if (savedTemplate) {
+        const template = document.querySelector(`.template-item[data-template="${savedTemplate}"]`);
+        if (template) {
+            template.classList.add('selected');
+        }
+    }
+
+    // Initialiser avec tous les templates visibles
+    filterOptions[0].classList.add('active'); // Activer le filtre "Tous" par défaut
+});
+==================================================
+
