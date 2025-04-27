@@ -1,0 +1,163 @@
+Symfony Project Structure - Generated on 2025-04-27 14:58:34
+
+Project: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer
+
+======================================================
+
+?? assets
+    ?? controllers
+        ?? csrf_protection_controller.js
+        ?? hello_controller.js
+    ?? images
+    ?? styles
+        ?? app.css
+    ?? app.js
+    ?? bootstrap.js
+    ?? controllers.json
+?? bin
+    ?? console
+    ?? phpunit
+?? config
+    ?? packages
+        ?? asset_mapper.yaml
+        ?? cache.yaml
+        ?? csrf.yaml
+        ?? debug.yaml
+        ?? doctrine.yaml
+        ?? doctrine_migrations.yaml
+        ?? framework.yaml
+        ?? mailer.yaml
+        ?? messenger.yaml
+        ?? monolog.yaml
+        ?? notifier.yaml
+        ?? routing.yaml
+        ?? security.yaml
+        ?? translation.yaml
+        ?? twig.yaml
+        ?? validator.yaml
+        ?? web_profiler.yaml
+        ?? webpack_encore.yaml
+    ?? routes
+        ?? framework.yaml
+        ?? security.yaml
+        ?? web_profiler.yaml
+    ?? bundles.php
+    ?? preload.php
+    ?? routes.yaml
+    ?? services.yaml
+?? migrations
+    ?? .gitignore
+?? public
+    ?? assets
+        ?? styles
+            ?? app.css
+            ?? app.scss
+            ?? navbar-fix.css
+        ?? app.js
+        ?? navbar-fix.js
+    ?? build
+        ?? app.css
+        ?? app.js
+        ?? entrypoints.json
+        ?? manifest.json
+        ?? runtime.js
+        ?? vendors-node_modules_bootstrap_dist_css_bootstrap_min_css-node_modules_symfony_stimulus-bundl-23a084.css
+        ?? vendors-node_modules_bootstrap_dist_css_bootstrap_min_css-node_modules_symfony_stimulus-bundl-23a084.js
+    ?? css
+        ?? section_editor.css
+        ?? template_carousel.css
+        ?? welcome.css
+    ?? images
+        ?? cvs
+            ?? 1.png
+            ?? 2.png
+            ?? 3.png
+            ?? 4.png
+            ?? 5.png
+            ?? 6.png
+            ?? 7.png
+            ?? cvang2.png
+            ?? cvar1.png
+            ?? cvar2.png
+            ?? cvde1.png
+            ?? cvfr1.png
+        ?? esprim.png
+        ?? espritesb.png
+        ?? espritprepa-removebg-preview.png
+        ?? esprit-removebg-preview.png
+        ?? gear.png
+        ?? logo.png
+        ?? tunisie-removebg-preview.png
+        ?? unnamed-removebg-preview.png
+    ?? js
+        ?? bootstrap.js
+        ?? cv-form-fix.js
+        ?? cv-generator.js
+        ?? cv-generator-main.js
+        ?? language-switcher.js
+        ?? section_editor.js
+        ?? sidebar.js
+        ?? template_carousel.js
+        ?? template_loader.js
+        ?? welcome.js
+        ?? welcome_animations.js
+    ?? styles
+    ?? cv-test.html
+    ?? index.php
+?? src
+    ?? Controller
+        ?? .gitignore
+        ?? CVGeneratorController.php
+        ?? TestController.php
+    ?? Entity
+        ?? .gitignore
+    ?? Repository
+        ?? .gitignore
+    ?? Kernel.php
+??? Templates
+    ?? components
+        ??? _navbar.html.twig
+        ??? language_nav.html.twig
+    ?? cv_generator
+        ??? _additional.html.twig
+        ??? _education.html.twig
+        ??? _experience.html.twig
+        ??? _form_scripts.html.twig
+        ??? _languages.html.twig
+        ??? _personal_info.html.twig
+        ??? _preview.html.twig
+        ??? _progress.html.twig
+        ??? _review.html.twig
+        ??? _skills.html.twig
+        ??? cv_template.html.twig
+        ??? cv_template_blue.html.twig
+        ??? cv_template_green.html.twig
+        ??? index.html.twig
+        ??? main.html.twig
+        ??? welcome.html.twig
+    ?? partials
+        ??? _header.html.twig
+        ??? _styles.html.twig
+        ??? section_editor.html.twig
+        ??? template_carousel.html.twig
+        ??? template_selector_sidebar.html.twig
+    ?? test
+        ??? index.html.twig
+    ??? base.html.twig
+?? tests
+    ?? bootstrap.php
+?? translations
+    ?? .gitignore
+?? .env
+?? .env.dev
+?? .gitignore
+??  ?? composer.json
+?? composer.lock
+?? importmap.php
+?? package.json
+?? package-lock.json
+?? phpunit.xml.dist
+?? postcss.config.j
+?? symfony.lock
+?? tailwind.config.js
+??  ?? webpack.config.js
