@@ -1,0 +1,164 @@
+# Définir les chemins source et destination
+$sourcePath = "C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer"
+$destinationPath = "C:\Users\Sh-Pc\Desktop\symfony checkpoint\Checkpoint 7"
+$outputFile = Join-Path -Path $destinationPath -ChildPath "project_code.txt"
+
+# Définir les dossiers spécifiques à extraire avec les extensions à considérer pour chacun
+$folderConfig = @(
+    @{
+        Path = "assets\styles"
+        Extensions = @(".css", ".php", ".twig", ".scss")
+    },
+    @{
+        Path = "Templates"
+        Extensions = @(".php", ".twig", ".css")
+    },
+    @{
+        Path = "Templates\components"
+        Extensions = @(".php", ".twig", ".css", ".html")
+    },
+    @{
+        Path = "src\Controller"
+        Extensions = @(".php", ".twig", ".css")
+    },
+    @{
+        Path = "config\packages"
+        Extensions = @(".yaml", ".yml")
+    },
+    @{
+        Path = "public\css"
+        Extensions = @(".css", ".scss")
+    },
+    @{
+        Path = "tests"
+        Extensions = @(".php")
+    }
+)
+
+# Définir les fichiers spécifiques à extraire
+$specificFiles = @(
+    "tailwind.config.js",
+    "webpack.config.js"
+)
+
+# S'assurer que le dossier de destination existe
+if (!(Test-Path -Path $destinationPath)) {
+    New-Item -ItemType Directory -Path $destinationPath | Out-Null
+}
+
+# Créer le fichier de sortie (écraser s'il existe déjà)
+New-Item -ItemType File -Path $outputFile -Force | Out-Null
+
+# Ajouter un en-tête au fichier
+$dateTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+Add-Content -Path $outputFile -Value "==================================================="
+Add-Content -Path $outputFile -Value "EXTRACTION DU CODE DU PROJET SYMFONY - $dateTime"
+Add-Content -Path $outputFile -Value "Projet: $sourcePath"
+Add-Content -Path $outputFile -Value "==================================================="
+Add-Content -Path $outputFile -Value ""
+
+# Fonction pour extraire le code d'un dossier spécifique
+function Extract-FolderCode {
+    param(
+        [string]$folderPath,
+        [array]$extensions
+    )
+    
+    Write-Host "Extraction du code depuis: $folderPath"
+    
+    # Vérifier si le dossier existe
+    if (!(Test-Path -Path $folderPath)) {
+        Write-Warning "Le dossier n'existe pas: $folderPath"
+        Add-Content -Path $outputFile -Value "AVERTISSEMENT: Le dossier n'existe pas: $folderPath"
+        Add-Content -Path $outputFile -Value ""
+        return
+    }
+    
+    # Obtenir tous les fichiers dans le dossier et ses sous-dossiers
+    $files = Get-ChildItem -Path $folderPath -Recurse -File
+    
+    # Compteur pour suivre combien de fichiers ont été extraits
+    $extractedCount = 0
+    
+    foreach ($file in $files) {
+        $filePath = $file.FullName
+        $relativePath = $filePath.Substring($sourcePath.Length + 1)
+        $fileExtension = $file.Extension
+        
+        # Vérifier si l'extension du fichier est dans la liste des extensions à traiter
+        if ($extensions -contains $fileExtension) {
+            try {
+                $content = Get-Content -Path $filePath -Raw -ErrorAction Stop
+                
+                # Écrire les informations dans le fichier de sortie
+                Add-Content -Path $outputFile -Value "==================================================="
+                Add-Content -Path $outputFile -Value "FICHIER: $relativePath"
+                Add-Content -Path $outputFile -Value "==================================================="
+                Add-Content -Path $outputFile -Value $content
+                Add-Content -Path $outputFile -Value ""
+                Add-Content -Path $outputFile -Value ""
+                
+                $extractedCount++
+            } catch {
+                Write-Warning "Impossible de lire le fichier: $filePath - $($_.Exception.Message)"
+                Add-Content -Path $outputFile -Value "ERREUR: Impossible de lire le fichier: $relativePath - $($_.Exception.Message)"
+                Add-Content -Path $outputFile -Value ""
+            }
+        }
+    }
+    
+    Write-Host "  $extractedCount fichiers extraits de $folderPath"
+}
+
+# Fonction pour extraire un fichier spécifique
+function Extract-SpecificFile {
+    param(
+        [string]$fileName
+    )
+    
+    $filePath = Join-Path -Path $sourcePath -ChildPath $fileName
+    
+    Write-Host "Extraction du fichier spécifique: $fileName"
+    
+    # Vérifier si le fichier existe
+    if (!(Test-Path -Path $filePath -PathType Leaf)) {
+        Write-Warning "Le fichier n'existe pas: $filePath"
+        Add-Content -Path $outputFile -Value "AVERTISSEMENT: Le fichier n'existe pas: $fileName"
+        Add-Content -Path $outputFile -Value ""
+        return
+    }
+    
+    try {
+        $content = Get-Content -Path $filePath -Raw -ErrorAction Stop
+        
+        # Écrire les informations dans le fichier de sortie
+        Add-Content -Path $outputFile -Value "==================================================="
+        Add-Content -Path $outputFile -Value "FICHIER: $fileName"
+        Add-Content -Path $outputFile -Value "==================================================="
+        Add-Content -Path $outputFile -Value $content
+        Add-Content -Path $outputFile -Value ""
+        Add-Content -Path $outputFile -Value ""
+    } catch {
+        Write-Warning "Impossible de lire le fichier: $filePath - $($_.Exception.Message)"
+        Add-Content -Path $outputFile -Value "ERREUR: Impossible de lire le fichier: $fileName - $($_.Exception.Message)"
+        Add-Content -Path $outputFile -Value ""
+    }
+}
+
+# Pour chaque configuration de dossier
+foreach ($config in $folderConfig) {
+    $fullPath = Join-Path -Path $sourcePath -ChildPath $config.Path
+    Extract-FolderCode -folderPath $fullPath -extensions $config.Extensions
+}
+
+# Pour chaque fichier spécifique
+foreach ($file in $specificFiles) {
+    Extract-SpecificFile -fileName $file
+}
+
+# Ajouter un résumé à la fin du fichier
+Add-Content -Path $outputFile -Value "==================================================="
+Add-Content -Path $outputFile -Value "FIN DE L'EXTRACTION - $dateTime"
+Add-Content -Path $outputFile -Value "==================================================="
+
+Write-Host "Le code des dossiers et fichiers spécifiés a été extrait dans le fichier: $outputFile"
