@@ -1,0 +1,3571 @@
+Fichier: src\Controller\CVGeneratorController.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Controller\CVGeneratorController.php
+-----
+<?php
+// Last updated: 2025-04-30 00:58:22
+// Author: Mohamed-abidi-95
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Psr\Log\LoggerInterface;
+
+class CVGeneratorController extends AbstractController
+{
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @Route("/", name="app_welcome")
+     */
+    public function welcome(): Response
+    {
+        return $this->render('cv_generator/welcome.html.twig');
+    }
+
+    /**
+     * @Route("/cv-builder", name="app_cv_builder")
+     */
+    public function builder(): Response
+    {
+        return $this->render('cv_builder/index.html.twig', [
+            'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+            'username' => 'Mohamed-abidi-95'
+        ]);
+    }
+
+    /**
+     * @Route("/cv-content-editor", name="app_cv_content_editor")
+     */
+    public function contentEditor(): Response
+    {
+        return $this->render('cv_builder/content_editor.html.twig', [
+            'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+            'username' => 'Mohamed-abidi-95'
+        ]);
+    }
+
+    /**
+     * @Route("/cv", name="app_cv_generator")
+     */
+    public function index(): Response
+    {
+        // Sample data for autofill testing
+        $sampleData = [
+            'firstName' => 'John', 'lastName' => 'Doe', 'position' => 'Software Developer',
+            'email' => 'john.doe@example.com', 'phone' => '+216 12 345 678',
+            'address' => '123 Main Street', 'city' => 'Tunis', 'country' => 'Tunisia',
+            'github' => 'github.com/johndoe', 'linkedin' => 'linkedin.com/in/johndoe',
+            'education' => [
+                ['degree' => 'Bachelor of Science in Computer Science', 'institution' => 'ESPRIT Engineering School', 'location' => 'Tunis, Tunisia', 'startDate' => '09/2018', 'endDate' => '06/2022', 'description' => 'Graduated with honors...'],
+                ['degree' => 'High School Diploma', 'institution' => 'International High School', 'location' => 'Tunis, Tunisia', 'startDate' => '09/2015', 'endDate' => '06/2018', 'description' => 'Science track...']
+            ],
+            'experience' => [
+                ['position' => 'Software Engineer', 'company' => 'Tech Solutions Inc.', 'location' => 'Tunis, Tunisia', 'startDate' => '08/2022', 'endDate' => 'Present', 'description' => 'Developing full-stack web apps...'],
+                ['position' => 'Web Development Intern', 'company' => 'StartUp Hub', 'location' => 'Tunis, Tunisia', 'startDate' => '06/2021', 'endDate' => '09/2021', 'description' => 'Assisted in development...']
+            ],
+            'skills' => ['JavaScript', 'React.js', 'Node.js', 'HTML/CSS', 'PHP', 'MySQL', 'Git', 'Agile', 'Problem Solving'],
+            'languages' => ['Arabic (Native)', 'French (Fluent)', 'English (Advanced)'],
+            'additionalInfo' => 'Passionate about building high-quality software...'
+        ];
+
+        return $this->render('cv_generator/main.html.twig', [
+            'currentStep' => 1,
+            'sampleData' => $sampleData
+        ]);
+    }
+
+    /**
+     * @Route("/cv-generator/generate", name="app_cv_generate", methods={"POST"})
+     */
+    /**
+    /**
+    /**
+    /**
+     * @Route("/cv-generator/generate", name="app_cv_generate", methods={"POST"})
+     */
+    public function generate(Request $request): Response
+    {
+        // Set memory limit and execution time
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 300);
+
+        $this->logger->info('CV Generation request received.');
+        $this->logger->info('Request method: ' . $request->getMethod());
+        $this->logger->info('Content type: ' . $request->headers->get('Content-Type'));
+        $this->logger->info('User: Mohamed-abidi-95, timestamp: ' . (new \DateTime())->format('Y-m-d H:i:s'));
+
+        try {
+            // Déboguer les données du formulaire
+            $allFormData = $request->request->all();
+            $this->logger->info('All form data: ' . json_encode(array_keys($allFormData)));
+
+            // --- Get Form Data ---
+            $formData = $request->request->all();
+
+            // --- Get Template and Photo ---
+            $templateType = $request->request->get('template', 'elegant'); // Default to elegant template
+            $photoData = $request->request->get('photoData', ''); // Base64 encoded photo data
+
+            $this->logger->info('Template selected (raw): ' . $templateType);
+
+            // Correction: s'assurer de la valeur correcte du template
+            $templateType = strtolower($templateType);
+            $this->logger->info('Template selected (normalized): ' . $templateType);
+
+            // --- Get Style Customization Data ---
+            $formData['backgroundColor'] = $request->request->get('backgroundColor', '#ffffff');
+            $formData['textColor'] = $request->request->get('textColor', '#000000');
+            $formData['selectedBackground'] = $request->request->get('selectedBackground', 'none');
+            $formData['selectedBackgroundType'] = $request->request->get('selectedBackgroundType', 'color');
+            $formData['selectedBackgroundColor'] = $request->request->get('selectedBackgroundColor', '#ffffff');
+
+            $this->logger->info('Background: ' . $formData['selectedBackground']);
+            $this->logger->info('Background Type: ' . $formData['selectedBackgroundType']);
+
+            // Déterminer quel template utiliser
+            if ($templateType === 'blue') {
+                $templateName = 'cv_template_blue.html.twig';
+            } elseif ($templateType === 'classic') {
+                $templateName = 'cv_template_classic.html.twig';
+            } else {
+                $templateName = 'cv_template_elegant.html.twig';
+            }
+
+            $this->logger->info('Template name chosen: ' . $templateName);
+
+            // Vérifier que le fichier existe réellement, en essayant différents chemins possibles
+            $possiblePaths = [
+                $this->getParameter('kernel.project_dir') . '/Templates/cv_generator/' . $templateName,
+                $this->getParameter('kernel.project_dir') . '/templates/cv_generator/' . $templateName,
+                $this->getParameter('kernel.project_dir') . '/templates/Templates/cv_generator/' . $templateName
+            ];
+
+            $templateFound = false;
+            $validTemplatePath = '';
+
+            foreach ($possiblePaths as $path) {
+                $this->logger->info("Checking template path: {$path}");
+                if (file_exists($path)) {
+                    $templateFound = true;
+                    $validTemplatePath = $path;
+                    $this->logger->info("Template found at: {$path}");
+                    break;
+                }
+            }
+
+            if (!$templateFound) {
+                throw new \Exception("Le fichier de template n'existe pas. Chemins vérifiés: " . implode(', ', $possiblePaths));
+            }
+
+            // Déterminer le chemin de rendu relatif en fonction du chemin absolu trouvé
+            $templateRenderPath = '';
+            $projectDir = $this->getParameter('kernel.project_dir');
+
+            if (strpos($validTemplatePath, $projectDir . '/Templates/') === 0) {
+                $templateRenderPath = 'Templates/cv_generator/' . $templateName;
+            } else if (strpos($validTemplatePath, $projectDir . '/templates/Templates/') === 0) {
+                $templateRenderPath = 'templates/Templates/cv_generator/' . $templateName;
+            } else {
+                $templateRenderPath = 'templates/cv_generator/' . $templateName;
+            }
+
+            $this->logger->info("Template render path: {$templateRenderPath}");
+
+            // --- Render HTML with Environment variable ---
+            $env = new \Twig\Environment(new \Twig\Loader\FilesystemLoader([
+                $this->getParameter('kernel.project_dir'),
+                $this->getParameter('kernel.project_dir') . '/templates',
+                $this->getParameter('kernel.project_dir') . '/Templates'
+            ]));
+
+            $html = $env->render($templateRenderPath, [
+                'data' => $formData,
+                'photoData' => $photoData,
+                'generatedDate' => new \DateTime(),
+                'debug_template' => $templateType // Ajouter cette variable pour le debug
+            ]);
+
+            // Generate PDF
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('isRemoteEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4');
+            $dompdf->render();
+
+            // Générez un nom de fichier significatif
+            $filename = ($formData['firstName'] ?? 'CV') . '-' . ($formData['lastName'] ?? 'Generated') . '-' . (new \DateTime())->format('Y-m-d') . '.pdf';
+
+            // Retournez la réponse PDF
+            $response = new Response($dompdf->output());
+            $disposition = HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename);
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', $disposition);
+
+            return $response;
+
+        } catch (\Throwable $e) {
+            $this->logger->error("Error generating PDF: {$e->getMessage()}", ['exception' => $e]);
+            $this->logger->error("Full exception details: " . get_class($e) . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Retourner une réponse d'erreur avec plus de détails
+            return new Response(
+                '<html><body>
+            <h1>Une erreur s\'est produite</h1>
+            <p>' . htmlspecialchars($e->getMessage()) . '</p>
+            <p><a href="/cv-content-editor" class="btn btn-primary">Retourner à l\'éditeur</a></p>
+            <hr>
+            <h3>Détails techniques (environnement de développement uniquement)</h3>
+            <pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>
+            <h4>Données formulaire reçues:</h4>
+            <pre>' . htmlspecialchars(print_r($request->request->all(), true)) . '</pre>
+            <hr>
+            <p>Date: ' . (new \DateTime())->format('Y-m-d H:i:s') . '</p>
+            <p>User: Mohamed-abidi-95</p>
+        </body></html>',
+                500,
+                ['Content-Type' => 'text/html']
+            );
+        }
+    }
+    /**
+     * @Route("/cv-generator/test-pdf", name="app_cv_test_pdf")
+     */
+    public function testPdf(): Response
+    {
+        // --- Test PDF Logic (remains mostly the same) ---
+        try {
+            $html = '<!DOCTYPE html><html><head><title>Test PDF</title></head><body><h1>Test PDF OK</h1><p>Generated: '.(new \DateTime())->format('Y-m-d H:i:s').'</p></body></html>';
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true); $options->set('defaultFont', 'DejaVu Sans');
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html); $dompdf->setPaper('A4'); $dompdf->render();
+            $response = new Response($dompdf->output());
+            $disposition = HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, 'test.pdf'); // Inline for testing
+            $response->headers->set('Content-Type', 'application/pdf'); $response->headers->set('Content-Disposition', $disposition);
+            return $response;
+        } catch (\Throwable $e) {
+            $this->logger->error("Error in test PDF generation: {$e->getMessage()}", ['exception' => $e]);
+            return new Response('<html><body><h1>Test PDF Error</h1><p>'.htmlspecialchars($e->getMessage()).'</p><pre>'.htmlspecialchars($e->getTraceAsString()).'</pre></body></html>', 500, ['Content-Type' => 'text/html']);
+        }
+    }
+
+    /**
+     * @Route("/cv-generator/debug-form", name="app_cv_debug_form", methods={"POST"})
+     */
+    public function debugForm(Request $request): Response
+    {
+        // --- Debug Form Logic (remains the same) ---
+        try {
+            return new Response('<html><body><h1>Form Debug</h1><pre>' . print_r($request->request->all(), true) . '</pre></body></html>', 200, ['Content-Type' => 'text/html']);
+        } catch (\Throwable $e) {
+            return new Response('Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * @Route("/cv-template-elegant", name="app_cv_template_elegant")
+     */
+    public function elegantTemplate(): Response
+    {
+        // Cette route sert à rendre le template élégant pour affichage/debug
+        $sampleData = [
+            'firstName' => 'Mohamed', 'lastName' => 'Abidi',
+            'position' => 'Développeur Full Stack',
+            'email' => 'mohamed.abidi@example.com', 'phone' => '+216 55 123 456',
+            'address' => '15 Avenue Habib Bourguiba', 'city' => 'Tunis', 'country' => 'Tunisie',
+            'github' => 'github.com/mohamed-abidi-95', 'linkedin' => 'linkedin.com/in/mohamed-abidi-95',
+            'additionalInfo' => 'Développeur passionné avec 5 ans d\'expérience dans le développement web.',
+            'skills' => ['JavaScript', 'React.js', 'Node.js', 'HTML/CSS', 'PHP', 'MySQL', 'Git'],
+            'languages' => ['Arabe', 'Français', 'Anglais'],
+            'languageLevels' => ['Langue maternelle', 'Courant', 'Avancé'],
+            'experience' => [
+                [
+                    'position' => 'Développeur Full Stack Senior',
+                    'company' => 'Tech Solutions Tunisie',
+                    'location' => 'Tunis, Tunisie',
+                    'startDate' => '01/2022',
+                    'endDate' => 'Présent',
+                    'description' => 'Direction d\'une équipe de développeurs pour construire et lancer le produit phare de l\'entreprise'
+                ]
+            ],
+            'education' => [
+                [
+                    'degree' => 'Diplôme d\'Ingénieur en Informatique',
+                    'institution' => 'École d\'Ingénieurs ESPRIT',
+                    'location' => 'Tunis, Tunisie',
+                    'startDate' => '09/2018',
+                    'endDate' => '06/2023',
+                    'description' => 'Diplômé avec mention. Spécialisation en technologies web et principes d\'ingénierie logicielle.'
+                ]
+            ],
+            'projects' => [
+                [
+                    'name' => 'Plateforme E-commerce',
+                    'description' => 'Développé une plateforme e-commerce complète avec traitement sécurisé des paiements et gestion des stocks.',
+                    'technologies' => 'React.js, Node.js, Express, MongoDB'
+                ]
+            ]
+        ];
+
+        // Pour le debug/démonstration, charger le logo ESPRIT
+        $photoData = '/images/logo.png';
+
+        return $this->render('Templates/cv_generator/cv_template_elegant.html.twig', [
+            'data' => $sampleData,
+            'photoData' => $photoData,
+            'generatedDate' => new \DateTime()
+        ]);
+    }
+}
+==================================================
+
+Fichier: Templates\cv_generator\cv_template_elegant.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template_elegant.html.twig
+-----
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV - {{ data.firstName }} {{ data.lastName }}</title>
+    <style>
+        @page {
+            margin: 0;
+            size: A4 portrait;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            font-size: 11pt;
+        }
+
+        .container {
+            position: relative;
+        }
+
+        /* Header Section */
+        .header {
+            background-color: #ff3a3a;
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-info {
+            flex: 2;
+        }
+
+        .profile-img-container {
+            flex: 1;
+            text-align: right;
+            margin-left: 20px;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid white;
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            margin: 5px 0 15px;
+            font-size: 14pt;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        /* Left Column */
+        .left-column {
+            flex: 1;
+            padding-right: 20px;
+            min-width: 200px;
+        }
+
+        /* Right Column */
+        .right-column {
+            flex: 2;
+            padding-left: 20px;
+            border-left: 1px solid #eee;
+        }
+
+        /* Contact Information */
+        .contact-info {
+            margin-bottom: 25px;
+        }
+
+        .contact-info p {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+            color: #ff3a3a;
+        }
+
+        /* Section Styling */
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            color: #ff3a3a;
+            font-size: 14pt;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #ff3a3a;
+            padding-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* Experience & Education */
+        .timeline-item {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .timeline-period {
+            color: #777;
+        }
+
+        .timeline-subtitle {
+            color: #555;
+            margin: 0 0 5px;
+        }
+
+        .timeline-description {
+            margin: 0;
+            text-align: justify;
+        }
+
+        /* Skills */
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .skill-tag {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 10pt;
+        }
+
+        /* Languages */
+        .languages-list {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .language-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .language-name {
+            font-weight: bold;
+        }
+
+        .language-level {
+            color: #777;
+        }
+
+        /* Projects */
+        .project-item {
+            margin-bottom: 15px;
+        }
+
+        .project-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .project-description {
+            margin-bottom: 5px;
+            text-align: justify;
+        }
+
+        .project-tech {
+            font-style: italic;
+            color: #555;
+        }
+
+        /* References */
+        .references-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .reference-item {
+            margin-bottom: 12px;
+        }
+
+        .reference-name {
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 9pt;
+            color: #777;
+            background-color: #f9f9f9;
+        }
+
+        .footer .divider {
+            margin: 0 10px;
+        }
+
+        /* Logo */
+        .logo-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+        }
+
+        .logo {
+            width: 100%;
+        }
+
+        /* Additional Info */
+        .additional-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #ff3a3a;
+            text-align: justify;
+        }
+
+        /* Page Break Control */
+        @media print {
+            .page-break {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="profile-info">
+            <h1>{{ data.firstName }} {{ data.lastName }}</h1>
+            <h2>{{ data.position }}</h2>
+        </div>
+        <div class="profile-img-container">
+            {% if photoData %}
+                <img src="{{ photoData }}" alt="Photo de profil" class="profile-img">
+            {% else %}
+                <img src="/images/avatar-placeholder.png" alt="Photo de profil" class="profile-img">
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Contact Information -->
+            <div class="section contact-info">
+                <h3 class="section-title">Contact</h3>
+                {% if data.email %}
+                    <p><span class="icon">✉</span> {{ data.email }}</p>
+                {% endif %}
+
+                {% if data.phone %}
+                    <p><span class="icon">☏</span> {{ data.phone }}</p>
+                {% endif %}
+
+                {% if data.address or data.city or data.country %}
+                    <p><span class="icon">⌂</span>
+                        {% if data.address %}{{ data.address }}{% endif %}
+                        {% if data.address and (data.city or data.country) %}, {% endif %}
+                        {% if data.city %}{{ data.city }}{% endif %}
+                        {% if data.city and data.country %}, {% endif %}
+                        {% if data.country %}{{ data.country }}{% endif %}
+                    </p>
+                {% endif %}
+
+                {% if data.linkedin %}
+                    <p><span class="icon">in</span> {{ data.linkedin }}</p>
+                {% endif %}
+
+                {% if data.github %}
+                    <p><span class="icon">★</span> {{ data.github }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Skills -->
+            {% if data.skills|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Compétences</h3>
+                    <div class="skills-container">
+                        {% for skill in data.skills %}
+                            <div class="skill-tag">{{ skill }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Languages -->
+            {% if data.languages|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Langues</h3>
+                    <ul class="languages-list">
+                        {% for language in data.languages %}
+                            <li class="language-item">
+                                <span class="language-name">{{ language }}</span>
+                                {% if data.languageLevels[loop.index0] is defined %}
+                                    <span class="language-level">{{ data.languageLevels[loop.index0] }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Summary/About Me -->
+            {% if data.additionalInfo %}
+                <div class="section">
+                    <h3 class="section-title">Profil</h3>
+                    <div class="additional-info">
+                        {{ data.additionalInfo }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Work Experience -->
+            {% if data.experience|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Expérience Professionnelle</h3>
+                    {% for exp in data.experience %}
+                        <div class="timeline-item">
+                            <div class="timeline-header">
+                                <h4 class="timeline-title">{{ exp.position }}</h4>
+                                <span class="timeline-period">
+                                        {{ exp.startDate }} - {{ exp.endDate|default('Présent') }}
+                                    </span>
+                            </div>
+                            <p class="timeline-subtitle">
+                                {{ exp.company }}{% if exp.location %}, {{ exp.location }}{% endif %}
+                            </p>
+                            {% if exp.description %}
+                                <p class="timeline-description">{{ exp.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Education -->
+            {% if data.education|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Formation</h3>
+                    {% for edu in data.education %}
+                        <div class="timeline-item">
+                            <div class="timeline-header">
+                                <h4 class="timeline-title">{{ edu.degree }}</h4>
+                                <span class="timeline-period">
+                                        {{ edu.startDate }} - {{ edu.endDate|default('Présent') }}
+                                    </span>
+                            </div>
+                            <p class="timeline-subtitle">
+                                {{ edu.institution }}{% if edu.location %}, {{ edu.location }}{% endif %}
+                            </p>
+                            {% if edu.description %}
+                                <p class="timeline-description">{{ edu.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Projects -->
+            {% if data.projects|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Projets</h3>
+                    {% for project in data.projects %}
+                        <div class="project-item">
+                            <div class="project-title">
+                                {{ project.name }}
+                                {% if project.link %}
+                                    <a href="{{ project.link }}">(Lien)</a>
+                                {% endif %}
+                            </div>
+                            {% if project.description %}
+                                <p class="project-description">{{ project.description }}</p>
+                            {% endif %}
+                            {% if project.technologies %}
+                                <p class="project-tech">Technologies: {{ project.technologies }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- References -->
+            {% if data.references|length > 0 %}
+                <div class="section">
+                    <h3 class="section-title">Références</h3>
+                    <ul class="references-list">
+                        {% for reference in data.references %}
+                            <li class="reference-item">
+                                <div class="reference-name">{{ reference.name }}</div>
+                                <div>
+                                    {% if reference.position %}{{ reference.position }}{% endif %}
+                                    {% if reference.position and reference.company %} - {% endif %}
+                                    {% if reference.company %}{{ reference.company }}{% endif %}
+                                </div>
+                                {% if reference.contact %}
+                                    <div>Contact: {{ reference.contact }}</div>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div>CV généré le {{ generatedDate|date('d/m/Y') }}</div>
+    </div>
+
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="/images/logo.png" alt="ESPRIT Logo" class="logo">
+    </div>
+</div>
+</body>
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\cv_template_classic.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template_classic.html.twig
+-----
+{# templates/Templates/cv_generator/cv_template_classic.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV {{ data.firstName }} {{ data.lastName }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: {{ data.textColor|default('#000000') }};
+
+        {% if data.selectedBackgroundType is defined and data.selectedBackgroundType == 'svg' %}
+            background-image: url('/images/backgrounds/{{ data.selectedBackground }}');
+            background-size: cover;
+            background-repeat: no-repeat;
+        {% elseif data.selectedBackground is defined and data.selectedBackground != 'none' %}
+            background-image: url('/images/backgrounds/{{ data.selectedBackground }}');
+            background-repeat: repeat;
+        {% else %}
+            background-color: {{ data.selectedBackgroundColor|default('#ffffff') }};
+        {% endif %}
+
+            padding: 2cm;
+            margin: 0;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 600;
+            margin-top: 0;
+            color: {{ data.textColor|default('#000000') }};
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 0.2em;
+        }
+
+        h2 {
+            font-size: 1.4em;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 15px 0;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 5px;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+
+        .header-text {
+            flex-grow: 1;
+        }
+
+        .contact-info {
+            margin-bottom: 20px;
+        }
+
+        .contact-info p {
+            margin: 5px 0;
+        }
+
+        .job-title {
+            font-size: 1.2em;
+            font-weight: 400;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .experience-item, .education-item {
+            margin-bottom: 15px;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .item-title {
+            font-weight: bold;
+        }
+
+        .item-date {
+            color: #666;
+        }
+
+        .item-subtitle {
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .item-description {
+            margin-top: 5px;
+        }
+
+        .skills-list, .languages-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .skill-item, .language-item {
+            background-color: rgba(0,0,0,0.05);
+            padding: 3px 10px;
+            border-radius: 3px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header-container">
+    {% if photoData is defined and photoData is not empty %}
+        <img class="profile-image" src="{{ photoData }}" alt="{{ data.firstName }} {{ data.lastName }}">
+    {% endif %}
+
+    <div class="header-text">
+        <h1>{{ data.firstName }} {{ data.lastName }}</h1>
+        <div class="job-title">{{ data.position }}</div>
+
+        <div class="contact-info">
+            {% if data.email is defined and data.email is not empty %}
+                <p><strong>Email:</strong> {{ data.email }}</p>
+            {% endif %}
+
+            {% if data.phone is defined and data.phone is not empty %}
+                <p><strong>Téléphone:</strong> {{ data.phone }}</p>
+            {% endif %}
+
+            {% if data.address is defined and data.address is not empty %}
+                <p><strong>Adresse:</strong>
+                    {{ data.address }}
+                    {% if data.city is defined and data.city is not empty %}
+                        , {{ data.city }}
+                    {% endif %}
+                    {% if data.country is defined and data.country is not empty %}
+                        , {{ data.country }}
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            {% if data.linkedin is defined and data.linkedin is not empty %}
+                <p><strong>LinkedIn:</strong> {{ data.linkedin }}</p>
+            {% endif %}
+
+            {% if data.github is defined and data.github is not empty %}
+                <p><strong>GitHub:</strong> {{ data.github }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr>
+
+{% if data.additionalInfo is defined and data.additionalInfo is not empty %}
+    <div class="section">
+        <h2>Profil</h2>
+        <p>{{ data.additionalInfo }}</p>
+    </div>
+{% endif %}
+
+{% if data.experience is defined and data.experience|length > 0 %}
+    <div class="section">
+        <h2>Expérience Professionnelle</h2>
+
+        {% for exp in data.experience %}
+            <div class="experience-item">
+                <div class="item-header">
+                    <div class="item-title">{{ exp.position }}</div>
+                    <div class="item-date">{{ exp.startDate }} - {{ exp.endDate|default('Présent') }}</div>
+                </div>
+                <div class="item-subtitle">{{ exp.company }}{% if exp.location %}, {{ exp.location }}{% endif %}</div>
+
+                {% if exp.description is defined and exp.description is not empty %}
+                    <div class="item-description">{{ exp.description }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if data.education is defined and data.education|length > 0 %}
+    <div class="section">
+        <h2>Formation</h2>
+
+        {% for edu in data.education %}
+            <div class="education-item">
+                <div class="item-header">
+                    <div class="item-title">{{ edu.degree }}</div>
+                    <div class="item-date">{{ edu.startDate }} - {{ edu.endDate|default('Présent') }}</div>
+                </div>
+                <div class="item-subtitle">{{ edu.institution }}{% if edu.location %}, {{ edu.location }}{% endif %}</div>
+
+                {% if edu.description is defined and edu.description is not empty %}
+                    <div class="item-description">{{ edu.description }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if data.projects is defined and data.projects|length > 0 %}
+    <div class="section">
+        <h2>Projets</h2>
+
+        {% for project in data.projects %}
+            <div class="education-item">
+                <div class="item-title">{{ project.name }}</div>
+
+                {% if project.description is defined and project.description is not empty %}
+                    <div class="item-description">{{ project.description }}</div>
+                {% endif %}
+
+                {% if project.technologies is defined and project.technologies is not empty %}
+                    <div class="item-subtitle"><strong>Technologies:</strong> {{ project.technologies }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if data.skills is defined and data.skills|length > 0 %}
+    <div class="section">
+        <h2>Compétences</h2>
+
+        <div class="skills-list">
+            {% for skill in data.skills %}
+                <div class="skill-item">{{ skill }}</div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+{% if data.languages is defined and data.languages|length > 0 %}
+    <div class="section">
+        <h2>Langues</h2>
+
+        <div class="languages-list">
+            {% for i, language in data.languages %}
+                <div class="language-item">
+                    {{ language }}
+                    {% if data.languageLevels is defined and data.languageLevels[i] is defined %}
+                        ({{ data.languageLevels[i] }})
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<div class="footer">
+    <p class="text-muted small">CV généré le {{ generatedDate|date('d/m/Y') }}</p>
+</div>
+</body>
+</html>
+==================================================
+
+Fichier: Templates\cv_generator\cv_template_blue.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\cv_template_blue.html.twig
+-----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ data.firstName }} {{ data.lastName }} - CV</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent: #1abc9c;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            color: var(--dark);
+            background-color: var(--light);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cv-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            overflow: hidden;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 60px 40px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            right: -100px;
+            top: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            left: -50px;
+            bottom: -100px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .profile-title {
+            position: relative;
+            z-index: 1;
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .position {
+            font-size: 22px;
+            opacity: 0.9;
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .contact-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 30px;
+        }
+
+        .contact-icon {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 24px;
+            margin-bottom: 30px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 50%;
+            height: 4px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        .about-text {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            height: calc(100% - 8px);
+            width: 2px;
+            background-color: var(--primary);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -30px;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--white);
+            border: 3px solid var(--primary);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-company {
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .timeline-period {
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .skill-tag {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .language-item {
+            margin-bottom: 15px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .col-8 {
+            width: 70%;
+        }
+
+        .col-4 {
+            width: 30%;
+        }
+
+        .profile-img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.2);
+            margin-left: auto;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+            }
+
+            .cv-container {
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="cv-container">
+    <!-- Header Section -->
+    <header>
+        <div class="row">
+            <div class="col-8 profile-title">
+                <h1 class="name">{{ data.firstName }} {{ data.lastName }}</h1>
+                <div class="position">{{ data.position }}</div>
+                {% if data.additionalInfo %}
+                    <p>{{ data.additionalInfo }}</p>
+                {% endif %}
+
+                <div class="contact-list">
+                    {% if data.email %}
+                        <div class="contact-item">
+                            <span class="contact-icon">@</span>
+                            <span>{{ data.email }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.phone %}
+                        <div class="contact-item">
+                            <span class="contact-icon">☏</span>
+                            <span>{{ data.phone }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.address or data.city or data.country %}
+                        <div class="contact-item">
+                            <span class="contact-icon">⌂</span>
+                            <span>{{ [data.city, data.country]|filter(v => v is not empty)|join(', ') }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if data.github %}
+                        <div class="contact-item">
+                            <span class="contact-icon">GH</span>
+                            <span>{{ data.github }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-4" style="text-align: right;">
+                {% if photoData is defined and photoData %}
+                    <img src="{{ photoData|raw }}" alt="Profile Image" class="profile-img">
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Experience -->
+        {% if data.experience is defined and data.experience|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Experience</h2>
+
+                <div class="timeline">
+                    {% for experience in data.experience %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-title">{{ experience.position }}</div>
+                            <div class="timeline-company">{{ experience.company }}{% if experience.location %}, {{ experience.location }}{% endif %}</div>
+                            <div class="timeline-period">{{ experience.startDate }}{% if experience.startDate and experience.endDate %} - {% endif %}{{ experience.endDate }}</div>
+                            {% if experience.description %}
+                                <p>{{ experience.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Education -->
+        {% if data.education is defined and data.education|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Education</h2>
+
+                <div class="timeline">
+                    {% for education in data.education %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-title">{{ education.degree }}</div>
+                            <div class="timeline-company">{{ education.institution }}{% if education.location %}, {{ education.location }}{% endif %}</div>
+                            <div class="timeline-period">{{ education.startDate }}{% if education.startDate and education.endDate %} - {% endif %}{{ education.endDate }}</div>
+                            {% if education.description %}
+                                <p>{{ education.description }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Skills -->
+        {% if data.skills is defined and data.skills|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Skills</h2>
+
+                <div class="skills-grid">
+                    {% for skill in data.skills %}
+                        <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Languages -->
+        {% if data.languages is defined and data.languages|length > 0 %}
+            <section class="section">
+                <h2 class="section-title">Languages</h2>
+
+                {% for language in data.languages %}
+                    <div class="language-item">
+                        <strong>{{ language }}</strong>
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777;">
+            CV generated on {{ generatedDate|date('F d, Y') }} using ESPRIT CV Generator
+        </div>
+    </main>
+</div>
+{% if app is defined and app.debug is defined and app.debug %}
+    <div style="background: #f5f5f5; border: 1px solid #ddd; padding: 20px; margin-top: 30px; font-family: monospace;">
+        <h2>Debug Data</h2>
+        <pre>{{ dump(data) }}</pre>
+    </div>
+{% endif %}
+</body>
+
+</html>
+==================================================
+
+Fichier: templates\cv_builder\content_editor.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\templates\cv_builder\content_editor.html.twig
+-----
+{% extends 'base.html.twig' %}
+
+{% block title %}Éditeur de contenu CV{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+    <link rel="stylesheet" href="{{ asset('css/cv-customize.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pickr-widget@1.3.3/dist/themes/classic.min.css">
+    <style>
+        :root {
+            --primary-color: #ff3a3a;     /* Rouge vif */
+            --primary-dark: #e12d2d;      /* Rouge foncé */
+            --primary-light: #ff6b6b;     /* Rouge clair */
+            --secondary-color: #2d3748;   /* Gris foncé */
+            --secondary-dark: #1a202c;    /* Presque noir */
+            --light-bg: #f8f9fa;          /* Gris très clair */
+            --dark-bg: #343a40;           /* Gris foncé */
+            --esprit-gray: #6c757d;       /* Gris moyen */
+            --esprit-light: #e9ecef;      /* Gris très clair */
+        }
+
+        .form-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .dynamic-form-item {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .dynamic-form-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .remove-item {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: var(--primary-color);
+            background: none;
+            border: none;
+            font-size: 16px;
+        }
+
+        .add-item {
+            margin-top: 15px;
+        }
+
+        .preview-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 50rem;
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+        }
+
+        .progress-container {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            background-color: var(--primary-color);
+        }
+
+        .profile-img-container {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 25px;
+            border: 3px solid var(--primary-color);
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-img-upload {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .profile-img-upload:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .autofill-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .autofill-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .autofill-menu {
+            position: absolute;
+            z-index: 1000;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 10px;
+            min-width: 200px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .autofill-menu-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .autofill-menu-item:hover {
+            background-color: rgba(255, 58, 58, 0.1);
+            color: var(--primary-color);
+        }
+
+        .autofill-heading {
+            font-weight: bold;
+            padding: 5px 12px;
+            color: var(--esprit-gray);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-heading {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            color: var(--secondary-dark);
+            font-weight: 700;
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title:after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 4px;
+            background-color: var(--primary-color);
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .section-subtitle {
+            color: var(--esprit-gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card-header {
+            background-color: var(--primary-color) !important;
+            color: white;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-dark) !important;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark) !important;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }
+
+        .btn-success {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-dark) !important;
+        }
+
+        .btn-success:hover {
+            background-color: var(--primary-dark) !important;
+        }
+
+        .btn-outline-success {
+            color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .btn-outline-success:hover {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }
+
+        .testimonial-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            margin-bottom: 30px;
+            height: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .testimonial-quote {
+            font-size: 5rem;
+            line-height: 1;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 58, 58, 0.1);
+            font-family: sans-serif;
+        }
+
+        .testimonial-content {
+            font-style: italic;
+            margin-bottom: 20px;
+            color: var(--esprit-gray);
+        }
+
+        .testimonial-user {
+            display: flex;
+            align-items: center;
+        }
+
+        .testimonial-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+
+        .testimonial-name {
+            font-size: 1.125rem;
+            margin-bottom: 0;
+            color: var(--secondary-dark);
+        }
+
+        .testimonial-position {
+            font-size: 0.875rem;
+            color: var(--esprit-gray);
+            margin-bottom: 5px;
+        }
+
+        .testimonial-rating {
+            color: #ffc107;
+            font-size: 0.875rem;
+        }
+
+        .autofill-all-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .autofill-all-btn:hover {
+            transform: scale(1.1);
+            background-color: var(--primary-dark);
+        }
+
+        .alert-info {
+            background-color: rgba(255, 58, 58, 0.1);
+            border-color: rgba(255, 58, 58, 0.2);
+            color: var(--primary-dark);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid my-4">
+        <div class="section-heading animate-on-scroll">
+            <h1 class="section-title">Éditeur de Contenu CV</h1>
+            <p class="section-subtitle">Complétez votre CV avec vos informations professionnelles</p>
+            <p class="text-muted mt-2">2025-04-30 01:06:13 | Mohamed-abidi-95</p>
+        </div>
+
+        <div class="progress-container animate-on-scroll">
+            <div class="progress-bar" style="width: 60%"></div>
+        </div>
+
+        <div class="alert alert-info d-flex align-items-center mb-4 animate-on-scroll">
+            <i class="fas fa-info-circle me-3 fs-4"></i>
+            <div>
+                Remplissez les informations de votre CV ci-dessous. Utilisez le bouton <i class="fas fa-magic text-primary"></i> pour remplir automatiquement tous les champs.
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card sticky-top animate-on-scroll" style="top: 20px; z-index: 1;">
+                    <div class="card-header text-white">
+                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Sections</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="nav flex-column nav-pills" id="form-sections" role="tablist">
+                            <a class="nav-link active" id="personal-tab" data-bs-toggle="pill" href="#personal" role="tab">
+                                <i class="fas fa-user me-2"></i>Informations personnelles
+                                <i class="fas fa-check-circle text-success float-end"></i>
+                            </a>
+                            <a class="nav-link" id="experience-tab" data-bs-toggle="pill" href="#experience" role="tab">
+                                <i class="fas fa-briefcase me-2"></i>Expérience professionnelle
+                            </a>
+                            <a class="nav-link" id="education-tab" data-bs-toggle="pill" href="#education" role="tab">
+                                <i class="fas fa-graduation-cap me-2"></i>Formation
+                            </a>
+                            <a class="nav-link" id="skills-tab" data-bs-toggle="pill" href="#skills" role="tab">
+                                <i class="fas fa-star me-2"></i>Compétences
+                            </a>
+                            <a class="nav-link" id="languages-tab" data-bs-toggle="pill" href="#languages" role="tab">
+                                <i class="fas fa-language me-2"></i>Langues
+                            </a>
+                            <a class="nav-link" id="projects-tab" data-bs-toggle="pill" href="#projects" role="tab">
+                                <i class="fas fa-code me-2"></i>Projets
+                            </a>
+                            <a class="nav-link" id="references-tab" data-bs-toggle="pill" href="#references" role="tab">
+                                <i class="fas fa-comment me-2"></i>Références
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3 animate-on-scroll">
+                    <div class="card-header text-white">
+                        <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Conseils de rédaction</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <p class="testimonial-content">Utilisez des verbes d'action et quantifiez vos réalisations pour donner plus d'impact à votre CV.</p>
+                            <div class="testimonial-user">
+                                <img src="https://ui-avatars.com/api/?name=Coach+CV&background=ff3a3a&color=fff" alt="Coach CV" class="testimonial-avatar">
+                                <div class="testimonial-info">
+                                    <h4 class="testimonial-name">Coach CV</h4>
+                                    <p class="testimonial-position">Expert en recrutement</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <form id="cv-form" method="POST" action="/cv-generator/generate" enctype="multipart/form-data">
+                    <input type="hidden" name="template" value="elegant">
+                    <div class="tab-content">
+                        <!-- Personal Information Section -->
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-user me-2"></i>Informations personnelles</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="personalInfoAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div class="profile-img-container">
+                                    <img src="https://ui-avatars.com/api/?name=M+A&background=ff3a3a&color=fff" alt="Photo de profil" id="profilePreview">
+                                    <div class="profile-img-upload" id="uploadProfileBtn">
+                                        <i class="fas fa-camera"></i> Modifier
+                                    </div>
+                                    <input type="file" id="profilePhotoInput" style="display: none" accept="image/*">
+                                    <input type="hidden" name="photoData" id="photoDataInput">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="firstName" required>
+                                            <button type="button" class="btn btn-outline-primary field-autofill" data-field="firstName">
+                                                <i class="fas fa-magic"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="lastName" required>
+                                            <button type="button" class="btn btn-outline-primary field-autofill" data-field="lastName">
+                                                <i class="fas fa-magic"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Poste/Titre <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="position" required>
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="position">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="email" class="form-control" name="email" required>
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="email">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="tel" class="form-control" name="phone" required>
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="phone">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Adresse</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="address">
+                                            <button type="button" class="btn btn-outline-primary field-autofill" data-field="address">
+                                                <i class="fas fa-magic"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Ville</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="city">
+                                            <button type="button" class="btn btn-outline-primary field-autofill" data-field="city">
+                                                <i class="fas fa-magic"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Pays</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="country" value="Tunisie">
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="country">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Profil LinkedIn <span class="text-muted">(optionnel)</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="linkedin" placeholder="linkedin.com/in/votrenom">                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="linkedin">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Profil GitHub <span class="text-muted">(optionnel)</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="github" placeholder="github.com/votrenom">
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="github">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Résumé/Profil</label>
+                                    <div class="input-group">
+                                        <textarea class="form-control" name="additionalInfo" rows="4"></textarea>
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="additionalInfo">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary" disabled>Précédent</button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="experience">
+                                        Suivant: Expérience professionnelle
+                                        <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Experience Section -->
+                        <div class="tab-pane fade" id="experience" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-briefcase me-2"></i>Expérience professionnelle</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="experienceAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div id="experience-container">
+                                    <!-- Template for work experience entries -->
+                                    <div class="dynamic-form-item animate-on-scroll" data-index="0">
+                                        <button type="button" class="remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Poste/Titre <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="experience[0][position]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="experience[0][position]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Entreprise <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="experience[0][company]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="experience[0][company]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Localisation</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="experience[0][location]">
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="experience[0][location]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Date de début <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="experience[0][startDate]" placeholder="MM/AAAA" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Date de fin</label>
+                                                <input type="text" class="form-control" name="experience[0][endDate]" placeholder="MM/AAAA ou Présent">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Description</label>
+                                            <div class="input-group">
+                                                <textarea class="form-control" name="experience[0][description]" rows="3"></textarea>
+                                                <button type="button" class="btn btn-outline-primary field-autofill" data-field="experience[0][description]">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-success add-item" id="add-experience">
+                                    <i class="fas fa-plus me-2"></i>Ajouter une expérience
+                                </button>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="personal">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="education">
+                                        Suivant: Formation <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Education Section -->
+                        <div class="tab-pane fade" id="education" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-graduation-cap me-2"></i>Formation</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="educationAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div id="education-container">
+                                    <!-- Template for education entries -->
+                                    <div class="dynamic-form-item animate-on-scroll" data-index="0">
+                                        <button type="button" class="remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Diplôme/Certificat <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="education[0][degree]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="education[0][degree]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Établissement <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="education[0][institution]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="education[0][institution]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Localisation</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="education[0][location]">
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="education[0][location]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Date de début <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="education[0][startDate]" placeholder="MM/AAAA" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Date de fin</label>
+                                                <input type="text" class="form-control" name="education[0][endDate]" placeholder="MM/AAAA ou Présent">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Description</label>
+                                            <div class="input-group">
+                                                <textarea class="form-control" name="education[0][description]" rows="3"></textarea>
+                                                <button type="button" class="btn btn-outline-primary field-autofill" data-field="education[0][description]">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-success add-item" id="add-education">
+                                    <i class="fas fa-plus me-2"></i>Ajouter une formation
+                                </button>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="experience">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="skills">
+                                        Suivant: Compétences <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills Section -->
+                        <div class="tab-pane fade" id="skills" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-star me-2"></i>Compétences</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="skillsAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Compétences techniques <span class="text-danger">*</span></label>
+                                    <div class="input-group mb-2">
+                                        <select id="skills-select" multiple placeholder="Sélectionnez ou ajoutez des compétences..." class="form-control"></select>
+                                        <button type="button" class="btn btn-outline-primary field-autofill" data-field="skills">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">Tapez pour ajouter des compétences personnalisées ou sélectionnez parmi les suggestions</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Regrouper par catégorie</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="groupSkillsByCategory">
+                                        <label class="form-check-label" for="groupSkillsByCategory">Activer le regroupement par catégorie</label>
+                                    </div>
+
+                                    <div id="skill-categories" class="mt-3" style="display: none;">
+                                        <div class="mb-3">
+                                            <label class="form-label">Catégories de compétences</label>
+                                            <div class="dynamic-form-item animate-on-scroll mb-2">
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-2">
+                                                        <input type="text" class="form-control" name="skillCategories[0]" placeholder="Ex: Programmation" value="Développement">
+                                                    </div>
+                                                    <div class="col-md-8 mb-2">
+                                                        <select multiple class="form-control skill-category-select" data-category="0"></select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dynamic-form-item animate-on-scroll mb-2">
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-2">
+                                                        <input type="text" class="form-control" name="skillCategories[1]" placeholder="Ex: Frameworks" value="Frameworks">
+                                                    </div>
+                                                    <div class="col-md-8 mb-2">
+                                                        <select multiple class="form-control skill-category-select" data-category="1"></select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dynamic-form-item animate-on-scroll">
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-2">
+                                                        <input type="text" class="form-control" name="skillCategories[2]" placeholder="Ex: Outils" value="Outils">
+                                                    </div>
+                                                    <div class="col-md-8 mb-2">
+                                                        <select multiple class="form-control skill-category-select" data-category="2"></select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="education">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="languages">
+                                        Suivant: Langues <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Languages Section -->
+                        <div class="tab-pane fade" id="languages" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-language me-2"></i>Langues</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="languagesAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div id="languages-container">
+                                    <!-- Template for language entries -->
+                                    <div class="dynamic-form-item animate-on-scroll" data-index="0">
+                                        <button type="button" class="remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Langue <span class="text-danger">*</span></label>
+                                                <select class="form-select" name="languages[0]" required>
+                                                    <option value="">Sélectionnez une langue</option>
+                                                    <option value="Arabe">Arabe</option>
+                                                    <option value="Français">Français</option>
+                                                    <option value="Anglais">Anglais</option>
+                                                    <option value="Espagnol">Espagnol</option>
+                                                    <option value="Allemand">Allemand</option>
+                                                    <option value="Italien">Italien</option>
+                                                    <option value="Chinois">Chinois</option>
+                                                    <option value="Japonais">Japonais</option>
+                                                    <option value="Russe">Russe</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Niveau</label>
+                                                <select class="form-select" name="languageLevels[0]">
+                                                    <option value="Langue maternelle">Langue maternelle</option>
+                                                    <option value="Courant">Courant</option>
+                                                    <option value="Avancé">Avancé</option>
+                                                    <option value="Intermédiaire">Intermédiaire</option>
+                                                    <option value="Débutant">Débutant</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-success add-item" id="add-language">
+                                    <i class="fas fa-plus me-2"></i>Ajouter une langue
+                                </button>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="skills">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="projects">
+                                        Suivant: Projets <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Projects Section -->
+                        <div class="tab-pane fade" id="projects" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-code me-2"></i>Projets</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="projectsAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div id="projects-container">
+                                    <!-- Template for project entries -->
+                                    <div class="dynamic-form-item animate-on-scroll" data-index="0">
+                                        <button type="button" class="remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Nom du projet <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="projects[0][name]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="projects[0][name]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Lien (optionnel)</label>
+                                                <input type="url" class="form-control" name="projects[0][link]" placeholder="https://...">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Description</label>
+                                            <div class="input-group">
+                                                <textarea class="form-control" name="projects[0][description]" rows="3"></textarea>
+                                                <button type="button" class="btn btn-outline-primary field-autofill" data-field="projects[0][description]">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Technologies utilisées</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" name="projects[0][technologies]" placeholder="ex: HTML, CSS, JavaScript, PHP">
+                                                <button type="button" class="btn btn-outline-primary field-autofill" data-field="projects[0][technologies]">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-success add-item" id="add-project">
+                                    <i class="fas fa-plus me-2"></i>Ajouter un projet
+                                </button>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="languages">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary next-section" data-next="references">
+                                        Suivant: Références <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- References Section -->
+                        <div class="tab-pane fade" id="references" role="tabpanel">
+                            <div class="form-section animate-on-scroll">
+                                <div class="form-section-header d-flex justify-content-between">
+                                    <h3><i class="fas fa-comment me-2"></i>Références</h3>
+                                    <button type="button" class="btn btn-light autofill-btn" id="referencesAutofill">
+                                        <i class="fas fa-magic text-primary"></i> Autosaisie
+                                    </button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="references-available" checked>
+                                        <label class="form-check-label" for="references-available">
+                                            Inclure la mention "Références disponibles sur demande"
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="references-container">
+                                    <!-- Template for reference entries -->
+                                    <div class="dynamic-form-item animate-on-scroll" data-index="0">
+                                        <button type="button" class="remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="references[0][name]" required>
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="references[0][name]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Poste/Titre</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="references[0][position]">
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="references[0][position]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Entreprise/Organisation</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="references[0][company]">
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="references[0][company]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Contact (Email/Téléphone)</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" name="references[0][contact]">
+                                                    <button type="button" class="btn btn-outline-primary field-autofill" data-field="references[0][contact]">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Relation</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" name="references[0][relationship]" placeholder="ex: Responsable, Superviseur, Professeur">
+                                                <button type="button" class="btn btn-outline-primary field-autofill" data-field="references[0][relationship]">
+                                                    <i class="fas fa-magic"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {# Ajoutez cette section juste avant le bloc de boutons #}
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-light">
+                                                <h5 class="mb-0">Personnalisation du CV</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Couleur de fond du CV</label>
+                                                        <div class="input-group mb-3">
+                                                            <span class="input-group-text">Couleur</span>
+                                                            <div id="color-picker" class="me-2"></div>
+                                                            <input type="hidden" name="backgroundColor" id="backgroundColor" value="#ffffff">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Couleur du texte</label>
+                                                        <div class="input-group mb-3">
+                                                            <span class="input-group-text">Couleur</span>
+                                                            <div id="text-color-picker" class="me-2"></div>
+                                                            <input type="hidden" name="textColor" id="textColor" value="#000000">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <label class="form-label">Aperçu</label>
+                                                    <div id="color-preview" class="p-3 border" style="background-color: #ffffff; color: #000000;">
+                                                        <p class="mb-1">Mohamed Abidi</p>
+                                                        <p class="mb-0 small">Développeur Full Stack</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-light">
+                                                <h5 class="mb-0">Galerie de fonds</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="text-muted mb-3">Cliquez sur une image pour l'utiliser comme fond de votre CV.</p>
+
+                                                <div class="row background-gallery">
+                                                    <!-- Background uni (blanc par défaut) -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border selected" data-background="none" data-color="#ffffff">
+                                                            <div class="bg-preview bg-white"></div>
+                                                            <div class="bg-name">Blanc uni</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Elegant Blue SVG -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border" data-background="elegant-blue.svg" data-type="svg">
+                                                            <div class="bg-preview" style="background-image: url('/images/backgrounds/elegant-blue.svg')"></div>
+                                                            <div class="bg-name">Élégant Bleu</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Professional Green SVG -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border" data-background="professional-green.svg" data-type="svg">
+                                                            <div class="bg-preview" style="background-image: url('/images/backgrounds/professional-green.svg')"></div>
+                                                            <div class="bg-name">Professionnel Vert</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Modern Indigo SVG -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border" data-background="modern-indigo.svg" data-type="svg">
+                                                            <div class="bg-preview" style="background-image: url('/images/backgrounds/modern-indigo.svg')"></div>
+                                                            <div class="bg-name">Moderne Indigo</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Gris neutre -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border" data-background="none" data-color="#f5f5f5">
+                                                            <div class="bg-preview bg-light"></div>
+                                                            <div class="bg-name">Gris neutre</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Couleur personnalisée -->
+                                                    <div class="col-4 col-md-3 col-lg-2 mb-3">
+                                                        <div class="bg-thumbnail border" data-background="custom-color">
+                                                            <div class="bg-preview" id="custom-color-preview" style="background: linear-gradient(45deg, #f3f3f3 25%, #e0e0e0 25%, #e0e0e0 50%, #f3f3f3 50%, #f3f3f3 75%, #e0e0e0 75%, #e0e0e0 100%)"></div>
+                                                            <div class="bg-name">Couleur personnalisée</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Champs cachés pour stocker les choix -->
+                                                <input type="hidden" name="selectedBackground" id="selectedBackground" value="none">
+                                                <input type="hidden" name="selectedBackgroundType" id="selectedBackgroundType" value="color">
+                                                <input type="hidden" name="selectedBackgroundColor" id="selectedBackgroundColor" value="#ffffff">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Votre bloc de boutons existant avec le nouveau bouton de test -->
+                                
+                                <button type="button" class="btn btn-outline-success add-item" id="add-reference">
+                                    <i class="fas fa-plus me-2"></i>Ajouter une référence
+                                </button>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary prev-section" data-prev="projects">
+                                        <i class="fas fa-arrow-left me-1"></i> Précédent
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-lg" id="generate-cv-btn">
+                                        <i class="fas fa-file-pdf me-2"></i>Générer mon CV
+                                    </button>
+                                    <!-- Ajoutez ceci à côté de votre bouton "Générer mon CV" actuel -->
+                                    <button type="button" class="btn btn-secondary mx-2" onclick="testFormSubmission()">
+                                        <i class="fas fa-vial me-2"></i>Tester la soumission
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Autofill Button -->
+    <div class="autofill-all-btn" id="autofillAllButton" title="Remplir automatiquement tous les champs">
+        <i class="fas fa-magic fa-lg"></i>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pickr-widget@1.3.3/dist/pickr.min.js"></script>
+    <script src="{{ asset('js/cv-customize.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Form submission handler attached:", !!document.getElementById('cv-form'));
+
+            // Animation on scroll
+            function animateOnScroll() {
+                const elements = document.querySelectorAll('.animate-on-scroll');
+                elements.forEach(element => {
+                    const position = element.getBoundingClientRect();
+                    if (position.top < window.innerHeight - 50) {
+                        element.classList.add('animated');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', animateOnScroll);
+            window.addEventListener('load', animateOnScroll);
+            animateOnScroll(); // Initial check on page load
+
+            // Initialize Tom Select for skills
+            const skillsSelect = new TomSelect('#skills-select', {
+                plugins: ['remove_button'],
+                persist: false,
+                createOnBlur: true,
+                create: true,
+                valueField: 'value',
+                labelField: 'text',
+                searchField: 'text',
+                options: [
+                    { value: 'JavaScript', text: 'JavaScript' },
+                    { value: 'PHP', text: 'PHP' },
+                    { value: 'HTML/CSS', text: 'HTML/CSS' },
+                    { value: 'React.js', text: 'React.js' },
+                    { value: 'Vue.js', text: 'Vue.js' },
+                    { value: 'Angular', text: 'Angular' },
+                    { value: 'Node.js', text: 'Node.js' },
+                    { value: 'Express.js', text: 'Express.js' },
+                    { value: 'MongoDB', text: 'MongoDB' },
+                    { value: 'MySQL', text: 'MySQL' },
+                    { value: 'PostgreSQL', text: 'PostgreSQL' },
+                    { value: 'Git', text: 'Git' },
+                    { value: 'Docker', text: 'Docker' },
+                    { value: 'AWS', text: 'AWS' },
+                    { value: 'Python', text: 'Python' },
+                    { value: 'Java', text: 'Java' },
+                    { value: 'C#', text: 'C#' },
+                    { value: 'Swift', text: 'Swift' },
+                    { value: 'Kotlin', text: 'Kotlin' },
+                    { value: 'Flutter', text: 'Flutter' },
+                    { value: 'React Native', text: 'React Native' },
+                    { value: 'Symfony', text: 'Symfony' },
+                    { value: 'Laravel', text: 'Laravel' },
+                    { value: 'Django', text: 'Django' },
+                    { value: 'Ruby on Rails', text: 'Ruby on Rails' },
+                ],
+                render: {
+                    option: function(data, escape) {
+                        return '<div class="py-2 px-3">' + escape(data.text) + '</div>';
+                    },
+                    item: function(data, escape) {
+                        return '<div class="badge bg-primary me-1 mb-1">' + escape(data.text) + '</div>';
+                    }
+                }
+            });
+
+            // Initialize Tom Select for skill categories
+            document.querySelectorAll('.skill-category-select').forEach(select => {
+                new TomSelect(select, {
+                    plugins: ['remove_button'],
+                    persist: false,
+                    create: false,
+                });
+            });
+
+            // Toggle skill categories display
+            document.getElementById('groupSkillsByCategory').addEventListener('change', function() {
+                document.getElementById('skill-categories').style.display = this.checked ? 'block' : 'none';
+            });
+
+            // Tab navigation
+            document.querySelectorAll('.next-section').forEach(button => {
+                button.addEventListener('click', function() {
+                    const next = this.dataset.next;
+                    document.querySelector(`#${next}-tab`).click();
+                });
+            });
+
+            document.querySelectorAll('.prev-section').forEach(button => {
+                button.addEventListener('click', function() {
+                    const prev = this.dataset.prev;
+                    document.querySelector(`#${prev}-tab`).click();
+                });
+            });
+
+            // Dynamic forms (add/remove items)
+            function setupDynamicForms(containerId, addButtonId) {
+                const container = document.getElementById(containerId);
+                const addButton = document.getElementById(addButtonId);
+
+                if (container && addButton) {
+                    // Handle add button
+                    addButton.addEventListener('click', function() {
+                        const items = container.querySelectorAll('.dynamic-form-item');
+                        const newIndex = items.length;
+
+                        // Clone template and update indices
+                        const newItem = items[0].cloneNode(true);
+                        newItem.dataset.index = newIndex;
+
+                        // Update input names
+                        newItem.querySelectorAll('input, select, textarea').forEach(input => {
+                            if (input.name) {
+                                input.name = input.name.replace(/\[\d+\]/, `[${newIndex}]`);
+                                input.value = '';
+                            }
+                        });
+
+                        // Update autofill button data
+                        newItem.querySelectorAll('.field-autofill').forEach(btn => {
+                            if (btn.dataset.field) {
+                                btn.dataset.field = btn.dataset.field.replace(/\[\d+\]/, `[${newIndex}]`);
+                            }
+                        });
+
+                        container.appendChild(newItem);
+                        animateOnScroll(); // Re-check animations
+                    });
+
+                    // Handle remove buttons (event delegation)
+                    container.addEventListener('click', function(e) {
+                        if (e.target.closest('.remove-item')) {
+                            const item = e.target.closest('.dynamic-form-item');
+                            const items = container.querySelectorAll('.dynamic-form-item');
+
+                            // Don't remove if it's the last one
+                            if (items.length > 1) {
+                                item.remove();
+                            } else {
+                                // Clear values instead
+                                item.querySelectorAll('input, select, textarea').forEach(input => {
+                                    input.value = '';
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Setup dynamic forms
+            setupDynamicForms('experience-container', 'add-experience');
+            setupDynamicForms('education-container', 'add-education');
+            setupDynamicForms('projects-container', 'add-project');
+            setupDynamicForms('references-container', 'add-reference');
+            setupDynamicForms('languages-container', 'add-language');
+
+            // Profile image upload
+            document.getElementById('uploadProfileBtn').addEventListener('click', function() {
+                document.getElementById('profilePhotoInput').click();
+            });
+
+            document.getElementById('profilePhotoInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('profilePreview').src = event.target.result;
+                        document.getElementById('photoDataInput').value = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Sample data for autofill
+            const sampleData = {
+                firstName: 'Mohamed',
+                lastName: 'Abidi',
+                position: 'Développeur Full Stack',
+                email: 'mohamed.abidi@example.com',
+                phone: '+216 55 123 456',
+                address: '15 Avenue Habib Bourguiba',
+                city: 'Tunis',
+                country: 'Tunisie',
+                github: 'github.com/mohamed-abidi-95',
+                linkedin: 'linkedin.com/in/mohamed-abidi-95',
+                additionalInfo: 'Développeur passionné avec plus de 5 ans d\'expérience dans le développement web. Spécialisé dans la création d\'applications robustes et évolutives avec les technologies modernes.',
+                skills: ['JavaScript', 'React.js', 'Node.js', 'HTML/CSS', 'PHP', 'MySQL', 'Git', 'Agile', 'Résolution de problèmes', 'TypeScript'],
+                languages: ['Arabe', 'Français', 'Anglais'],
+                languageLevels: ['Langue maternelle', 'Courant', 'Avancé'],
+                'experience[0][position]': 'Développeur Full Stack Senior',
+                'experience[0][company]': 'Tech Solutions Tunisie',
+                'experience[0][location]': 'Tunis, Tunisie',
+                'experience[0][startDate]': '01/2022',
+                'experience[0][endDate]': 'Présent',
+                'experience[0][description]': 'Direction d\'une équipe de développeurs pour construire et lancer le produit phare de l\'entreprise, résultant en une augmentation de 30% de l\'engagement des utilisateurs et une augmentation de 25% des revenus.',
+                'education[0][degree]': 'Diplôme d\'Ingénieur en Informatique',
+                'education[0][institution]': 'École d\'Ingénieurs ESPRIT',
+                'education[0][location]': 'Tunis, Tunisie',
+                'education[0][startDate]': '09/2018',
+                'education[0][endDate]': '06/2023',
+                'education[0][description]': 'Diplômé avec mention. Spécialisation en technologies web et principes d\'ingénierie logicielle.',
+                'projects[0][name]': 'Plateforme E-commerce',
+                'projects[0][description]': 'Développé une plateforme e-commerce complète avec traitement sécurisé des paiements et gestion des stocks.',
+                'projects[0][technologies]': 'React.js, Node.js, Express, MongoDB',
+                'references[0][name]': 'Dr. Ali Ben Brahim',
+                'references[0][position]': 'Professeur',
+                'references[0][company]': 'École d\'Ingénieurs ESPRIT',
+                'references[0][contact]': 'Ali.Ben.Brahim@esprit.tn',
+                'references[0][relationship]': 'Conseiller académique',
+            };
+
+            // Function to autofill all fields with sample data
+            function autoFillAllFields() {
+                // Personal information
+                document.querySelector('[name="firstName"]').value = sampleData.firstName;
+                document.querySelector('[name="lastName"]').value = sampleData.lastName;
+                document.querySelector('[name="position"]').value = sampleData.position;
+                document.querySelector('[name="email"]').value = sampleData.email;
+                document.querySelector('[name="phone"]').value = sampleData.phone;
+                document.querySelector('[name="address"]').value = sampleData.address;
+                document.querySelector('[name="city"]').value = sampleData.city;
+                document.querySelector('[name="country"]').value = sampleData.country;
+                document.querySelector('[name="github"]').value = sampleData.github;
+                document.querySelector('[name="linkedin"]').value = sampleData.linkedin;
+                document.querySelector('[name="additionalInfo"]').value = sampleData.additionalInfo;
+
+                // Experience
+                document.querySelector('[name="experience[0][position]"]').value = sampleData['experience[0][position]'];
+                document.querySelector('[name="experience[0][company]"]').value = sampleData['experience[0][company]'];
+                document.querySelector('[name="experience[0][location]"]').value = sampleData['experience[0][location]'];
+                document.querySelector('[name="experience[0][startDate]"]').value = sampleData['experience[0][startDate]'];
+                document.querySelector('[name="experience[0][endDate]"]').value = sampleData['experience[0][endDate]'];
+                document.querySelector('[name="experience[0][description]"]').value = sampleData['experience[0][description]'];
+
+                // Education
+                document.querySelector('[name="education[0][degree]"]').value = sampleData['education[0][degree]'];
+                document.querySelector('[name="education[0][institution]"]').value = sampleData['education[0][institution]'];
+                document.querySelector('[name="education[0][location]"]').value = sampleData['education[0][location]'];
+                document.querySelector('[name="education[0][startDate]"]').value = sampleData['education[0][startDate]'];
+                document.querySelector('[name="education[0][endDate]"]').value = sampleData['education[0][endDate]'];
+                document.querySelector('[name="education[0][description]"]').value = sampleData['education[0][description]'];
+
+                // Skills
+                skillsSelect.clear();
+                sampleData.skills.forEach(skill => {
+                    skillsSelect.addItem(skill);
+                });
+
+                // Languages
+                document.querySelector('[name="languages[0]"]').value = sampleData.languages[0];
+                document.querySelector('[name="languageLevels[0]"]').value = sampleData.languageLevels[0];
+
+                // Add a second language
+                document.getElementById('add-language').click();
+                setTimeout(() => {
+                    document.querySelector('[name="languages[1]"]').value = sampleData.languages[1];
+                    document.querySelector('[name="languageLevels[1]"]').value = sampleData.languageLevels[1];
+
+                    // Add a third language
+                    document.getElementById('add-language').click();
+                    setTimeout(() => {
+                        document.querySelector('[name="languages[2]"]').value = sampleData.languages[2];
+                        document.querySelector('[name="languageLevels[2]"]').value = sampleData.languageLevels[2];
+                    }, 100);
+                }, 100);
+
+                // Projects
+                document.querySelector('[name="projects[0][name]"]').value = sampleData['projects[0][name]'];
+                document.querySelector('[name="projects[0][description]"]').value = sampleData['projects[0][description]'];
+                document.querySelector('[name="projects[0][technologies]"]').value = sampleData['projects[0][technologies]'];
+
+                // References
+                document.querySelector('[name="references[0][name]"]').value = sampleData['references[0][name]'];
+                document.querySelector('[name="references[0][position]"]').value = sampleData['references[0][position]'];
+                document.querySelector('[name="references[0][company]"]').value = sampleData['references[0][company]'];
+                document.querySelector('[name="references[0][contact]"]').value = sampleData['references[0][contact]'];
+                document.querySelector('[name="references[0][relationship]"]').value = sampleData['references[0][relationship]'];
+
+                // Show confirmation
+                showNotification('Tous les champs ont été remplis automatiquement !');
+            }
+
+            // Auto-fill all fields button
+            document.getElementById('autofillAllButton').addEventListener('click', function() {
+                autoFillAllFields();
+            });
+
+            // Individual section autofill buttons
+            document.getElementById('personalInfoAutofill').addEventListener('click', function() {
+                document.querySelector('[name="firstName"]').value = sampleData.firstName;
+                document.querySelector('[name="lastName"]').value = sampleData.lastName;
+                document.querySelector('[name="position"]').value = sampleData.position;
+                document.querySelector('[name="email"]').value = sampleData.email;
+                document.querySelector('[name="phone"]').value = sampleData.phone;
+                document.querySelector('[name="address"]').value = sampleData.address;
+                document.querySelector('[name="city"]').value = sampleData.city;
+                document.querySelector('[name="country"]').value = sampleData.country;
+                document.querySelector('[name="github"]').value = sampleData.github;
+                document.querySelector('[name="linkedin"]').value = sampleData.linkedin;
+                document.querySelector('[name="additionalInfo"]').value = sampleData.additionalInfo;
+                showNotification('Informations personnelles remplies !');
+            });
+
+            document.getElementById('experienceAutofill').addEventListener('click', function() {
+                document.querySelector('[name="experience[0][position]"]').value = sampleData['experience[0][position]'];
+                document.querySelector('[name="experience[0][company]"]').value = sampleData['experience[0][company]'];
+                document.querySelector('[name="experience[0][location]"]').value = sampleData['experience[0][location]'];
+                document.querySelector('[name="experience[0][startDate]"]').value = sampleData['experience[0][startDate]'];
+                document.querySelector('[name="experience[0][endDate]"]').value = sampleData['experience[0][endDate]'];
+                document.querySelector('[name="experience[0][description]"]').value = sampleData['experience[0][description]'];
+                showNotification('Expérience professionnelle remplie !');
+            });
+
+            document.getElementById('educationAutofill').addEventListener('click', function() {
+                document.querySelector('[name="education[0][degree]"]').value = sampleData['education[0][degree]'];
+                document.querySelector('[name="education[0][institution]"]').value = sampleData['education[0][institution]'];
+                document.querySelector('[name="education[0][location]"]').value = sampleData['education[0][location]'];
+                document.querySelector('[name="education[0][startDate]"]').value = sampleData['education[0][startDate]'];
+                document.querySelector('[name="education[0][endDate]"]').value = sampleData['education[0][endDate]'];
+                document.querySelector('[name="education[0][description]"]').value = sampleData['education[0][description]'];
+                showNotification('Formation remplie !');
+            });
+
+            document.getElementById('skillsAutofill').addEventListener('click', function() {
+                skillsSelect.clear();
+                sampleData.skills.forEach(skill => {
+                    skillsSelect.addItem(skill);
+                });
+                showNotification('Compétences remplies !');
+            });
+
+            document.getElementById('languagesAutofill').addEventListener('click', function() {
+                document.querySelector('[name="languages[0]"]').value = sampleData.languages[0];
+                document.querySelector('[name="languageLevels[0]"]').value = sampleData.languageLevels[0];
+
+                // Add a second language
+                document.getElementById('add-language').click();
+                setTimeout(() => {
+                    document.querySelector('[name="languages[1]"]').value = sampleData.languages[1];
+                    document.querySelector('[name="languageLevels[1]"]').value = sampleData.languageLevels[1];
+
+                    // Add a third language
+                    document.getElementById('add-language').click();
+                    setTimeout(() => {
+                        document.querySelector('[name="languages[2]"]').value = sampleData.languages[2];
+                        document.querySelector('[name="languageLevels[2]"]').value = sampleData.languageLevels[2];
+                    }, 100);
+                }, 100);
+                showNotification('Langues remplies !');
+            });
+
+            document.getElementById('projectsAutofill').addEventListener('click', function() {
+                document.querySelector('[name="projects[0][name]"]').value = sampleData['projects[0][name]'];
+                document.querySelector('[name="projects[0][description]"]').value = sampleData['projects[0][description]'];
+                document.querySelector('[name="projects[0][technologies]"]').value = sampleData['projects[0][technologies]'];
+                showNotification('Projets remplis !');
+            });
+
+            document.getElementById('referencesAutofill').addEventListener('click', function() {
+                document.querySelector('[name="references[0][name]"]').value = sampleData['references[0][name]'];
+                document.querySelector('[name="references[0][position]"]').value = sampleData['references[0][position]'];
+                document.querySelector('[name="references[0][company]"]').value = sampleData['references[0][company]'];
+                document.querySelector('[name="references[0][contact]"]').value = sampleData['references[0][contact]'];
+                document.querySelector('[name="references[0][relationship]"]').value = sampleData['references[0][relationship]'];
+                showNotification('Références remplies !');
+            });
+
+            // Field-specific autofill
+            document.querySelectorAll('.field-autofill').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fieldName = this.dataset.field;
+                    const input = document.querySelector(`[name="${fieldName}"]`);
+
+                    if (input && sampleData[fieldName]) {
+                        input.value = sampleData[fieldName];
+                        showNotification('Champ rempli !');
+                    }
+                });
+            });
+
+            // Simple notification function
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.style.position = 'fixed';
+                notification.style.bottom = '100px';
+                notification.style.right = '30px';
+                notification.style.backgroundColor = type === 'success' ? 'var(--primary-color)' : '#dc3545';
+                notification.style.color = 'white';
+                notification.style.padding = '15px 25px';
+                notification.style.borderRadius = '8px';
+                notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                notification.style.zIndex = '9999';
+                notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>${message}`;
+
+                document.body.appendChild(notification);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            }
+
+            // Handle form submission - REMPLACEMENT COMPLET
+            document.getElementById('cv-form').addEventListener('submit', function(e) {
+                // Empêcher la soumission par défaut pour notre validation personnalisée
+                e.preventDefault();
+
+                console.log('Validation du formulaire...');
+
+                // Vérifier uniquement les champs requis
+                let isValid = true;
+                const requiredFields = document.querySelectorAll('#cv-form [required]');
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        // Créer un message d'erreur si nécessaire
+                        if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                            const feedback = document.createElement('div');
+                            feedback.className = 'invalid-feedback';
+                            feedback.textContent = 'Ce champ est requis';
+                            field.parentNode.appendChild(feedback);
+                        }
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                // Valider les URL sans les rendre obligatoires
+                const urlFields = document.querySelectorAll('input[type="url"]');
+                urlFields.forEach(field => {
+                    if (field.value.trim()) {
+                        // Simple validation - ajouter http:// si pas de protocole
+                        if (!field.value.match(/^https?:\/\//)) {
+                            field.value = 'https://' + field.value;
+                        }
+                    }
+                });
+
+                console.log('Formulaire valide:', isValid);
+
+                // Si le formulaire est valide, soumettre
+                if (isValid) {
+                    console.log('Soumission du formulaire...');
+
+                    // Collecter les données du formulaire
+                    const formData = new FormData(this);
+
+                    // Ajouter le type de template explicitement
+                    formData.set('template', 'elegant');
+
+                    // Afficher un indicateur de chargement
+                    const submitBtn = document.getElementById('generate-cv-btn');
+                    const originalButtonText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+                    submitBtn.disabled = true;
+
+                    // Soumettre directement le formulaire - pas de AJAX
+                    this.submit();
+                } else {
+                    // Faire défiler jusqu'au premier champ invalide
+                    const firstInvalid = document.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+
+                    // Afficher un message d'erreur général
+                    showNotification('Veuillez remplir tous les champs obligatoires avant de générer votre CV.', 'error');
+                }
+            });
+
+            // Par défaut, utilisez le logo ESPRIT comme image de profil
+            const logoUrl = '/images/logo.png';
+            document.getElementById('profilePreview').src = logoUrl;
+            document.getElementById('photoDataInput').value = logoUrl;
+            // Fonction de test pour la soumission du formulaire
+            function testFormSubmission() {
+                console.log('Test de soumission...');
+
+                // Convertir temporairement les champs URL en champs texte
+                document.querySelectorAll('input[type="url"]').forEach(field => {
+                    console.log('Conversion du champ URL:', field.name);
+                    field.type = 'text';
+                });
+
+                // Désactiver temporairement la validation HTML5
+                document.getElementById('cv-form').setAttribute('novalidate', '');
+
+                // Afficher un message
+                showNotification('Préparation de la soumission de test...', 'success');
+
+                // Attendre un peu pour les conversions
+                setTimeout(() => {
+                    try {
+                        document.getElementById('cv-form').submit();
+                    } catch (error) {
+                        console.error('Erreur lors de la soumission:', error);
+                        showNotification('Erreur lors de la soumission: ' + error.message, 'error');
+                    }
+                }, 500);
+            }
+        });
+
+    </script>
+{% endblock %}
+==================================================
+
+Fichier: public\css\cv-customize.css
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\css\cv-customize.css
+-----
+.background-gallery .bg-thumbnail {
+    cursor: pointer;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.2s;
+    position: relative;
+    height: 80px;
+}
+
+.background-gallery .bg-thumbnail:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.background-gallery .bg-preview {
+    height: 60px;
+    background-size: cover;
+    background-position: center;
+}
+
+.background-gallery .bg-name {
+    font-size: 12px;
+    padding: 3px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: rgba(255,255,255,0.8);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.background-gallery .selected {
+    box-shadow: 0 0 0 3px #0d6efd;
+}
+
+#color-preview {
+    border-radius: 5px;
+    padding: 15px;
+    min-height: 100px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+.pickr {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.template-card {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.template-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.template-card.selected {
+    box-shadow: 0 0 0 3px #0d6efd;
+}
+==================================================
+
+Fichier: public\js\cv-customize.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\cv-customize.js
+-----
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration des color pickers
+    if (typeof Pickr !== 'undefined') {
+        // Color picker pour le fond
+        window.bgPickr = Pickr.create({
+            el: '#color-picker',
+            theme: 'classic',
+            default: '#ffffff',
+            swatches: [
+                '#ffffff', // Blanc
+                '#f5f5f5', // Gris très clair
+                '#f8f9fa', // Gris très pâle
+                '#e8f4f8', // Bleu très pâle
+                '#edf7ed', // Vert très pâle
+                '#fff5f5'  // Rouge très pâle
+            ],
+            components: {
+                preview: true,
+                opacity: true,
+                hue: true,
+                interaction: {
+                    hex: true,
+                    rgba: true,
+                    input: true,
+                    save: true
+                }
+            }
+        });
+
+        // Color picker pour le texte
+        window.textPickr = Pickr.create({
+            el: '#text-color-picker',
+            theme: 'classic',
+            default: '#000000',
+            swatches: [
+                '#000000', // Noir
+                '#333333', // Gris foncé
+                '#555555', // Gris
+                '#0066cc', // Bleu
+                '#006633', // Vert foncé
+                '#660033'  // Bordeaux
+            ],
+            components: {
+                preview: true,
+                opacity: true,
+                hue: true,
+                interaction: {
+                    hex: true,
+                    rgba: true,
+                    input: true,
+                    save: true
+                }
+            }
+        });
+
+        // Mettre à jour la prévisualisation et l'input caché lorsque la couleur de fond change
+        window.bgPickr.on('save', (color) => {
+            const hexColor = color.toHEXA().toString();
+            document.getElementById('backgroundColor').value = hexColor;
+            document.getElementById('selectedBackgroundColor').value = hexColor;
+            document.getElementById('color-preview').style.backgroundColor = hexColor;
+            document.getElementById('color-preview').style.backgroundImage = '';
+            document.getElementById('selectedBackground').value = 'none';
+            document.getElementById('selectedBackgroundType').value = 'color';
+
+            // Faire afficher la couleur dans la vignette "Couleur personnalisée"
+            if (document.getElementById('custom-color-preview')) {
+                document.getElementById('custom-color-preview').style.background = hexColor;
+
+                // Sélectionner la vignette "Couleur personnalisée"
+                const thumbnails = document.querySelectorAll('.bg-thumbnail');
+                thumbnails.forEach(t => t.classList.remove('selected'));
+                const customColorThumb = document.querySelector('[data-background="custom-color"]');
+                if (customColorThumb) {
+                    customColorThumb.classList.add('selected');
+                }
+            }
+
+            window.bgPickr.hide();
+        });
+
+        // Mettre à jour la prévisualisation et l'input caché lorsque la couleur du texte change
+        window.textPickr.on('save', (color) => {
+            const hexColor = color.toHEXA().toString();
+            document.getElementById('textColor').value = hexColor;
+            document.getElementById('color-preview').style.color = hexColor;
+            window.textPickr.hide();
+        });
+    }
+
+    // Gestion de la galerie de fonds
+    const backgroundThumbnails = document.querySelectorAll('.bg-thumbnail');
+    backgroundThumbnails.forEach(thumbnail => {
+        thumbnail.addEventListener('click', function() {
+            // Supprimer la classe "selected" de tous les thumbnails
+            backgroundThumbnails.forEach(t => t.classList.remove('selected'));
+
+            // Ajouter la classe "selected" au thumbnail cliqué
+            this.classList.add('selected');
+
+            // Mettre à jour les inputs cachés
+            const background = this.getAttribute('data-background');
+            const color = this.getAttribute('data-color');
+            const type = this.getAttribute('data-type') || 'color';
+
+            document.getElementById('selectedBackground').value = background;
+            document.getElementById('selectedBackgroundType').value = type;
+
+            // Mettre à jour l'aperçu
+            const preview = document.getElementById('color-preview');
+
+            if (background === 'none' && color) {
+                // Fond de couleur unie
+                preview.style.backgroundImage = '';
+                preview.style.backgroundColor = color;
+                document.getElementById('selectedBackgroundColor').value = color;
+
+                // Mettre à jour le color picker si c'est une couleur unie
+                if (window.bgPickr) {
+                    window.bgPickr.setColor(color);
+                }
+            }
+            else if (background === 'custom-color') {
+                // Ouvrir le color picker pour une couleur personnalisée
+                if (window.bgPickr) {
+                    window.bgPickr.show();
+                }
+            }
+            else if (background !== 'none') {
+                // Image de fond (SVG ou autre)
+                preview.style.backgroundImage = `url('/images/backgrounds/${background}')`;
+                preview.style.backgroundColor = '';
+            }
+        });
+    });
+
+    // Si des templates sont disponibles, gérer leur sélection
+    const templateCards = document.querySelectorAll('.template-card');
+    templateCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const radioInput = this.querySelector('input[type="radio"]');
+            if (radioInput) {
+                radioInput.checked = true;
+
+                // Mise à jour visuelle
+                templateCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+            }
+        });
+    });
+
+    // Fonction pour tester la soumission du formulaire
+    window.testFormSubmission = function() {
+        console.log('Test de soumission du formulaire');
+
+        // Afficher toutes les données du formulaire
+        const form = document.getElementById('cv-form');
+        const formData = new FormData(form);
+
+        console.log('Données du formulaire:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        // Vérifier les valeurs des champs de personnalisation
+        console.log('Données de personnalisation:');
+        console.log('Template: ' + document.querySelector('input[name="template"]:checked')?.value);
+        console.log('Background: ' + document.getElementById('selectedBackground').value);
+        console.log('Background Type: ' + document.getElementById('selectedBackgroundType').value);
+        console.log('Background Color: ' + document.getElementById('selectedBackgroundColor').value);
+        console.log('Text Color: ' + document.getElementById('textColor').value);
+
+        // Afficher une notification
+        alert('Le formulaire est prêt à être soumis. Vérifiez la console pour les détails.');
+    };
+});
+==================================================
+
+Fichier: public\images\backgrounds\elegant-blue.svg
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\images\backgrounds\elegant-blue.svg
+-----
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 595 842" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background color -->
+    <rect width="595" height="842" fill="#fcfcfc"/>
+
+    <!-- Left sidebar with elegant pattern -->
+    <rect x="0" y="0" width="180" height="842" fill="#2c3e50"/>
+
+    <!-- Elegant pattern overlay in sidebar -->
+    <g opacity="0.15">
+        <pattern id="elegant-pattern" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
+            <path d="M20,0 L40,20 L20,40 L0,20 Z" fill="none" stroke="#ffffff" stroke-width="0.5"/>
+            <circle cx="20" cy="20" r="3" fill="#ffffff"/>
+        </pattern>
+        <rect x="0" y="0" width="180" height="842" fill="url(#elegant-pattern)"/>
+    </g>
+
+    <!-- Header accent -->
+    <rect x="180" y="0" width="415" height="120" fill="#34495e"/>
+
+    <!-- Subtle line separators -->
+    <line x1="200" y1="155" x2="575" y2="155" stroke="#bdc3c7" stroke-width="1"/>
+    <line x1="200" y1="280" x2="575" y2="280" stroke="#bdc3c7" stroke-width="1"/>
+    <line x1="200" y1="405" x2="575" y2="405" stroke="#bdc3c7" stroke-width="1"/>
+    <line x1="200" y1="530" x2="575" y2="530" stroke="#bdc3c7" stroke-width="1"/>
+    <line x1="200" y1="655" x2="575" y2="655" stroke="#bdc3c7" stroke-width="1"/>
+
+    <!-- Elegant corner accent -->
+    <path d="M575,0 L575,80 L555,60 L535,80 L515,60 L495,80 L475,60 L455,80 L435,60 L415,80 L395,60 L375,80 L355,60 L335,80 L315,60 L295,80 L275,60 L255,80 L235,60 L215,80 L195,60 L180,70 L180,0 Z" fill="#3498db" opacity="0.7"/>
+
+    <!-- Footer elegant element -->
+    <path d="M0,842 L0,772 L15,782 L30,772 L45,782 L60,772 L75,782 L90,772 L105,782 L120,772 L135,782 L150,772 L165,782 L180,772 L180,842 Z" fill="#2980b9" opacity="0.9"/>
+
+    <!-- Small accent color bars -->
+    <rect x="180" y="122" width="415" height="8" fill="#e74c3c"/>
+    <rect x="0" y="842" width="595" height="5" fill="#e74c3c" opacity="0.8"/>
+</svg>
+==================================================
+
+Fichier: public\images\backgrounds\professional-green.svg
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\images\backgrounds\professional-green.svg
+-----
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 595 842" xmlns="http://www.w3.org/2000/svg">
+    <!-- Base background -->
+    <rect width="595" height="842" fill="#fefefe"/>
+
+    <!-- Subtle light pattern across entire background -->
+    <pattern id="light-dots" patternUnits="userSpaceOnUse" width="20" height="20">
+        <circle cx="10" cy="10" r="0.8" fill="#f0f0f0"/>
+    </pattern>
+    <rect width="595" height="842" fill="url(#light-dots)"/>
+
+    <!-- Top header section with rich green -->
+    <rect x="0" y="0" width="595" height="150" fill="#27ae60" opacity="0.9"/>
+    <rect x="0" y="150" width="595" height="8" fill="#2ecc71"/>
+
+    <!-- Subtle left margin area -->
+    <rect x="0" y="158" width="100" height="684" fill="#f6f6f6"/>
+
+    <!-- Delicate separator lines in pleasant color -->
+    <line x1="120" y1="200" x2="575" y2="200" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="350" x2="575" y2="350" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="500" x2="575" y2="500" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="650" x2="575" y2="650" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+
+    <!-- Light decorative elements -->
+    <g opacity="0.1">
+        <circle cx="50" cy="75" r="35" fill="#16a085"/>
+        <circle cx="545" cy="75" r="35" fill="#16a085"/>
+        <circle cx="50" cy="792" r="35" fill="#16a085"/>
+        <circle cx="545" cy="792" r="35" fill="#16a085"/>
+    </g>
+
+    <!-- Subtle pattern overlay in corners -->
+    <pattern id="corner-pattern" patternUnits="userSpaceOnUse" width="10" height="10">
+        <path d="M0,0 L10,0 L0,10 Z" fill="#27ae60"/>
+    </pattern>
+
+    <rect x="0" y="0" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15"/>
+    <rect x="495" y="0" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(90, 545, 50)"/>
+    <rect x="0" y="742" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(270, 50, 792)"/>
+    <rect x="495" y="742" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(180, 545, 792)"/>
+
+    <!-- Footer element -->
+    <rect x="0" y="820" width="595" height="22" fill="#27ae60" opacity="0.8"/>
+</svg>
+==================================================
+
+Fichier: public\images\backgrounds\modern-indigo.svg
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\images\backgrounds\modern-indigo.svg
+-----
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 595 842" xmlns="http://www.w3.org/2000/svg">
+    <!-- Base background -->
+    <rect width="595" height="842" fill="#fefefe"/>
+
+    <!-- Subtle light pattern across entire background -->
+    <pattern id="light-dots" patternUnits="userSpaceOnUse" width="20" height="20">
+        <circle cx="10" cy="10" r="0.8" fill="#f0f0f0"/>
+    </pattern>
+    <rect width="595" height="842" fill="url(#light-dots)"/>
+
+    <!-- Top header section with rich green -->
+    <rect x="0" y="0" width="595" height="150" fill="#27ae60" opacity="0.9"/>
+    <rect x="0" y="150" width="595" height="8" fill="#2ecc71"/>
+
+    <!-- Subtle left margin area -->
+    <rect x="0" y="158" width="100" height="684" fill="#f6f6f6"/>
+
+    <!-- Delicate separator lines in pleasant color -->
+    <line x1="120" y1="200" x2="575" y2="200" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="350" x2="575" y2="350" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="500" x2="575" y2="500" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+    <line x1="120" y1="650" x2="575" y2="650" stroke="#3498db" stroke-width="1.5" opacity="0.4"/>
+
+    <!-- Light decorative elements -->
+    <g opacity="0.1">
+        <circle cx="50" cy="75" r="35" fill="#16a085"/>
+        <circle cx="545" cy="75" r="35" fill="#16a085"/>
+        <circle cx="50" cy="792" r="35" fill="#16a085"/>
+        <circle cx="545" cy="792" r="35" fill="#16a085"/>
+    </g>
+
+    <!-- Subtle pattern overlay in corners -->
+    <pattern id="corner-pattern" patternUnits="userSpaceOnUse" width="10" height="10">
+        <path d="M0,0 L10,0 L0,10 Z" fill="#27ae60"/>
+    </pattern>
+
+    <rect x="0" y="0" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15"/>
+    <rect x="495" y="0" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(90, 545, 50)"/>
+    <rect x="0" y="742" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(270, 50, 792)"/>
+    <rect x="495" y="742" width="100" height="100" fill="url(#corner-pattern)" opacity="0.15" transform="rotate(180, 545, 792)"/>
+
+    <!-- Footer element -->
+    <rect x="0" y="820" width="595" height="22" fill="#27ae60" opacity="0.8"/>
+</svg>
+==================================================
+
