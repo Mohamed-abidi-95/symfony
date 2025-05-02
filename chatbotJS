@@ -1,0 +1,2202 @@
+/**
+ * Enhanced Chatbot Script with Circular Floating Animation
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Enhanced Chatbot script loaded');
+
+    // Initialize the chatbot
+    initChatbot();
+
+    // Set up circular animation cycle
+    setupCircularAnimationCycle();
+});
+
+/**
+ * Set up a cycle of different circular animations for the chatbot button
+ */
+function setupCircularAnimationCycle() {
+    const chatbotButton = document.getElementById('chatbotButton');
+    if (!chatbotButton) return;
+
+    // Basic circular float animation is applied via CSS
+
+    // Every 45 seconds, switch to attention animation for 8 seconds
+    setInterval(() => {
+        chatbotButton.classList.remove('circular-pulse');
+        chatbotButton.style.animation = 'none';
+
+        // Trigger reflow
+        void chatbotButton.offsetWidth;
+
+        chatbotButton.classList.add('attention');
+
+        setTimeout(() => {
+            chatbotButton.classList.remove('attention');
+            chatbotButton.style.animation = '';
+        }, 8000);
+    }, 45000);
+
+    // Every 90 seconds, apply the pulse-circular animation for 10 seconds
+    setInterval(() => {
+        chatbotButton.classList.remove('attention');
+        chatbotButton.style.animation = 'none';
+
+        // Trigger reflow
+        void chatbotButton.offsetWidth;
+
+        chatbotButton.classList.add('circular-pulse');
+
+        setTimeout(() => {
+            chatbotButton.classList.remove('circular-pulse');
+            chatbotButton.style.animation = '';
+        }, 10000);
+    }, 90000);
+}
+
+/**
+ * Initialize the chatbot functionality
+ */
+function initChatbot() {
+    // Get the chat button
+    const chatbotButton = document.getElementById('chatbotButton');
+
+    if (!chatbotButton) {
+        console.error('Chatbot button not found!');
+        return;
+    }
+
+    console.log('Chatbot button found, initializing...');
+
+    // Create the chat interface
+    createChatInterface();
+
+    // Add event listener to the button
+    chatbotButton.addEventListener('click', toggleChat);
+}
+
+/**
+ * Create the chatbot interface
+ */
+function createChatInterface() {
+    // Check if it already exists
+    if (document.getElementById('chatbot-popup')) {
+        return;
+    }
+
+    // Create the chat container
+    const chatPopup = document.createElement('div');
+    chatPopup.id = 'chatbot-popup';
+
+    // Create the bot avatar image source
+    const botAvatarSrc = 'https://ui-avatars.com/api/?name=ESPRIT&background=E12D2D&color=fff&size=128';
+    const userAvatarSrc = 'https://ui-avatars.com/api/?name=Mohamed&background=2D3748&color=fff&size=128';
+
+    // Default to offline mode
+    window.isOnlineMode = false;
+
+    // Set the content
+    chatPopup.innerHTML = `
+        <div class="chat-header">
+            <div class="chat-header-title">
+                <i class="fas fa-robot"></i>
+                ESPRIT Assistant
+            </div>
+            <div class="chat-mode-toggle">
+                <span class="mode-label offline-label">Offline</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span class="mode-label online-label">Online</span>
+            </div>
+            <div class="chat-actions">
+                <button class="chat-action-btn" id="chat-minimize" aria-label="Minimiser">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="chat-action-btn chat-close" id="chat-close" aria-label="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                <h4>Bienvenue sur ESPRIT CV Generator</h4>
+                <p>Je suis votre assistant virtuel. Comment puis-je vous aider aujourd'hui?</p>
+                <div class="mode-info">
+                    <span class="mode-info-icon"><i class="fas fa-info-circle"></i></span>
+                    <span class="mode-info-text">Le mode hors ligne est activé. Les réponses sont prédéfinies.</span>
+                </div>
+            </div>
+            
+            <div class="message bot animate-in">
+                <div class="message-avatar">
+                    <img src="${botAvatarSrc}" alt="Bot Avatar">
+                </div>
+                <div class="message-container">
+                    <div class="message-header">
+                        <span class="message-sender">ESPRIT Assistant</span>
+                        <span class="message-time">${formatTime(new Date())}</span>
+                    </div>
+                    <p class="message-content">Bonjour! Je suis votre assistant ESPRIT CV Generator. Comment puis-je vous aider aujourd'hui?</p>
+                    <div class="message-footer">
+                        <span>Envoyé</span>
+                    </div>
+                </div>
+                <div class="message-actions">
+                    <button class="message-action-btn" aria-label="Options" data-message-id="bot-1">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="message-action-dropdown" id="dropdown-bot-1">
+                        <ul>
+                            <li><a href="#" class="copy-message"><i class="far fa-copy"></i> Copier</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="chat-input-actions">
+                <button class="chat-input-action" id="chat-emoji" aria-label="Ajouter emoji">
+                    <i class="far fa-smile"></i>
+                </button>
+                <button class="chat-input-action" id="chat-attachment" aria-label="Joindre un fichier">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+            </div>
+            <input type="text" id="chat-input" placeholder="Écrivez votre message..." aria-label="Écrivez votre message...">
+            <button id="chat-send" aria-label="Envoyer">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    `;
+
+    // Add to body
+    document.body.appendChild(chatPopup);
+
+    // Create external suggestions container
+    const suggestionsContainer = document.createElement('div');
+    suggestionsContainer.className = 'suggestions-container';
+    suggestionsContainer.id = 'suggestions-container';
+    suggestionsContainer.innerHTML = `
+        <div class="suggestion-title">Suggestions</div>
+        <button class="suggestion-button" data-message="Comment créer un CV?" data-lang="fr">
+            <i class="fas fa-file-alt"></i> Comment créer un CV?
+        </button>
+        <button class="suggestion-button" data-message="كيفاش نلقى خدمة؟" data-lang="ar">
+            <i class="fas fa-briefcase"></i> كيفاش نلقى خدمة؟
+        </button>
+        <button class="suggestion-button" data-message="Templates disponibles?" data-lang="fr">
+            <i class="fas fa-palette"></i> Templates disponibles?
+        </button>
+        <button class="suggestion-button" data-message="شنية المهارات المهمة؟" data-lang="ar">
+            <i class="fas fa-star"></i> شنية المهارات المهمة؟
+        </button>
+    `;
+
+    document.body.appendChild(suggestionsContainer);
+
+    // Add event listeners
+    document.getElementById('chat-close').addEventListener('click', () => toggleChat(false));
+    document.getElementById('chat-minimize').addEventListener('click', () => toggleChat(false));
+    document.getElementById('chat-send').addEventListener('click', sendMessage);
+    document.getElementById('chat-attachment').addEventListener('click', showAttachmentOptions);
+    document.getElementById('chat-emoji').addEventListener('click', showEmojiPicker);
+
+    // Add event listener for the online/offline mode toggle
+    const modeToggle = document.getElementById('mode-toggle');
+    if (modeToggle) {
+        modeToggle.addEventListener('change', function() {
+            toggleOnlineMode(this.checked);
+        });
+    }
+
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    // Add suggestion button functionality
+    const suggestionButtons = document.querySelectorAll('.suggestion-button');
+    suggestionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const message = this.getAttribute('data-message');
+            const lang = this.getAttribute('data-lang');
+            if (message) {
+                // Set the message in the input
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) {
+                    chatInput.value = message;
+
+                    // Set the preferred language based on the suggestion
+                    if (lang) {
+                        window.preferredLanguage = lang;
+                    }
+
+                    sendMessage();
+                }
+            }
+        });
+    });
+
+    // Setup message action dropdowns
+    setupMessageActions();
+}
+
+/**
+ * Toggle between online and offline mode
+ * @param {boolean} isOnline - Whether to enable online mode
+ */
+function toggleOnlineMode(isOnline) {
+    window.isOnlineMode = isOnline;
+
+    // Update UI to reflect mode change
+    const chatMessages = document.getElementById('chat-messages');
+    const modeInfo = chatMessages.querySelector('.mode-info-text');
+
+    if (modeInfo) {
+        modeInfo.classList.add('animate-fade-out');
+
+        setTimeout(() => {
+            if (isOnline) {
+                modeInfo.innerHTML = 'Le mode en ligne est activé. Réponses du modèle en temps réel.';
+                modeInfo.style.color = '#4CAF50';
+            } else {
+                modeInfo.innerHTML = 'Le mode hors ligne est activé. Les réponses sont prédéfinies.';
+                modeInfo.style.color = '';
+            }
+            modeInfo.classList.remove('animate-fade-out');
+            modeInfo.classList.add('animate-fade-in');
+
+            setTimeout(() => {
+                modeInfo.classList.remove('animate-fade-in');
+            }, 300);
+        }, 300);
+    }
+
+    // Add status message to chat
+    const statusMessage = document.createElement('div');
+    statusMessage.className = 'chat-status-message animate-fade-in';
+
+    if (isOnline) {
+        statusMessage.innerHTML = `
+            <div class="status-icon online">
+                <i class="fas fa-plug"></i>
+            </div>
+            <div class="status-text">
+                Mode en ligne activé. Assistant connecté à l'API.
+            </div>
+        `;
+    } else {
+        statusMessage.innerHTML = `
+            <div class="status-icon offline">
+                <i class="fas fa-power-off"></i>
+            </div>
+            <div class="status-text">
+                Mode hors ligne activé. Utilisation des réponses locales.
+            </div>
+        `;
+    }
+
+    chatMessages.appendChild(statusMessage);
+    scrollToBottom();
+
+    // Remove status message after a few seconds
+    setTimeout(() => {
+        statusMessage.classList.add('animate-fade-out');
+        setTimeout(() => {
+            if (statusMessage.parentNode) {
+                statusMessage.parentNode.removeChild(statusMessage);
+            }
+        }, 300);
+    }, 3000);
+}
+
+/**
+ * Show attachment options dialog
+ */
+function showAttachmentOptions() {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+
+    // Create attachment options container if it doesn't exist
+    let attachmentOptions = document.getElementById('attachment-options');
+    if (attachmentOptions) {
+        attachmentOptions.remove();
+    }
+
+    attachmentOptions = document.createElement('div');
+    attachmentOptions.id = 'attachment-options';
+    attachmentOptions.className = 'attachment-options animate-pop';
+
+    attachmentOptions.innerHTML = `
+        <div class="attachment-header">Joindre un fichier</div>
+        <div class="attachment-types">
+            <button class="attachment-type" data-type="cv">
+                <i class="fas fa-file-pdf"></i>
+                <span>CV existant</span>
+            </button>
+            <button class="attachment-type" data-type="image">
+                <i class="fas fa-image"></i>
+                <span>Photo</span>
+            </button>
+            <button class="attachment-type" data-type="document">
+                <i class="fas fa-file-alt"></i>
+                <span>Document</span>
+            </button>
+        </div>
+        <div class="attachment-footer">
+            <button id="cancel-attachment">Annuler</button>
+        </div>
+    `;
+
+    chatMessages.appendChild(attachmentOptions);
+
+    // Add event listeners
+    document.querySelectorAll('.attachment-type').forEach(button => {
+        button.addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
+            simulateFileUpload(type);
+            attachmentOptions.remove();
+        });
+    });
+
+    document.getElementById('cancel-attachment').addEventListener('click', function() {
+        attachmentOptions.classList.add('animate-out');
+        setTimeout(() => {
+            if (attachmentOptions.parentNode) {
+                attachmentOptions.parentNode.removeChild(attachmentOptions);
+            }
+        }, 300);
+    });
+}
+
+/**
+ * Simulates file upload process
+ * @param {string} type - Type of file to upload
+ */
+function simulateFileUpload(type) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+
+    // Create upload status message
+    const uploadStatus = document.createElement('div');
+    uploadStatus.className = 'upload-status animate-slide-in';
+    uploadStatus.innerHTML = `
+        <div class="upload-icon"><i class="fas fa-file-upload"></i></div>
+        <div class="upload-details">
+            <div class="upload-filename">fichier_${type}.${type === 'cv' ? 'pdf' : (type === 'image' ? 'jpg' : 'doc')}</div>
+            <div class="upload-progress-container">
+                <div class="upload-progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="upload-percentage">0%</div>
+        </div>
+        <div class="upload-actions">
+            <button class="upload-cancel"><i class="fas fa-times"></i></button>
+        </div>
+    `;
+
+    chatMessages.appendChild(uploadStatus);
+    scrollToBottom();
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = uploadStatus.querySelector('.upload-progress-bar');
+    const progressPercentage = uploadStatus.querySelector('.upload-percentage');
+
+    const progressInterval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = `${progress}%`;
+        progressPercentage.textContent = `${progress}%`;
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+
+            // Replace with success message
+            setTimeout(() => {
+                uploadStatus.innerHTML = `
+                    <div class="upload-complete animate-bounce">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Fichier téléchargé avec succès</span>
+                    </div>
+                `;
+
+                // Add bot response about the file
+                setTimeout(() => {
+                    const botMessageId = 'bot-' + Date.now();
+                    let responseMessage = '';
+
+                    switch(type) {
+                        case 'cv':
+                            responseMessage = window.preferredLanguage === 'ar' ?
+                                'شكرا على مشاركة سيرتك الذاتية. هل ترغب في تحليلها أو تحسينها؟ يمكنني مساعدتك في تحديد النقاط التي يمكن تطويرها.' :
+                                'Merci d\'avoir partagé votre CV. Souhaitez-vous que je l\'analyse ou que je vous aide à l\'améliorer? Je peux vous aider à identifier les points à développer.';
+                            break;
+                        case 'image':
+                            responseMessage = window.preferredLanguage === 'ar' ?
+                                'تم استلام الصورة بنجاح. هل تريد إضافتها إلى سيرتك الذاتية كصورة شخصية؟' :
+                                'L\'image a été reçue avec succès. Voulez-vous l\'ajouter à votre CV comme photo de profil?';
+                            break;
+                        case 'document':
+                            responseMessage = window.preferredLanguage === 'ar' ?
+                                'شكرا على إرسال المستند. هل هذا مستند داعم لسيرتك الذاتية مثل رسالة توصية أو شهادة؟' :
+                                'Merci pour ce document. S\'agit-il d\'un document complémentaire à votre CV comme une lettre de recommandation ou un certificat?';
+                            break;
+                    }
+
+                    addBotMessage(responseMessage, botMessageId);
+
+                    // Update suggestions based on uploaded file type
+                    let newSuggestions = [];
+                    if (type === 'cv') {
+                        newSuggestions = window.preferredLanguage === 'ar' ? [
+                            { icon: 'fas fa-search', text: 'حلل السيرة الذاتية', lang: 'ar' },
+                            { icon: 'fas fa-edit', text: 'اقترح تحسينات', lang: 'ar' },
+                            { icon: 'fas fa-redo', text: 'قارن مع نموذج حديث', lang: 'ar' },
+                            { icon: 'fas fa-check', text: 'تأكيد المعلومات', lang: 'ar' }
+                        ] : [
+                            { icon: 'fas fa-search', text: 'Analyser le CV', lang: 'fr' },
+                            { icon: 'fas fa-edit', text: 'Suggestions d\'amélioration', lang: 'fr' },
+                            { icon: 'fas fa-redo', text: 'Comparer avec un modèle moderne', lang: 'fr' },
+                            { icon: 'fas fa-check', text: 'Vérifier les informations', lang: 'fr' }
+                        ];
+                    } else if (type === 'image') {
+                        newSuggestions = window.preferredLanguage === 'ar' ? [
+                            { icon: 'fas fa-user-circle', text: 'استخدم كصورة شخصية', lang: 'ar' },
+                            { icon: 'fas fa-crop', text: 'تعديل الصورة', lang: 'ar' },
+                            { icon: 'fas fa-times', text: 'لا أريد استخدام الصورة', lang: 'ar' },
+                            { icon: 'fas fa-question-circle', text: 'نصائح حول صور السيرة الذاتية', lang: 'ar' }
+                        ] : [
+                            { icon: 'fas fa-user-circle', text: 'Utiliser comme photo de profil', lang: 'fr' },
+                            { icon: 'fas fa-crop', text: 'Éditer l\'image', lang: 'fr' },
+                            { icon: 'fas fa-times', text: 'Ne pas utiliser l\'image', lang: 'fr' },
+                            { icon: 'fas fa-question-circle', text: 'Conseils sur les photos de CV', lang: 'fr' }
+                        ];
+                    } else {
+                        newSuggestions = window.preferredLanguage === 'ar' ? [
+                            { icon: 'fas fa-paperclip', text: 'أرفق بالسيرة الذاتية', lang: 'ar' },
+                            { icon: 'fas fa-eye', text: 'عرض المستند', lang: 'ar' },
+                            { icon: 'fas fa-times', text: 'إلغاء', lang: 'ar' },
+                            { icon: 'fas fa-info-circle', text: 'مستندات داعمة أخرى؟', lang: 'ar' }
+                        ] : [
+                            { icon: 'fas fa-paperclip', text: 'Joindre au CV', lang: 'fr' },
+                            { icon: 'fas fa-eye', text: 'Afficher le document', lang: 'fr' },
+                            { icon: 'fas fa-times', text: 'Annuler', lang: 'fr' },
+                            { icon: 'fas fa-info-circle', text: 'Autres documents utiles?', lang: 'fr' }
+                        ];
+                    }
+
+                    updateSuggestionButtons(document.getElementById('suggestions-container'), newSuggestions);
+                    if (document.getElementById('suggestions-container-mobile')) {
+                        updateSuggestionButtons(document.getElementById('suggestions-container-mobile'), newSuggestions);
+                    }
+                }, 500);
+            }, 1000);
+        }
+    }, 100);
+
+    // Add cancel upload functionality
+    const cancelButton = uploadStatus.querySelector('.upload-cancel');
+    cancelButton.addEventListener('click', () => {
+        clearInterval(progressInterval);
+        uploadStatus.classList.add('animate-slide-out');
+        setTimeout(() => {
+            if (uploadStatus.parentNode) {
+                uploadStatus.parentNode.removeChild(uploadStatus);
+            }
+        }, 300);
+    });
+}
+
+/**
+ * Show emoji picker dialog
+ */
+function showEmojiPicker() {
+    const chatInput = document.getElementById('chat-input');
+    if (!chatInput) return;
+
+    // Create emoji picker if it doesn't exist
+    let emojiPicker = document.getElementById('emoji-picker');
+    if (emojiPicker) {
+        emojiPicker.remove();
+    }
+
+    emojiPicker = document.createElement('div');
+    emojiPicker.id = 'emoji-picker';
+    emojiPicker.className = 'emoji-picker animate-scale-in';
+
+    // Common emojis for CV & job search context
+    const emojis = [
+        '👍', '👋', '😊', '🙂', '👨‍💼', '👩‍💼',
+        '📄', '📝', '📊', '💼', '🎓', '🏆',
+        '📌', '✅', '❓', '📱', '💻', '📨',
+        '🔍', '⏳', '👏', '🌟', '🚀', '👨‍🎓'
+    ];
+
+    let emojiHtml = '<div class="emoji-container">';
+    emojis.forEach(emoji => {
+        emojiHtml += `<span class="emoji">${emoji}</span>`;
+    });
+    emojiHtml += '</div>';
+    emojiHtml += '<button id="close-emoji-picker">Fermer</button>';
+
+    emojiPicker.innerHTML = emojiHtml;
+
+    // Position the emoji picker
+    const chatInputContainer = document.querySelector('.chat-input-container');
+    chatInputContainer.appendChild(emojiPicker);
+
+    // Add event listeners to emojis
+    document.querySelectorAll('.emoji').forEach(emojiElement => {
+        emojiElement.addEventListener('click', function() {
+            chatInput.value += this.textContent;
+            chatInput.focus();
+        });
+    });
+
+    document.getElementById('close-emoji-picker').addEventListener('click', function() {
+        emojiPicker.classList.add('animate-scale-out');
+        setTimeout(() => {
+            if (emojiPicker.parentNode) {
+                emojiPicker.parentNode.removeChild(emojiPicker);
+            }
+        }, 300);
+    });
+}
+
+/**
+ * Setup message action buttons and dropdowns
+ */
+function setupMessageActions() {
+    document.addEventListener('click', function(e) {
+        // Check if clicked element is a message action button
+        if (e.target.closest('.message-action-btn')) {
+            const btn = e.target.closest('.message-action-btn');
+            const messageId = btn.getAttribute('data-message-id');
+            const dropdown = document.getElementById(`dropdown-${messageId}`);
+
+            if (dropdown) {
+                // Toggle dropdown
+                dropdown.classList.toggle('active');
+                e.stopPropagation();
+            }
+        } else {
+            // Close all dropdowns when clicking elsewhere
+            const dropdowns = document.querySelectorAll('.message-action-dropdown');
+            dropdowns.forEach(dropdown => dropdown.classList.remove('active'));
+        }
+
+        // Handle copy message action
+        if (e.target.closest('.copy-message')) {
+            e.preventDefault();
+            const messageElement = e.target.closest('.message');
+            if (messageElement) {
+                const messageText = messageElement.querySelector('.message-content').textContent;
+                navigator.clipboard.writeText(messageText).then(() => {
+                    console.log('Message copied to clipboard');
+                    showToast('Message copié!');
+                });
+            }
+        }
+
+        // Handle delete message action
+        if (e.target.closest('.delete-message')) {
+            e.preventDefault();
+            const messageElement = e.target.closest('.message');
+            if (messageElement) {
+                // Add fade-out animation
+                messageElement.classList.add('animate-fade-out');
+
+                // Remove element after animation completes
+                setTimeout(() => {
+                    if (messageElement.parentNode) {
+                        messageElement.parentNode.removeChild(messageElement);
+                    }
+                    showToast('Message supprimé');
+                }, 300);
+            }
+        }
+    });
+}
+
+/**
+ * Toggle the chat interface visibility
+ * @param {boolean|undefined} show - True to show, false to hide, undefined to toggle
+ */
+function toggleChat(show) {
+    const chatPopup = document.getElementById('chatbot-popup');
+    const suggestionsContainer = document.getElementById('suggestions-container');
+
+    if (!chatPopup) {
+        console.error('Chat popup not found');
+        return;
+    }
+
+    // If show is explicitly defined, set that state
+    if (show === true) {
+        chatPopup.classList.add('active');
+        chatPopup.classList.add('animate-slide-in-up');
+
+        setTimeout(() => {
+            chatPopup.classList.remove('animate-slide-in-up');
+        }, 500);
+
+        if (suggestionsContainer) {
+            suggestionsContainer.classList.add('active');
+            suggestionsContainer.classList.add('animate-fade-in');
+
+            setTimeout(() => {
+                suggestionsContainer.classList.remove('animate-fade-in');
+            }, 500);
+        }
+
+        setTimeout(() => {
+            const inputField = document.getElementById('chat-input');
+            if (inputField) inputField.focus();
+        }, 300);
+    } else if (show === false) {
+        chatPopup.classList.add('animate-slide-out-down');
+
+        if (suggestionsContainer) {
+            suggestionsContainer.classList.add('animate-fade-out');
+        }
+
+        setTimeout(() => {
+            chatPopup.classList.remove('active');
+            chatPopup.classList.remove('animate-slide-out-down');
+
+            if (suggestionsContainer) {
+                suggestionsContainer.classList.remove('active');
+                suggestionsContainer.classList.remove('animate-fade-out');
+            }
+        }, 300);
+    } else {
+        // Toggle state
+        if (chatPopup.classList.contains('active')) {
+            // Hide with animation
+            chatPopup.classList.add('animate-slide-out-down');
+
+            if (suggestionsContainer) {
+                suggestionsContainer.classList.add('animate-fade-out');
+            }
+
+            setTimeout(() => {
+                chatPopup.classList.remove('active');
+                chatPopup.classList.remove('animate-slide-out-down');
+
+                if (suggestionsContainer) {
+                    suggestionsContainer.classList.remove('active');
+                    suggestionsContainer.classList.remove('animate-fade-out');
+                }
+            }, 300);
+        } else {
+            // Show with animation
+            chatPopup.classList.add('active');
+            chatPopup.classList.add('animate-slide-in-up');
+
+            setTimeout(() => {
+                chatPopup.classList.remove('animate-slide-in-up');
+            }, 500);
+
+            if (suggestionsContainer) {
+                suggestionsContainer.classList.add('active');
+                suggestionsContainer.classList.add('animate-fade-in');
+
+                setTimeout(() => {
+                    suggestionsContainer.classList.remove('animate-fade-in');
+                }, 500);
+            }
+
+            setTimeout(() => {
+                const inputField = document.getElementById('chat-input');
+                if (inputField) inputField.focus();
+            }, 300);
+        }
+    }
+
+    // Check if we need to adjust suggestions container position for mobile
+    adjustSuggestionsPosition();
+}
+
+/**
+ * Adjust the position of suggestions container based on screen size
+ */
+function adjustSuggestionsPosition() {
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (!suggestionsContainer || !chatMessages) return;
+
+    // Check window width for mobile view
+    if (window.innerWidth <= 768) {
+        // Move suggestions inside the chat messages container for mobile
+        if (!document.querySelector('.chat-messages .suggestions-container')) {
+            const suggestionsClone = suggestionsContainer.cloneNode(true);
+            suggestionsClone.id = 'suggestions-container-mobile';
+            chatMessages.appendChild(suggestionsClone);
+            suggestionsContainer.style.display = 'none';
+
+            // Add event listeners to the cloned suggestion buttons
+            const suggestionButtons = suggestionsClone.querySelectorAll('.suggestion-button');
+            suggestionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    const lang = this.getAttribute('data-lang');
+                    if (message) {
+                        const chatInput = document.getElementById('chat-input');
+                        if (chatInput) {
+                            chatInput.value = message;
+
+                            // Set the preferred language based on the suggestion
+                            if (lang) {
+                                window.preferredLanguage = lang;
+                            }
+
+                            sendMessage();
+                        }
+                    }
+                });
+            });
+        }
+    } else {
+        // Remove suggestions from inside chat on desktop
+        const mobileSuggestions = document.getElementById('suggestions-container-mobile');
+        if (mobileSuggestions) {
+            mobileSuggestions.remove();
+        }
+        suggestionsContainer.style.display = '';
+    }
+}
+
+/**
+ * Send a message from the user
+ */
+function sendMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (!chatInput || !chatMessages) {
+        console.error('Chat input or messages container not found');
+        return;
+    }
+
+    const message = chatInput.value.trim();
+
+    if (message === '') return;
+
+    // Clear the input
+    chatInput.value = '';
+
+    // Generate a unique message ID
+    const userMessageId = 'user-' + Date.now();
+
+    // Determine language of message for later response matching
+    const containsArabic = /[\u0600-\u06FF]/.test(message);
+    const messageLanguage = containsArabic ? 'ar' : 'fr';
+
+    // Store language with message for later reference
+    const messageData = {
+        text: message,
+        language: messageLanguage
+    };
+
+    // Add user message
+    addUserMessage(message, userMessageId, messageData);
+
+    // Show typing indicator with animation
+    showTypingIndicator();
+
+    // Different behavior based on online/offline mode
+    if (window.isOnlineMode) {
+        // Simulate API call delay - In a real app, you'd call your API here
+        setTimeout(() => {
+            // Hide typing indicator
+            hideTypingIndicator();
+
+            // Here you would normally process the API response
+            // For now we'll simulate it with a placeholder response
+            const botResponse = getOnlineModeResponse(message, messageData.language);
+
+            // Add bot response with animation
+            const botMessageId = 'bot-' + Date.now();
+            addBotMessage(botResponse, botMessageId);
+
+            // Update suggestions based on the conversation
+            updateSuggestions(message, messageData.language);
+
+            // Mark message as read with animation
+            setTimeout(() => {
+                const userMessageElement = document.querySelector(`[data-message-id="${userMessageId}"]`);
+                if (userMessageElement) {
+                    const messageElement = userMessageElement.closest('.message');
+                    if (messageElement) {
+                        const statusElement = messageElement.querySelector('.message-footer span');
+                        if (statusElement) {
+                            statusElement.classList.add('status-change');
+                            statusElement.textContent = messageData.language === 'ar' ? 'مقروءة' : 'Lu';
+
+                            setTimeout(() => {
+                                statusElement.classList.remove('status-change');
+                            }, 300);
+                        }
+                    }
+                }
+            }, 1000);
+        }, 2000 + Math.random() * 2000); // Longer delay for online mode to simulate API call
+    } else {
+        // Offline mode - use predefined responses
+        setTimeout(() => {
+            // Hide typing indicator
+            hideTypingIndicator();
+
+            // Generate bot response from local data
+            const botResponse = getBotResponse(message, messageData.language);
+
+            // Add bot response with animation
+            const botMessageId = 'bot-' + Date.now();
+            addBotMessage(botResponse, botMessageId);
+
+            // Update suggestions based on the conversation
+            updateSuggestions(message, messageData.language);
+
+            // Mark message as read with animation
+            setTimeout(() => {
+                const userMessageElement = document.querySelector(`[data-message-id="${userMessageId}"]`);
+                if (userMessageElement) {
+                    const messageElement = userMessageElement.closest('.message');
+                    if (messageElement) {
+                        const statusElement = messageElement.querySelector('.message-footer span');
+                        if (statusElement) {
+                            statusElement.classList.add('status-change');
+                            statusElement.textContent = messageData.language === 'ar' ? 'مقروءة' : 'Lu';
+
+                            setTimeout(() => {
+                                statusElement.classList.remove('status-change');
+                            }, 300);
+                        }
+                    }
+                }
+            }, 1000);
+        }, 1000 + Math.random() * 1500); // Shorter delay for offline mode
+    }
+}
+
+/**
+ * Get a response from the "online" simulated AI model
+ * In a real app, this would call an API rather than use predetermined responses
+ * @param {string} message - The user's message
+ * @param {string} language - The language of the message
+ * @returns {string} - The bot's response
+ */
+function getOnlineModeResponse(message, language) {
+    // In a real app, this would make an API call to a language model service
+    // For now, we'll simulate with a slightly more dynamic response than the offline mode
+
+    message = message.toLowerCase();
+
+    // Initialize response with default message
+    let response = '';
+    let currentDate = new Date();
+    let currentDateString = `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
+    let currentTimeString = `${currentDate.getHours()}:${currentDate.getMinutes()}`;
+
+    if (language === 'fr') {
+        // Add AI-like greeting and context
+        response = `[Mode AI - ${currentDateString} ${currentTimeString}]\n\n`;
+
+        // Add personalized response
+        if (message.includes('bonjour') || message.includes('salut') || message.includes('hello')) {
+            response += `Bonjour ! Je suis ravi de vous aider aujourd'hui. Je suis votre assistant ESPRIT CV Generator connecté à notre API d'intelligence artificielle. Comment puis-je vous aider avec votre CV ou votre recherche d'emploi ?`;
+        }
+        // Check for CV creation questions
+        else if ((message.includes('cv') || message.includes('curriculum') || message.includes('resume')) &&
+            (message.includes('creer') || message.includes('créer') || message.includes('faire'))) {
+            response += `Pour créer un CV professionnel, je vous invite à cliquer sur le bouton "Créer mon CV" en haut de la page. Notre système vous guidera à travers plusieurs étapes :\n\n1. Sélection d'un template adapté à votre secteur d'activité\n2. Saisie de vos informations personnelles et de contact\n3. Description de votre expérience professionnelle\n4. Ajout de votre formation et qualifications\n5. Personnalisation du design et des couleurs\n\nSouhaitez-vous des conseils spécifiques pour une section particulière du CV ?`;
+        }
+        else {
+            // Default to the offline response but with a different prefix
+            response += getBotResponse(message, language);
+        }
+    } else {
+        // Arabic mode
+        response = `[وضع الذكاء الاصطناعي - ${currentDateString} ${currentTimeString}]\n\n`;
+
+        if (message.includes('عسلامة') || message.includes('سلام') || message.includes('مرحبا')) {
+            response += `عسلامة! يسعدني مساعدتك اليوم. أنا مساعدك الافتراضي ESPRIT CV Generator متصل بواجهة برمجة التطبيقات للذكاء الاصطناعي لدينا. كيف يمكنني مساعدتك في إنشاء سيرتك الذاتية أو البحث عن وظيفة؟`;
+        }
+        // Check for CV creation questions in Arabic
+        else if ((message.includes('cv') || message.includes('سيرة ذاتية')) &&
+            (message.includes('نعمل') || message.includes('نخدم'))) {
+            response += `لإنشاء سيرة ذاتية احترافية، أدعوك للنقر على زر "Créer mon CV" الموجود في أعلى الصفحة. سيرشدك نظامنا من خلال عدة خطوات:\n\n1. اختيار قالب مناسب لمجال عملك\n2. إدخال معلوماتك الشخصية وتفاصيل الاتصال\n3. وصف خبرتك المهنية\n4. إضافة تعليمك ومؤهلاتك\n5. تخصيص التصميم والألوان\n\nهل ترغب في الحصول على نصائح محددة لقسم معين من السيرة الذاتية؟`;
+        }
+        else {
+            // Default to the offline response with a different prefix
+            response += getBotResponse(message, language);
+        }
+    }
+
+    return response;
+}
+
+/**
+ * Add a user message to the chat
+ * @param {string} message - The message text
+ * @param {string} messageId - Unique ID for the message
+ * @param {object} messageData - Additional data about the message
+ */
+function addUserMessage(message, messageId, messageData = {}) {
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (!chatMessages) return;
+
+    const userAvatarSrc = 'https://ui-avatars.com/api/?name=Mohamed&background=2D3748&color=fff&size=128';
+    const language = messageData.language || 'fr';
+
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message user animate-message-in-right';
+    messageElement.setAttribute('data-language', language);
+    messageElement.setAttribute('data-message-id', messageId);
+
+    messageElement.innerHTML = `
+        <div class="message-avatar">
+            <img src="${userAvatarSrc}" alt="Your Avatar">
+        </div>
+        <div class="message-container ${language === 'ar' ? 'rtl-text' : ''}">
+            <div class="message-header">
+                <span class="message-sender">${language === 'ar' ? 'أنت' : 'Vous'}</span>
+                <span class="message-time">${formatTime(new Date())}</span>
+            </div>
+            <p class="message-content">${escapeHtml(message)}</p>
+            <div class="message-footer">
+                <span>${language === 'ar' ? 'مرسلة' : 'Envoyé'}</span>
+            </div>
+        </div>
+        <div class="message-actions">
+            <button class="message-action-btn" aria-label="Options" data-message-id="${messageId}">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="message-action-dropdown" id="dropdown-${messageId}">
+                <ul>
+                    <li><a href="#" class="copy-message"><i class="far fa-copy"></i> ${language === 'ar' ? 'نسخ' : 'Copier'}</a></li>
+                    <li><a href="#" class="delete-message"><i class="far fa-trash-alt"></i> ${language === 'ar' ? 'حذف' : 'Supprimer'}</a></li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    chatMessages.appendChild(messageElement);
+    scrollToBottom();
+
+    // Remove animation class after animation completes
+    setTimeout(() => {
+        messageElement.classList.remove('animate-message-in-right');
+    }, 500);
+
+    // Update action buttons
+    setupMessageActions();
+}
+
+/**
+ * Add a bot message to the chat
+ * @param {string} message - The message text
+ * @param {string} messageId - Unique ID for the message
+ * @param {string} language - Language of the message (fr or ar)
+ */
+function addBotMessage(message, messageId, language) {
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (!chatMessages) return;
+
+    // If language isn't specified, detect it from the message
+    if (!language) {
+        language = /[\u0600-\u06FF]/.test(message) ? 'ar' : 'fr';
+    }
+
+    const botAvatarSrc = 'https://ui-avatars.com/api/?name=ESPRIT&background=E12D2D&color=fff&size=128';
+
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message bot animate-message-in-left';
+    messageElement.setAttribute('data-language', language);
+
+    // Check if in online mode to show indicator
+    const modeIndicator = window.isOnlineMode ?
+        `<span class="online-indicator" title="Mode en ligne"><i class="fas fa-wifi"></i></span>` : '';
+
+    messageElement.innerHTML = `
+        <div class="message-avatar">
+            <img src="${botAvatarSrc}" alt="Bot Avatar">
+        </div>
+        <div class="message-container ${language === 'ar' ? 'rtl-text' : ''}">
+            <div class="message-header">
+                <span class="message-sender">ESPRIT Assistant ${modeIndicator}</span>
+                <span class="message-time">${formatTime(new Date())}</span>
+            </div>
+            <p class="message-content">${escapeHtml(message)}</p>
+            <div class="message-footer">
+                <span>${language === 'ar' ? 'مرسلة' : 'Envoyé'}</span>
+            </div>
+        </div>
+        <div class="message-actions">
+            <button class="message-action-btn" aria-label="Options" data-message-id="${messageId}">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="message-action-dropdown" id="dropdown-${messageId}">
+                <ul>
+                    <li><a href="#" class="copy-message"><i class="far fa-copy"></i> ${language === 'ar' ? 'نسخ' : 'Copier'}</a></li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    chatMessages.appendChild(messageElement);
+    scrollToBottom();
+
+    // Remove animation class after animation completes
+    setTimeout(() => {
+        messageElement.classList.remove('animate-message-in-left');
+    }, 500);
+
+    // Update action buttons
+    setupMessageActions();
+}
+
+/**
+ * Show typing indicator in the chat with animation
+ */
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (!chatMessages) return;
+
+    // Remove any existing typing indicator
+    hideTypingIndicator();
+
+    const botAvatarSrc = 'https://ui-avatars.com/api/?name=ESPRIT&background=E12D2D&color=fff&size=128';
+
+    // Create a new typing indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'typing-indicator animate-fade-in';
+    indicator.id = 'typing-indicator';
+
+    // Add WiFi icon for online mode
+    const onlineIndicator = window.isOnlineMode ?
+        `<span class="online-typing-indicator"><i class="fas fa-wifi"></i></span>` : '';
+
+    indicator.innerHTML = `
+        <div class="message-avatar">
+            <img src="${botAvatarSrc}" alt="Bot Avatar">
+        </div>
+        <div class="typing-indicator-container">
+            ${onlineIndicator}
+            <div class="typing-indicator-bubbles">
+                <div class="typing-indicator-dot"></div>
+                <div class="typing-indicator-dot"></div>
+                <div class="typing-indicator-dot"></div>
+            </div>
+        </div>
+    `;
+
+    chatMessages.appendChild(indicator);
+    scrollToBottom();
+}
+
+/**
+ * Hide the typing indicator with animation
+ */
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+        indicator.classList.add('animate-fade-out');
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }, 300);
+    }
+}
+
+/**
+ * Update suggestions based on conversation
+ * @param {string} lastMessage - The last message sent by user
+ * @param {string} language - Language of the message
+ */
+function updateSuggestions(lastMessage, language) {
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    const mobileSuggestions = document.getElementById('suggestions-container-mobile');
+
+    if (!suggestionsContainer) return;
+
+    // Default to French if no language specified
+    if (!language) {
+        language = /[\u0600-\u06FF]/.test(lastMessage) ? 'ar' : 'fr';
+    }
+
+    // Different suggestion sets based on conversation context and language
+    let newSuggestions = [];
+
+    lastMessage = lastMessage.toLowerCase();
+
+    if (language === 'ar') {
+        // Arabic suggestions based on context
+        if (lastMessage.includes('قالب') || lastMessage.includes('نموذج') || lastMessage.includes('تصميم')) {
+            newSuggestions = [
+                { icon: 'fas fa-palette', text: 'كيفاش نختار قالب مناسب؟', lang: 'ar' },
+                { icon: 'fas fa-star', text: 'أفضل القوالب المهنية؟', lang: 'ar' },
+                { icon: 'fas fa-file-alt', text: 'انشاء سيرة ذاتية', lang: 'ar' },
+                { icon: 'fas fa-question-circle', text: 'معلومات إضافية', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('سيرة') || lastMessage.includes('cv') || lastMessage.includes('نعمل')) {
+            newSuggestions = [
+                { icon: 'fas fa-edit', text: 'كيفاش نحرر السيرة الذاتية؟', lang: 'ar' },
+                { icon: 'fas fa-download', text: 'كيفاش نحمل السيرة الذاتية؟', lang: 'ar' },
+                { icon: 'fas fa-language', text: 'كيفاش نكتب السيرة بالفرنسية؟', lang: 'ar' },
+                { icon: 'fas fa-question-circle', text: 'مساعدة حول الأقسام', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('تحميل') || lastMessage.includes('pdf') || lastMessage.includes('نزل')) {
+            newSuggestions = [
+                { icon: 'fas fa-file-pdf', text: 'صيغ متاحة للتحميل؟', lang: 'ar' },
+                { icon: 'fas fa-print', text: 'خيارات الطباعة؟', lang: 'ar' },
+                { icon: 'fas fa-envelope', text: 'ارسال بالبريد الإلكتروني؟', lang: 'ar' },
+                { icon: 'fas fa-share-alt', text: 'كيفاش نشارك السيرة؟', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('بلاش') || lastMessage.includes('فلوس') || lastMessage.includes('سعر')) {
+            newSuggestions = [
+                { icon: 'fas fa-crown', text: 'خدمات بريميوم؟', lang: 'ar' },
+                { icon: 'fas fa-tag', text: 'رموز الخصم؟', lang: 'ar' },
+                { icon: 'fas fa-users', text: 'عروض للطلبة؟', lang: 'ar' },
+                { icon: 'fas fa-money-bill', text: 'شنوا الخدمات اللي بلاش؟', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('شكرا') || lastMessage.includes('مرسي') || lastMessage.includes('مساعدة')) {
+            newSuggestions = [
+                { icon: 'fas fa-question-circle', text: 'أسئلة أخرى؟', lang: 'ar' },
+                { icon: 'fas fa-file-alt', text: 'انشاء سيرتي الذاتية', lang: 'ar' },
+                { icon: 'fas fa-star', text: 'تقييم الخدمة', lang: 'ar' },
+                { icon: 'fas fa-hands-helping', text: 'كيفاش تتصل بالدعم؟', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('منستير') || lastMessage.includes('تونس') || lastMessage.includes('صفاقس') || lastMessage.includes('سوسة')) {
+            newSuggestions = [
+                { icon: 'fas fa-university', text: 'شنوة الجامعات في تونس؟', lang: 'ar' },
+                { icon: 'fas fa-briefcase', text: 'فرص العمل في المدينة؟', lang: 'ar' },
+                { icon: 'fas fa-graduation-cap', text: 'شهادات مطلوبة؟', lang: 'ar' },
+                { icon: 'fas fa-building', text: 'شركات التوظيف؟', lang: 'ar' }
+            ];
+        } else if (lastMessage.includes('خدمة') || lastMessage.includes('شغل') || lastMessage.includes('عمل') || lastMessage.includes('توظيف')) {
+            newSuggestions = [
+                { icon: 'fas fa-search', text: 'وين نلقى خدمة في تونس؟', lang: 'ar' },
+                { icon: 'fas fa-briefcase', text: 'شنية الوثائق المطلوبة؟', lang: 'ar' },
+                { icon: 'fas fa-handshake', text: 'كيفاش نستعد للمقابلة؟', lang: 'ar' },
+                { icon: 'fas fa-chart-line', text: 'مجالات مطلوبة حاليا؟', lang: 'ar' }
+            ];
+        } else {
+            // Default Arabic suggestions
+            newSuggestions = [
+                { icon: 'fas fa-file-alt', text: 'كيفاش نعمل سيرة ذاتية؟', lang: 'ar' },
+                { icon: 'fas fa-briefcase', text: 'كيفاش نلقى خدمة؟', lang: 'ar' },
+                { icon: 'fas fa-palette', text: 'شنية القوالب المتوفرة؟', lang: 'ar' },
+                { icon: 'fas fa-star', text: 'شنية المهارات المهمة؟', lang: 'ar' }
+            ];
+        }
+    } else {
+        // French suggestions based on context
+        if (lastMessage.includes('template') || lastMessage.includes('modèle') || lastMessage.includes('design')) {
+            newSuggestions = [
+                { icon: 'fas fa-palette', text: 'Comment choisir un template?', lang: 'fr' },
+                { icon: 'fas fa-star', text: 'Templates populaires?', lang: 'fr' },
+                { icon: 'fas fa-file-alt', text: 'Créer un CV', lang: 'fr' },
+                { icon: 'fas fa-question-circle', text: 'Plus d\'informations', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('cv') || lastMessage.includes('créer') || lastMessage.includes('creer') || lastMessage.includes('curriculum')) {
+            newSuggestions = [
+                { icon: 'fas fa-edit', text: 'Comment éditer mon CV?', lang: 'fr' },
+                { icon: 'fas fa-download', text: 'Comment télécharger mon CV?', lang: 'fr' },
+                { icon: 'fas fa-language', text: 'CV en plusieurs langues?', lang: 'fr' },
+                { icon: 'fas fa-question-circle', text: 'Aide sur les sections', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('télécharger') || lastMessage.includes('telecharger') || lastMessage.includes('pdf') || lastMessage.includes('export')) {
+            newSuggestions = [
+                { icon: 'fas fa-file-pdf', text: 'Formats disponibles?', lang: 'fr' },
+                { icon: 'fas fa-print', text: 'Options d\'impression?', lang: 'fr' },
+                { icon: 'fas fa-envelope', text: 'Envoyer par email?', lang: 'fr' },
+                { icon: 'fas fa-share-alt', text: 'Comment partager mon CV?', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('gratuit') || lastMessage.includes('prix') || lastMessage.includes('coût') || lastMessage.includes('payer')) {
+            newSuggestions = [
+                { icon: 'fas fa-crown', text: 'Fonctionnalités premium?', lang: 'fr' },
+                { icon: 'fas fa-tag', text: 'Codes promotionnels?', lang: 'fr' },
+                { icon: 'fas fa-users', text: 'Offres étudiantes?', lang: 'fr' },
+                { icon: 'fas fa-money-bill', text: 'Services gratuits?', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('merci') || lastMessage.includes('aide') || lastMessage.includes('support') || lastMessage.includes('assistance')) {
+            newSuggestions = [
+                { icon: 'fas fa-question-circle', text: 'Autres questions?', lang: 'fr' },
+                { icon: 'fas fa-file-alt', text: 'Créer mon CV', lang: 'fr' },
+                { icon: 'fas fa-star', text: 'Noter le service', lang: 'fr' },
+                { icon: 'fas fa-hands-helping', text: 'Contacter le support?', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('monastir') || lastMessage.includes('tunis') || lastMessage.includes('sfax') || lastMessage.includes('sousse')) {
+            newSuggestions = [
+                { icon: 'fas fa-university', text: 'Universités en Tunisie?', lang: 'fr' },
+                { icon: 'fas fa-briefcase', text: 'Opportunités d\'emploi?', lang: 'fr' },
+                { icon: 'fas fa-graduation-cap', text: 'Diplômes recherchés?', lang: 'fr' },
+                { icon: 'fas fa-building', text: 'Entreprises qui recrutent?', lang: 'fr' }
+            ];
+        } else if (lastMessage.includes('emploi') || lastMessage.includes('travail') || lastMessage.includes('job') || lastMessage.includes('recrutement')) {
+            newSuggestions = [
+                { icon: 'fas fa-search', text: 'Où chercher un emploi?', lang: 'fr' },
+                { icon: 'fas fa-briefcase', text: 'Documents nécessaires?', lang: 'fr' },
+                { icon: 'fas fa-handshake', text: 'Préparer un entretien?', lang: 'fr' },
+                { icon: 'fas fa-chart-line', text: 'Secteurs qui recrutent?', lang: 'fr' }
+            ];
+        } else {
+            // Default French suggestions
+            newSuggestions = [
+                { icon: 'fas fa-file-alt', text: 'Comment créer un CV?', lang: 'fr' },
+                { icon: 'fas fa-briefcase', text: 'Comment trouver un emploi?', lang: 'fr' },
+                { icon: 'fas fa-palette', text: 'Templates disponibles?', lang: 'fr' },
+                { icon: 'fas fa-star', text: 'Compétences importantes?', lang: 'fr' }
+            ];
+        }
+    }
+
+    // Update desktop suggestions with animation
+    updateSuggestionButtons(suggestionsContainer, newSuggestions);
+
+    // Update mobile suggestions if they exist
+    if (mobileSuggestions) {
+        updateSuggestionButtons(mobileSuggestions, newSuggestions);
+    }
+}
+
+/**
+ * Update the suggestion buttons in a container with animation
+ * @param {HTMLElement} container - The suggestions container
+ * @param {Array} suggestions - Array of suggestion objects with icon and text
+ */
+function updateSuggestionButtons(container, suggestions) {
+    // Keep the suggestion title element
+    const title = container.querySelector('.suggestion-title');
+
+    // Apply fade-out animation to current buttons
+    const currentButtons = container.querySelectorAll('.suggestion-button');
+    currentButtons.forEach(button => {
+        button.classList.add('animate-fade-out-fast');
+    });
+
+    // After animation, clear and add new buttons
+    setTimeout(() => {
+        // Clear existing buttons
+        container.innerHTML = '';
+
+        // Add the title back
+        container.appendChild(title);
+
+        // Add new suggestion buttons with animation
+        suggestions.forEach((suggestion, index) => {
+            const button = document.createElement('button');
+            button.className = 'suggestion-button animate-pop-staggered';
+            button.style.animationDelay = `${index * 0.1}s`;
+            button.setAttribute('data-message', suggestion.text);
+            if (suggestion.lang) {
+                button.setAttribute('data-lang', suggestion.lang);
+            }
+
+            // Add RTL class for Arabic suggestions
+            if (suggestion.lang === 'ar') {
+                button.classList.add('rtl-text');
+            }
+
+            button.innerHTML = `<i class="${suggestion.icon}"></i> ${suggestion.text}`;
+
+            button.addEventListener('click', function() {
+                const message = this.getAttribute('data-message');
+                const lang = this.getAttribute('data-lang');
+                if (message) {
+                    // Set the message in the input
+                    const chatInput = document.getElementById('chat-input');
+                    if (chatInput) {
+                        chatInput.value = message;
+
+                        // Set the preferred language based on the suggestion language
+                        if (lang) {
+                            window.preferredLanguage = lang;
+                        }
+
+                        sendMessage();
+                    }
+                }
+            });
+
+            container.appendChild(button);
+
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                button.classList.remove('animate-pop-staggered');
+            }, 500);
+        });
+    }, 200);
+}
+
+/**
+ * Display a toast notification with animation
+ * @param {string} message - Message to display
+ */
+function showToast(message) {
+    // Check if a toast container already exists, if not create one
+    let toastContainer = document.getElementById('toast-container');
+
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.left = '20px';
+        toastContainer.style.zIndex = '10000';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast animate-toast-in';
+    toast.textContent = message;
+
+    // Add to container
+    toastContainer.appendChild(toast);
+
+    // Remove after delay
+    setTimeout(() => {
+        toast.classList.add('animate-toast-out');
+
+        // Remove from DOM after animation
+        setTimeout(() => {
+            if (toastContainer.contains(toast)) {
+                toastContainer.removeChild(toast);
+            }
+
+            // Remove container if empty
+            if (toastContainer.childElementCount === 0) {
+                document.body.removeChild(toastContainer);
+            }
+        }, 300);
+    }, 2000);
+}
+
+/**
+ * Get a response from the bot based on user input
+ * @param {string} message - The user's message
+ * @param {string} language - The language of the message (fr or ar)
+ * @returns {string} - The bot's response
+ */
+function getBotResponse(message, language) {
+    message = message.toLowerCase();
+
+    // If no language is specified, detect it from the message
+    if (!language) {
+        language = /[\u0600-\u06FF]/.test(message) ? 'ar' : 'fr';
+    }
+
+    // Responses in French
+    if (language === 'fr') {
+        // CV creation
+        if ((message.includes('cv') || message.includes('curriculum') || message.includes('resume')) &&
+            (message.includes('creer') || message.includes('créer') || message.includes('faire'))) {
+            return 'Pour créer un CV, cliquez sur le bouton "Créer mon CV" en haut de la page. Vous pourrez ensuite choisir un template et remplir vos informations personnelles, votre expérience professionnelle et votre formation.';
+        }
+
+        // CV templates
+        if (message.includes('template') || message.includes('modèle') || message.includes('modele')) {
+            return 'Nous proposons 15 templates professionnels différents, adaptés à divers secteurs d\'activité. Vous pouvez les consulter dans la section "Templates". Chaque template peut être personnalisé selon vos préférences en termes de couleurs, polices et mise en page.';
+        }
+
+        // Downloading/exporting CV
+        if (message.includes('télécharger') || message.includes('telecharger') || message.includes('exporter') ||
+            message.includes('pdf')) {
+            return 'Une fois votre CV complété, vous pourrez l\'exporter en format PDF haute qualité en cliquant sur le bouton "Télécharger" dans votre espace personnel. Nous proposons également d\'autres formats comme Word ou JPG selon vos besoins.';
+        }
+
+        // Pricing information
+        if (message.includes('gratuit') || message.includes('prix') || message.includes('coûte') ||
+            message.includes('coute')) {
+            return 'Notre service de base pour la création de CV est gratuit pour les étudiants d\'ESPRIT. Des options premium sont également disponibles, comme des templates exclusifs, l\'analyse avancée de CV et le suivi de candidatures, à partir de 5 dinars par mois.';
+        }
+
+        // How to find a job
+        if (message.includes('emploi') || message.includes('job') || message.includes('travail') ||
+            message.includes('chercher') || message.includes('trouver')) {
+            return 'Pour trouver un emploi en Tunisie, nous vous recommandons d\'utiliser des plateformes comme Tanitjobs, Keejob, Emploi.tn et LinkedIn. Suivez également les pages des entreprises qui vous intéressent et participez aux journées portes ouvertes et salons de recrutement. Un CV professionnel créé sur notre plateforme augmentera considérablement vos chances!';
+        }
+
+        // Interview tips
+        if (message.includes('entretien') || message.includes('interview')) {
+            return 'Pour réussir un entretien d\'embauche: renseignez-vous sur l\'entreprise avant l\'entretien, préparez-vous aux questions courantes, habillez-vous professionnellement, préparez des exemples concrets de vos réalisations, montrez votre enthousiasme pour le poste et posez des questions pertinentes à la fin. N\'oubliez pas d\'apporter une copie imprimée de votre CV!';
+        }
+
+        // Important skills
+        if (message.includes('compétence') || message.includes('competence') || message.includes('skill')) {
+            return 'Les compétences importantes à mentionner dans votre CV comprennent: compétences techniques spécifiques à votre domaine, langues étrangères, communication, travail d\'équipe, résolution de problèmes et gestion de projet. Classez vos compétences par catégorie et indiquez votre niveau de maîtrise. Pour les métiers techniques, précisez les logiciels et technologies que vous maîtrisez.';
+        }
+
+        // Education institutions
+        if ((message.includes('education') || message.includes('formation') || message.includes('étude') || message.includes('etude')) &&
+            (message.includes('esprit'))) {
+            return 'Si vous êtes diplômé d\'ESPRIT (École Supérieure Privée d\'Ingénierie et de Technologies), c\'est excellent à mentionner dans votre CV! ESPRIT est connue pour sa formation de haute qualité en ingénierie et technologie. Précisez votre spécialisation (génie logiciel, réseaux, intelligence artificielle...), l\'année d\'obtention de votre diplôme et les projets importants auxquels vous avez participé. Les diplômés d\'ESPRIT sont recherchés sur le marché du travail.';
+        }
+
+        // General greeting
+        if (message.includes('bonjour') || message.includes('salut') || message.includes('hello')) {
+            return 'Bonjour! Comment puis-je vous aider avec la création de votre CV ou votre recherche d\'emploi aujourd\'hui?';
+        }
+
+        // Default French response
+        return 'Je ne suis pas sûr de comprendre votre question. Je peux vous aider avec la création de votre CV, vous donner des conseils sur votre carrière ou répondre à des questions générales sur l\'emploi et l\'éducation. N\'hésitez pas à reformuler votre question.';
+    }
+    // Responses in Arabic
+    else {
+        // CV creation
+        if ((message.includes('cv') || message.includes('سيرة ذاتية')) &&
+            (message.includes('نعمل') || message.includes('نخدم'))) {
+            return 'باش تعمل سيرة ذاتية، أنقر على زر "Créer mon CV" الموجود في أعلى الصفحة. تنجم بعدها تختار قالب و تعبّي معلوماتك الشخصية و خبراتك المهنية و تعليمك.';
+        }
+
+        // CV templates
+        if (message.includes('قالب') || message.includes('تصميم') || message.includes('نموذج')) {
+            return 'نوفرو 15 قالب محترف مختلف، مناسبين لمجالات مختلفة. تنجم تشوفهم في قسم "Templates". كل قالب يمكن تخصيصه حسب تفضيلاتك من ناحية الألوان و الخطوط و التنسيق.';
+        }
+
+        // Downloading/exporting CV
+        if (message.includes('تحميل') || message.includes('pdf') || message.includes('نزل')) {
+            return 'بعد ما تكمل سيرتك الذاتية، تنجم تحملها بصيغة PDF عالية الجودة بالنقر على زر "Télécharger" في صفحتك الشخصية. كما نوفر صيغ أخرى مثل Word أو JPG حسب احتياجاتك.';
+        }
+
+        // Pricing information
+        if (message.includes('بلاش') || message.includes('فلوس') || message.includes('سعر')) {
+            return 'خدمتنا الأساسية بلاش لطلبة ESPRIT. توجد خدمات بريميوم كيما القوالب الخاصة، التحليل المتقدم للسيرة الذاتية ومتابعة الترشحات، بداية من 5 دنانير في الشهر.';
+        }
+
+        // How to find a job
+        if (message.includes('خدمة') || message.includes('شغل') || message.includes('وظيفة') ||
+            message.includes('نلقى')) {
+            return 'للبحث عن فرص عمل في تونس، تنجم تستعمل مواقع مثل Tanitjobs, Keejob, Emploi.tn و LinkedIn. زيد على هذا، تابع صفحات الشركات اللي تهمك على Facebook و LinkedIn و احضر أيام الأبواب المفتوحة و معارض التوظيف. سيرة ذاتية محترفة من موقعنا تزيد من فرصك بشكل كبير!';
+        }
+
+        // Interview tips
+        if (message.includes('مقابلة') || message.includes('انترفيو')) {
+            return 'باش تنجح في المقابلة المهنية: ابحث عن الشركة قبل المقابلة، اتمرن على الأسئلة الشائعة، البس لباس محترم، أحضر أمثلة عن إنجازاتك، أظهر حماسك للوظيفة، و اطرح أسئلة ذكية في الآخر. متنساش تجيب نسخة مطبوعة من سيرتك الذاتية من موقعنا!';
+        }
+
+        // Important skills
+        if (message.includes('مهارات') || message.includes('كفاءات')) {
+            return 'المهارات المهمة اللي لازم تذكرها في سيرتك الذاتية تشمل: المهارات التقنية الخاصة بمجالك، اللغات الأجنبية، مهارات التواصل، العمل الجماعي، حل المشاكل، و إدارة المشاريع. قسّم مهاراتك حسب النوع و أكتب مستوى إتقانك فيها. بالنسبة للمهن التقنية، حدد البرامج و التقنيات اللي تتقنها.';
+        }
+
+        // Education institutions
+        if ((message.includes('قريت') || message.includes('درست') || message.includes('تعليم')) &&
+            (message.includes('esprit'))) {
+            return 'إذا كنت خريج ESPRIT (École Supérieure Privée d\'Ingénierie et de Technologies)، هذا أمر ممتاز للذكر في سيرتك الذاتية! ESPRIT معروفة بتكوينها العالي الجودة في مجال الهندسة والتكنولوجيا. اذكر التخصص بالتفصيل (هندسة برمجيات، شبكات، ذكاء اصطناعي...)، سنة التخرج، والمشاريع المهمة التي شاركت فيها. خريجو ESPRIT مطلوبون في سوق العمل.';
+        }
+
+        // General greeting
+        if (message.includes('عسلامة') || message.includes('سلام') || message.includes('مرحبا')) {
+            return 'عسلامة! كيفاش نجم نعاونك في عمل سيرة ذاتية مهنية أو البحث عن وظيفة اليوم؟';
+        }
+
+        // Default Arabic response
+        return 'مانيش متأكد أني فهمت سؤالك. نجم نعاونك في عمل سيرتك الذاتية، نعطيك نصائح للمسار المهني، و نجاوب على أسئلة عامة حول الشغل و التعليم. حاول تعاود تصوغ سؤالك.';
+    }
+}
+
+/**
+ * Format time for display (HH:MM)
+ * @param {Date} date - Date object
+ * @returns {string} - Formatted time
+ */
+function formatTime(date) {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+/**
+ * Scroll chat messages to the bottom
+ */
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped text
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Check if device is mobile
+ * @returns {boolean} - True if mobile device
+ */
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Initialize preferred language
+window.preferredLanguage = 'mixed';
+
+// Add window resize listener to adjust suggestions position
+window.addEventListener('resize', adjustSuggestionsPosition);
+
+// Add styles for RTL text and animations
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+    .rtl-text {
+        direction: rtl;
+        text-align: right;
+    }
+    
+    /* Message animations */
+    .animate-message-in-right {
+        animation: slideInRight 0.4s ease forwards;
+    }
+    
+    .animate-message-in-left {
+        animation: slideInLeft 0.4s ease forwards;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Pop animations */
+    .animate-pop {
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        transform-origin: center;
+    }
+    
+    .animate-pop-staggered {
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        transform-origin: center;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    
+    @keyframes popIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    /* Fade animations */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .animate-fade-out {
+        animation: fadeOut 0.3s ease forwards;
+    }
+    
+    .animate-fade-out-fast {
+        animation: fadeOut 0.2s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+    
+    /* Slide animations */
+    .animate-slide-in {
+        animation: slideIn 0.3s ease forwards;
+    }
+    
+    .animate-slide-out {
+        animation: slideOut 0.3s ease forwards;
+    }
+    
+    .animate-slide-in-up {
+        animation: slideInUp 0.4s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
+    }
+    
+    .animate-slide-out-down {
+        animation: slideOutDown 0.4s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutDown {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+    }
+    
+    /* Scale animations */
+    .animate-scale-in {
+        animation: scaleIn 0.3s ease forwards;
+        transform-origin: bottom left;
+    }
+    
+    .animate-scale-out {
+        animation: scaleOut 0.3s ease forwards;
+        transform-origin: bottom left;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes scaleOut {
+        from {
+            transform: scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: scale(0);
+            opacity: 0;
+        }
+    }
+    
+    /* Bounce animation */
+    .animate-bounce {
+        animation: bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    /* Toast animation */
+    .toast {
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .animate-toast-in {
+        animation: toastIn 0.3s ease forwards;
+    }
+    
+    .animate-toast-out {
+        animation: toastOut 0.3s ease forwards;
+    }
+    
+    @keyframes toastIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes toastOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+    
+    /* Status change animation */
+    .status-change {
+        animation: flash 0.6s ease;
+    }
+    
+    @keyframes flash {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+            color: #4CAF50;
+        }
+    }
+    
+    /* Online/Offline toggle switch */
+    .chat-mode-toggle {
+        display: flex;
+        align-items: center;
+        margin: 0 20px;
+    }
+    
+    .mode-label {
+        font-size: 12px;
+        margin: 0 5px;
+    }
+    
+    .offline-label {
+        color: #777;
+    }
+    
+    .online-label {
+        color: #4CAF50;
+    }
+    
+    /* The switch - the box around the slider */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+    
+    /* Hide default HTML checkbox */
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    /* The slider */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+    }
+    
+    input:checked + .slider {
+        background-color: #4CAF50;
+    }
+    
+    input:focus + .slider {
+        box-shadow: 0 0 1px #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(16px);
+    }
+    
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+    
+    .slider.round:before {
+        border-radius: 50%;
+    }
+    
+    /* Mode info styles */
+    .mode-info {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+    }
+    
+    .mode-info-icon {
+        margin-right: 8px;
+        color: #6c757d;
+    }
+    
+    .mode-info-text {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    /* Status message styles */
+    .chat-status-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px auto;
+        padding: 8px 15px;
+        border-radius: 20px;
+        background-color: #f8f9fa;
+        max-width: 80%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .status-icon {
+        margin-right: 8px;
+        font-size: 14px;
+    }
+    
+    .status-icon.online {
+        color: #4CAF50;
+    }
+    
+    .status-icon.offline {
+        color: #777;
+    }
+    
+    .status-text {
+        font-size: 12px;
+        color: #555;
+    }
+    
+    /* Online indicator in messages */
+    .online-indicator {
+        font-size: 12px;
+        color: #4CAF50;
+        margin-left: 5px;
+    }
+    
+    .online-typing-indicator {
+        font-size: 12px;
+        color: #4CAF50;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            opacity: 0.5;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0.5;
+        }
+    }
+    
+    /* Typing indicator bubbles */
+    .typing-indicator-container {
+        display: flex;
+        align-items: center;
+    }
+    
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    
+    .typing-indicator-bubbles {
+        display: flex;
+        align-items: center;
+        background-color: #f0f0f0;
+        border-radius: 15px;
+        padding: 10px 15px;
+    }
+    
+    .typing-indicator-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #555;
+        margin: 0 2px;
+        display: inline-block;
+        opacity: 0.6;
+    }
+    
+    .typing-indicator-dot:nth-child(1) {
+        animation: typingAnimation 1.5s infinite 0s;
+    }
+    
+    .typing-indicator-dot:nth-child(2) {
+        animation: typingAnimation 1.5s infinite 0.3s;
+    }
+    
+    .typing-indicator-dot:nth-child(3) {
+        animation: typingAnimation 1.5s infinite 0.6s;
+    }
+    
+    @keyframes typingAnimation {
+        0% {
+            transform: translateY(0px);
+            opacity: 0.6;
+        }
+        50% {
+            transform: translateY(-5px);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(0px);
+            opacity: 0.6;
+        }
+    }
+    
+    /* Attachment styles */
+    .attachment-options {
+        position: absolute;
+        bottom: 80px;
+        left: 20px;
+        right: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 15px;
+        z-index: 1000;
+    }
+    
+    .attachment-header {
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .attachment-types {
+        display: flex;
+        justify-content: space-around;
+        margin: 15px 0;
+    }
+    
+    .attachment-type {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 30%;
+        transition: all 0.3s ease;
+    }
+    
+    .attachment-type:hover {
+        background-color: #f9f9f9;
+        border-color: #E12D2D;
+        transform: scale(1.05);
+    }
+    
+    .attachment-type i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        color: #E12D2D;
+    }
+    
+    .attachment-footer {
+        text-align: center;
+    }
+    
+    .attachment-footer button {
+        padding: 5px 15px;
+        background-color: #f5f5f5;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+    }
+    
+    /* Upload styles */
+    .upload-status {
+        display: flex;
+        align-items: center;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        margin: 10px 20px;
+        padding: 10px;
+    }
+    
+    .upload-icon {
+        margin-right: 10px;
+        font-size: 20px;
+        color: #E12D2D;
+    }
+    
+    .upload-details {
+        flex: 1;
+    }
+    
+    .upload-filename {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .upload-progress-container {
+        height: 5px;
+        background-color: #e0e0e0;
+        border-radius: 3px;
+        margin: 5px 0;
+    }
+    
+    .upload-progress-bar {
+        height: 100%;
+        background-color: #E12D2D;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+    
+    .upload-percentage {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .upload-actions {
+        margin-left: 10px;
+    }
+    
+    .upload-cancel {
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .upload-complete {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        color: #34a853;
+    }
+    
+    .upload-complete i {
+        margin-right: 10px;
+    }
+    
+    /* Emoji picker */
+    .emoji-picker {
+        position: absolute;
+        bottom: 60px;
+        left: 10px;
+        z-index: 1000;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 10px;
+        width: 280px;
+    }
+    
+    .emoji-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+    
+    .emoji {
+        font-size: 20px;
+        padding: 5px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .emoji:hover {
+        transform: scale(1.5);
+    }
+    
+    #close-emoji-picker {
+        width: 100%;
+        padding: 5px;
+        background-color: #f5f5f5;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+`;
+
+document.head.appendChild(styleElement);
