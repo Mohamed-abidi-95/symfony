@@ -1,0 +1,8 @@
+Conseils pour éviter les problèmes courants avec LaTeX
+Échappez correctement les caractères spéciaux LaTeX : Les caractères comme %, #, _, & sont spéciaux en LaTeX et doivent être échappés. Créez une fonction Twig pour les échapper automatiquement.
+
+Gérez les chemins correctement : Assurez-vous que pdfLaTeX peut accéder aux fichiers et dossiers nécessaires, particulièrement pour les images et autres ressources externes.
+
+Dépannage : En cas d'erreur, consultez les fichiers log générés par pdfLaTeX pour identifier précisément la source du problème.
+
+Environnement de production : Vérifiez que MiKTeX est installé sur votre serveur de production et que le serveur web (Apache/Nginx) a les permissions nécessaires pour accéder à pdfLaTeX.
