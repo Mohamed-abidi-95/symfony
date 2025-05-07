@@ -1,0 +1,223 @@
+=========================================================
+STRUCTURE DU PROJET EsprimCareer
+Généré le: 2025-05-08 00:49:02
+=========================================================
+
+EsprimCareer/
+¦   +-- tests/
+¦   ¦   +-- bootstrap.php
+¦   +-- Templates/
+¦   ¦   +-- base.html.twig
+¦   ¦   +-- components/
+¦   ¦   ¦   +-- _cv_examples_carousel.html.twig
+¦   ¦   ¦   +-- _navbar.html.twig
+¦   ¦   ¦   +-- language_nav.html.twig
+¦   ¦   ¦   +-- latex_button.html.twig
+¦   ¦   ¦   +-- latex_scripts.html.twig
+¦   ¦   ¦   +-- cv_templates/
+¦   ¦   ¦       +-- _template1.html.twig
+¦   ¦   ¦       +-- _template2.html.twig
+¦   ¦   +-- cv/
+¦   ¦   ¦   +-- error.html.twig
+¦   ¦   ¦   +-- preview.html.twig
+¦   ¦   ¦   +-- success.html.twig
+¦   ¦   +-- cv_builder/
+¦   ¦   ¦   +-- content_editor.html.twig
+¦   ¦   ¦   +-- index.html.twig
+¦   ¦   +-- cv_generator/
+¦   ¦   ¦   +-- _additional.html.twig
+¦   ¦   ¦   +-- _education.html.twig
+¦   ¦   ¦   +-- _experience.html.twig
+¦   ¦   ¦   +-- _form_scripts.html.twig
+¦   ¦   ¦   +-- _languages.html.twig
+¦   ¦   ¦   +-- _personal_info.html.twig
+¦   ¦   ¦   +-- _preview.html.twig
+¦   ¦   ¦   +-- _progress.html.twig
+¦   ¦   ¦   +-- _review.html.twig
+¦   ¦   ¦   +-- _skills.html.twig
+¦   ¦   ¦   +-- cv_template.html.twig
+¦   ¦   ¦   +-- cv_template_blue.html.twig
+¦   ¦   ¦   +-- cv_template_classic.html.twig
+¦   ¦   ¦   +-- cv_template_elegant.html.twig
+¦   ¦   ¦   +-- cv_template_green.html.twig
+¦   ¦   ¦   +-- error.html.twig
+¦   ¦   ¦   +-- index.html.twig
+¦   ¦   ¦   +-- main.html.twig
+¦   ¦   ¦   +-- test_latex_editor.html.twig
+¦   ¦   ¦   +-- welcome.html.twig
+¦   ¦   +-- latex/
+¦   ¦   ¦   +-- cv_template.tex
+¦   ¦   ¦   +-- cv_template_pdf.tex
+¦   ¦   ¦   +-- cv_template_xe.tex
+¦   ¦   ¦   +-- diagnostic.html.twig
+¦   ¦   ¦   +-- edit_for_cv.html.twig
+¦   ¦   ¦   +-- index.html.twig
+¦   ¦   +-- partials/
+¦   ¦   ¦   +-- _header.html.twig
+¦   ¦   ¦   +-- _styles.html.twig
+¦   ¦   ¦   +-- section_editor.html.twig
+¦   ¦   ¦   +-- template_carousel.html.twig
+¦   ¦   +-- test/
+¦   ¦       +-- components.html.twig
+¦   ¦       +-- index.html.twig
+¦   +-- src/
+¦   ¦   +-- Kernel.php
+¦   ¦   +-- Controller/
+¦   ¦   ¦   +-- .gitignore
+¦   ¦   ¦   +-- CVGeneratorController.php
+¦   ¦   ¦   +-- LatexController.php
+¦   ¦   ¦   +-- TestController.php
+¦   ¦   +-- Entity/
+¦   ¦   ¦   +-- .gitignore
+¦   ¦   +-- Repository/
+¦   ¦   ¦   +-- .gitignore
+¦   ¦   +-- Service/
+¦   ¦       +-- LatexPdfGenerator.php
+¦   ¦       +-- LatexService.php
+¦   +-- public/
+¦   ¦   +-- cv-test.html
+¦   ¦   +-- index.php
+¦   ¦   +-- assets/
+¦   ¦   ¦   +-- app.js
+¦   ¦   ¦   +-- styles/
+¦   ¦   ¦       +-- app.css
+¦   ¦   ¦       +-- latex_editor.css
+¦   ¦   +-- build/
+¦   ¦   ¦   +-- app.css
+¦   ¦   ¦   +-- app.js
+¦   ¦   ¦   +-- entrypoints.json
+¦   ¦   ¦   +-- manifest.json
+¦   ¦   ¦   +-- runtime.js
+¦   ¦   ¦   +-- vendors-node_modules_bootstrap_dist_css_bootstrap_min_css-node_modules_symfony_stimulus-bundl-23a084.css
+¦   ¦   ¦   +-- vendors-node_modules_bootstrap_dist_css_bootstrap_min_css-node_modules_symfony_stimulus-bundl-23a084.js
+¦   ¦   +-- css/
+¦   ¦   ¦   +-- animations.css
+¦   ¦   ¦   +-- base.css
+¦   ¦   ¦   +-- chatbot.css
+¦   ¦   ¦   +-- cta.css
+¦   ¦   ¦   +-- cv-builder.css
+¦   ¦   ¦   +-- cv-content-editor.css
+¦   ¦   ¦   +-- cv-customize.css
+¦   ¦   ¦   +-- cv-examples-carousel.css
+¦   ¦   ¦   +-- cv-examples-enhancements.css
+¦   ¦   ¦   +-- faq.css
+¦   ¦   ¦   +-- features.css
+¦   ¦   ¦   +-- hero.css
+¦   ¦   ¦   +-- logo-marquee.css
+¦   ¦   ¦   +-- main-cv-generator.css
+¦   ¦   ¦   +-- process.css
+¦   ¦   ¦   +-- responsive.css
+¦   ¦   ¦   +-- section_editor.css
+¦   ¦   ¦   +-- statistics.css
+¦   ¦   ¦   +-- template_carousel.css
+¦   ¦   ¦   +-- template-carousel-fixes.css
+¦   ¦   ¦   +-- template-selection.css
+¦   ¦   ¦   +-- testimonials.css
+¦   ¦   ¦   +-- typography.css
+¦   ¦   ¦   +-- variables.css
+¦   ¦   ¦   +-- welcome.css
+¦   ¦   ¦   +-- chatbot/
+¦   ¦   ¦       +-- chatbot-core.css
+¦   ¦   ¦       +-- chatbot-toggle-mode.css
+¦   ¦   +-- generated_pdfs/
+¦   ¦   +-- images/
+¦   ¦   ¦   +-- avatar-placeholder.png
+¦   ¦   ¦   +-- esprim.png
+¦   ¦   ¦   +-- espritesb.png
+¦   ¦   ¦   +-- espritprepa-removebg-preview.png
+¦   ¦   ¦   +-- esprit-removebg-preview.png
+¦   ¦   ¦   +-- logo.png
+¦   ¦   ¦   +-- placeholder-profile.jpg
+¦   ¦   ¦   +-- tunisie-removebg-preview.png
+¦   ¦   ¦   +-- unnamed-removebg-preview.png
+¦   ¦   ¦   +-- backgrounds/
+¦   ¦   ¦   ¦   +-- elegant-blue.svg
+¦   ¦   ¦   ¦   +-- hello.svg
+¦   ¦   ¦   ¦   +-- modern-indigo.svg
+¦   ¦   ¦   ¦   +-- professional-green.svg
+¦   ¦   ¦   +-- cvs/
+¦   ¦   ¦   ¦   +-- 1.png
+¦   ¦   ¦   ¦   +-- 2.png
+¦   ¦   ¦   ¦   +-- 3.png
+¦   ¦   ¦   ¦   +-- 4.png
+¦   ¦   ¦   ¦   +-- 5.png
+¦   ¦   ¦   ¦   +-- 5192021.jpg
+¦   ¦   ¦   ¦   +-- 6.png
+¦   ¦   ¦   ¦   +-- 7.png
+¦   ¦   ¦   ¦   +-- Capture d’écran 2025-04-29 225842.png
+¦   ¦   ¦   ¦   +-- Capture d’écran 2025-04-29 230323.png
+¦   ¦   ¦   ¦   +-- cvang2.png
+¦   ¦   ¦   ¦   +-- cvar1.png
+¦   ¦   ¦   ¦   +-- cvar2.png
+¦   ¦   ¦   ¦   +-- cvde1.png
+¦   ¦   ¦   ¦   +-- cvfr1.png
+¦   ¦   ¦   ¦   +-- executive.jpg
+¦   ¦   ¦   ¦   +-- ismail.png
+¦   ¦   ¦   ¦   +-- profile-example.jpg
+¦   ¦   ¦   ¦   +-- Tech.jpg
+¦   ¦   ¦   +-- flags/
+¦   ¦   ¦       +-- de.png
+¦   ¦   ¦       +-- es.png
+¦   ¦   ¦       +-- fr.png
+¦   ¦   ¦       +-- gb.png
+¦   ¦   ¦       +-- tn.png
+¦   ¦   +-- js/
+¦   ¦       +-- bootstrap.js
+¦   ¦       +-- chatbot.js
+¦   ¦       +-- cv-builder.js
+¦   ¦       +-- cv-content-editor.js
+¦   ¦       +-- cv-customize.js
+¦   ¦       +-- cv-examples-carousel.js
+¦   ¦       +-- cv-examples-slider.js
+¦   ¦       +-- cv-form-fix.js
+¦   ¦       +-- cv-generator.js
+¦   ¦       +-- cv-generator-main.js
+¦   ¦       +-- language-switcher.js
+¦   ¦       +-- latex-editor.js
+¦   ¦       +-- latex-integration.js
+¦   ¦       +-- main-cv-generator.js
+¦   ¦       +-- section_editor.js
+¦   ¦       +-- sidebar.js
+¦   ¦       +-- template_carousel.js
+¦   ¦       +-- template_loader.js
+¦   ¦       +-- welcome.js
+¦   ¦       +-- welcome_animations.js
+¦   ¦       +-- chatbot/
+¦   ¦           +-- chatbot-online.js
+¦   ¦           +-- chatbot-responses.js
+¦   ¦           +-- chatbot-toggle-mode.js
+¦   +-- config/
+¦   ¦   +-- bundles.php
+¦   ¦   +-- preload.php
+¦   ¦   +-- routes.yaml
+¦   ¦   +-- services.yaml
+¦   ¦   +-- packages/
+¦   ¦   ¦   +-- asset_mapper.yaml
+¦   ¦   ¦   +-- cache.yaml
+¦   ¦   ¦   +-- csrf.yaml
+¦   ¦   ¦   +-- debug.yaml
+¦   ¦   ¦   +-- doctrine.yaml
+¦   ¦   ¦   +-- doctrine_migrations.yaml
+¦   ¦   ¦   +-- framework.yaml
+¦   ¦   ¦   +-- mailer.yaml
+¦   ¦   ¦   +-- mathjax.yaml
+¦   ¦   ¦   +-- messenger.yaml
+¦   ¦   ¦   +-- monolog.yaml
+¦   ¦   ¦   +-- notifier.yaml
+¦   ¦   ¦   +-- routing.yaml
+¦   ¦   ¦   +-- security.yaml
+¦   ¦   ¦   +-- translation.yaml
+¦   ¦   ¦   +-- twig.yaml
+¦   ¦   ¦   +-- validator.yaml
+¦   ¦   ¦   +-- web_profiler.yaml
+¦   ¦   ¦   +-- webpack_encore.yaml
+¦   ¦   +-- routes/
+¦   ¦       +-- framework.yaml
+¦   ¦       +-- security.yaml
+¦   ¦       +-- web_profiler.yaml
+¦   +-- webpack.config.js
+¦   +-- tailwind.config.js
+
+=========================================================
+Fin de la structure du projet
+=========================================================
