@@ -1,0 +1,3290 @@
+Fichier: public\js\latex-editor.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\latex-editor.js
+-----
+// latex-editor.js - Fichier à inclure dans votre page d'édition de CV
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration pour la soumission AJAX
+    const latexForm = document.getElementById('latex-form');
+    const latexInput = document.getElementById('latex-input');
+    const latexPreviewBtn = document.getElementById('preview-button');
+    const pdfViewer = document.getElementById('pdf-viewer');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const errorContainer = document.getElementById('error-container');
+
+    // Fonction pour afficher les erreurs
+    function showError(message) {
+        if (errorContainer) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000); // Cacher après 5 secondes
+        } else {
+            console.error(message);
+        }
+    }
+
+    // Gestion de la prévisualisation
+    if (latexPreviewBtn && latexInput) {
+        latexPreviewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const latexCode = latexInput.value.trim();
+            if (!latexCode) {
+                showError('Veuillez entrer du code LaTeX.');
+                return;
+            }
+
+            if (loadingSpinner) loadingSpinner.style.display = 'block';
+            if (pdfViewer) pdfViewer.style.display = 'none';
+            if (errorContainer) errorContainer.style.display = 'none';
+
+            // Effectuer la requête AJAX
+            fetch('/latex/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ latex: latexCode })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur serveur: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (loadingSpinner) loadingSpinner.style.display = 'none';
+
+                    if (data.success) {
+                        if (pdfViewer) {
+                            pdfViewer.src = data.pdfUrl;
+                            pdfViewer.style.display = 'block';
+                        }
+                    } else {
+                        showError('Erreur: ' + (data.error || 'Échec de la génération du PDF'));
+                    }
+                })
+                .catch(error => {
+                    if (loadingSpinner) loadingSpinner.style.display = 'none';
+                    showError('Erreur: ' + error.message);
+                });
+        });
+    }
+
+    // Ajouter un bouton LaTeX à l'éditeur de CV
+    const addLatexButton = document.getElementById('add-latex-button');
+    if (addLatexButton) {
+        addLatexButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Ouvrir l'éditeur LaTeX dans une nouvelle fenêtre
+            window.open('/latex', 'LaTeXEditor', 'width=800,height=600');
+        });
+    }
+
+    // Vérifier s'il y a une formule LaTeX stockée dans localStorage
+    const latexFormula = localStorage.getItem('latex_formula');
+    if (latexFormula) {
+        insertLatexFormula(latexFormula);
+        localStorage.removeItem('latex_formula');
+    }
+
+    // Écouter les messages de la fenêtre popup
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'latex_insert') {
+            insertLatexFormula(event.data.latex);
+        }
+    });
+
+    // Fonction pour insérer la formule LaTeX dans l'éditeur
+    function insertLatexFormula(latex) {
+        // Trouver l'éditeur (vous devrez adapter ceci à votre structure HTML)
+        const editor = document.querySelector('#cv-content') ||
+            document.querySelector('[contenteditable="true"]') ||
+            document.querySelector('#cv-editor');
+
+        if (editor) {
+            // Créer l'élément pour la formule
+            const formulaSpan = document.createElement('span');
+            formulaSpan.className = 'latex-formula';
+            formulaSpan.setAttribute('data-latex', latex);
+            formulaSpan.innerHTML = '$$' + latex + '$$';
+
+            // Ajouter au contenu de l'éditeur
+            if (editor.isContentEditable) {
+                // Pour un div contenteditable
+                editor.appendChild(formulaSpan);
+            } else if (editor.tagName === 'TEXTAREA') {
+                // Pour un textarea
+                const pos = editor.selectionStart || 0;
+                editor.value = editor.value.substring(0, pos) +
+                    '$$' + latex + '$$' +
+                    editor.value.substring(editor.selectionEnd || pos);
+                
+                // Mettre à jour la position du curseur
+                const newPos = pos + 2 + latex.length + 2;
+                editor.selectionStart = newPos;
+                editor.selectionEnd = newPos;
+            }
+
+            // Rendre avec MathJax si disponible
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                try {
+                    window.MathJax.typesetPromise([formulaSpan]).catch(function(err) {
+                        console.error('Erreur MathJax:', err);
+                    });
+                } catch (e) {
+                    console.error('Erreur lors du rendu MathJax:', e);
+                }
+            } else {
+                console.warn('MathJax non disponible ou méthode typesetPromise non trouvée');
+            }
+
+            console.log('LaTeX formule insérée:', latex);
+        } else {
+            console.error('Aucun éditeur trouvé pour insérer la formule LaTeX');
+        }
+    }
+
+    // Intercepter la soumission du formulaire pour soumission AJAX
+    if (latexForm) {
+        latexForm.addEventListener('submit', function(e) {
+            // Ne pas intercepter si c'est un téléchargement
+            if (e.submitter && e.submitter.id === 'download-button') {
+                return; // Laisser la soumission normale se poursuivre
+            }
+
+            e.preventDefault(); // Empêcher la soumission normale du formulaire
+
+            if (latexPreviewBtn) {
+                latexPreviewBtn.click(); // Déclencher la prévisualisation AJAX
+            }
+        });
+    }
+});
+
+==================================================
+
+Fichier: public\js\latex-integration.js
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\latex-integration.js
+-----
+// public/js/latex-integration.js
+/**
+ * ESPRIT CV Generator - Module d'intégration LaTeX
+ * Version: 1.0.0
+ * Dernière mise à jour: 2025-05-05
+ */
+
+(function() {
+    // Configuration
+    const CONFIG = {
+        editorPopupUrl: '/latex',
+        popupFeatures: 'width=900,height=700,resizable=yes,scrollbars=yes',
+        editorSelectors: ['#cv-content', '[contenteditable="true"]', '#cv-editor', 'textarea.latex-enabled']
+    };
+
+    // État
+    let activeEditor = null;
+    let currentFormula = null;
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeLatexButtons();
+        checkForStoredFormulas();
+        setupMessageListener();
+    });
+
+    /**
+     * Initialise tous les boutons LaTeX de la page
+     */
+    function initializeLatexButtons() {
+        // Boutons avec classe ou ID spécifique
+        const buttons = document.querySelectorAll('.add-latex-button, #add-latex-button');
+
+        buttons.forEach(button => {
+            if (button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openLatexEditor(e);
+                });
+            }
+        });
+
+        // Trouver et configuret les éditeurs compatibles
+        findAndSetupEditors();
+    }
+
+    /**
+     * Recherche et configure tous les éditeurs compatibles sur la page
+     */
+    function findAndSetupEditors() {
+        CONFIG.editorSelectors.forEach(selector => {
+            const editors = document.querySelectorAll(selector);
+
+            editors.forEach(editor => {
+                // Marquer comme compatible LaTeX
+                editor.classList.add('latex-compatible');
+
+                // Ajouter un écouteur d'événement focus pour suivre l'éditeur actif
+                editor.addEventListener('focus', function() {
+                    activeEditor = this;
+                });
+            });
+        });
+    }
+
+    /**
+     * Vérifie s'il y a des formules LaTeX stockées dans localStorage
+     */
+    function checkForStoredFormulas() {
+        const formula = localStorage.getItem('latex_formula');
+        if (formula) {
+            insertLatexFormula(formula);
+            localStorage.removeItem('latex_formula');
+        }
+    }
+
+    /**
+     * Configure l'écoute des messages de la fenêtre d'édition LaTeX
+     */
+    function setupMessageListener() {
+        window.addEventListener('message', function(event) {
+            // Vérifier si le message contient une formule LaTeX
+            if (event.data && event.data.type === 'latex_insert') {
+                insertLatexFormula(event.data.latex);
+            }
+        });
+    }
+
+    /**
+     * Ouvre l'éditeur LaTeX dans une fenêtre pop-up
+     */
+    function openLatexEditor(event) {
+        window.open(CONFIG.editorPopupUrl, 'LaTeXEditor', CONFIG.popupFeatures);
+    }
+
+    /**
+     * Insère une formule LaTeX dans l'éditeur actif
+     */
+    function insertLatexFormula(latex) {
+        // Si aucun éditeur actif n'a été trouvé, réessayer
+        if (!activeEditor) {
+            findAndSetupEditors();
+
+            // Si toujours aucun éditeur actif, utiliser le premier trouvé
+            if (!activeEditor) {
+                for (const selector of CONFIG.editorSelectors) {
+                    const editor = document.querySelector(selector);
+                    if (editor) {
+                        activeEditor = editor;
+                        break;
+                    }
+                }
+            }
+
+            // Si encore aucun éditeur trouvé, sauvegarder la formule et notifier
+            if (!activeEditor) {
+                localStorage.setItem('latex_formula', latex);
+                console.warn('Aucun éditeur actif trouvé. La formule sera utilisée lors du prochain focus');
+                return;
+            }
+        }
+
+        // Créer l'élément HTML pour la formule
+        const formulaSpan = document.createElement('span');
+        formulaSpan.className = 'latex-formula';
+        formulaSpan.setAttribute('data-latex', latex);
+        formulaSpan.innerHTML = '$$' + latex + '$$';
+
+        // Insérer la formule selon le type d'éditeur
+        if (activeEditor.isContentEditable) {
+            // Pour un div contenteditable
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (range.intersectsNode(activeEditor)) {
+                    range.insertNode(formulaSpan);
+                    // Déplacer le curseur après la formule
+                    range.setStartAfter(formulaSpan);
+                    range.setEndAfter(formulaSpan);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else {
+                    activeEditor.appendChild(formulaSpan);
+                }
+            } else {
+                activeEditor.appendChild(formulaSpan);
+            }
+        } else if (activeEditor.tagName === 'TEXTAREA') {
+            // Pour un textarea, insérer le texte à la position du curseur
+            const pos = activeEditor.selectionStart || 0;
+            activeEditor.value = activeEditor.value.substring(0, pos) +
+                '$$' + latex + '$$' +
+                activeEditor.value.substring(activeEditor.selectionEnd || pos);
+
+            // Mettre à jour la position du curseur
+            const newPos = pos + 2 + latex.length + 2;
+            activeEditor.selectionStart = newPos;
+            activeEditor.selectionEnd = newPos;
+            activeEditor.focus();
+        }
+
+        // Rendre la formule avec MathJax si disponible
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+            try {
+                window.MathJax.typesetPromise([formulaSpan]).catch(function(err) {
+                    console.error('Erreur MathJax:', err);
+                });
+            } catch (e) {
+                console.error('Erreur lors du rendu MathJax:', e);
+            }
+        } else {
+            console.warn('MathJax non disponible ou méthode typesetPromise non trouvée');
+        }
+
+        console.log('LaTeX formule insérée:', latex);
+
+        // Stocker la dernière formule utilisée
+        currentFormula = latex;
+    }
+
+    // Exposer des fonctions publiques
+    window.latexHelper = {
+        openEditor: openLatexEditor,
+        insertFormula: insertLatexFormula,
+        getCurrentFormula: function() { return currentFormula; }
+    };
+})();
+
+==================================================
+
+Fichier: src/Controller/CVGeneratorController.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Controller\CVGeneratorController.php
+-----
+<?php
+// Last updated: 2025-05-08 12:05:00
+// Author: Mohamed-abidi-95
+
+namespace App\Controller;
+
+use App\Entity\TemplateUsage;
+use App\Service\LatexPdfGenerator;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Routing\Attribute\Route;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Process;
+
+class CVGeneratorController extends AbstractController
+{
+    private LoggerInterface $logger;
+    private ?LatexPdfGenerator $latexPdfGenerator;
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(LoggerInterface $logger, EntityManagerInterface $entityManager, ?LatexPdfGenerator $latexPdfGenerator = null)
+    {
+        $this->logger = $logger;
+        $this->latexPdfGenerator = $latexPdfGenerator;
+        $this->entityManager = $entityManager;
+    }
+
+    #[Route("/", name: "app_welcome")]
+    public function welcome(): Response
+    {
+        return $this->render('cv_generator/welcome.html.twig');
+    }
+
+    #[Route("/cv-builder", name: "app_cv_builder")]
+    public function builder(): Response
+    {
+        return $this->render('cv_builder/index.html.twig', [
+            'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+            'username' => 'Mohamed-abidi-95'
+        ]);
+    }
+
+    #[Route("/cv-content-editor", name: "app_cv_content_editor")]
+    public function contentEditor(): Response
+    {
+        return $this->render('cv_builder/content_editor.html.twig', [
+            'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+            'username' => 'Mohamed-abidi-95'
+        ]);
+    }
+
+    #[Route("/cv", name: "app_cv_generator")]
+    public function index(): Response
+    {
+        // Sample data for autofill testing
+        $sampleData = [
+            'firstName' => 'John', 'lastName' => 'Doe', 'position' => 'Software Developer',
+            'email' => 'john.doe@example.com', 'phone' => '+216 12 345 678',
+            'address' => '123 Main Street', 'city' => 'Tunis', 'country' => 'Tunisia',
+            'github' => 'github.com/johndoe', 'linkedin' => 'linkedin.com/in/johndoe',
+            'education' => [
+                ['degree' => 'Bachelor of Science in Computer Science', 'institution' => 'ESPRIT Engineering School', 'location' => 'Tunis, Tunisia', 'startDate' => '09/2018', 'endDate' => '06/2022', 'description' => 'Graduated with honors...'],
+                ['degree' => 'High School Diploma', 'institution' => 'International High School', 'location' => 'Tunis, Tunisia', 'startDate' => '09/2015', 'endDate' => '06/2018', 'description' => 'Science track...']
+            ],
+            'experience' => [
+                ['position' => 'Software Engineer', 'company' => 'Tech Solutions Inc.', 'location' => 'Tunis, Tunisia', 'startDate' => '08/2022', 'endDate' => 'Present', 'description' => 'Developing full-stack web apps...'],
+                ['position' => 'Web Development Intern', 'company' => 'StartUp Hub', 'location' => 'Tunis, Tunisia', 'startDate' => '06/2021', 'endDate' => '09/2021', 'description' => 'Assisted in development...']
+            ],
+            'skills' => ['JavaScript', 'React.js', 'Node.js', 'HTML/CSS', 'PHP', 'MySQL', 'Git', 'Agile', 'Problem Solving'],
+            'languages' => ['Arabic (Native)', 'French (Fluent)', 'English (Advanced)'],
+            'additionalInfo' => 'Passionate about building high-quality software...'
+        ];
+
+        return $this->render('cv_generator/main.html.twig', [
+            'currentStep' => 1,
+            'sampleData' => $sampleData
+        ]);
+    }
+
+    // Ajout des attributs Route pour les fonctions LaTeX
+    #[Route("/latex", name: "app_latex")]
+    public function latex(): Response
+    {
+        return $this->render('latex/index.html.twig', [
+            'controller_name' => 'LatexController',
+        ]);
+    }
+
+    #[Route("/latex/preview", name: "app_latex_preview", methods: ["POST"])]
+    public function latexPreview(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $latex = $data['latex'] ?? '';
+
+        return $this->json([
+            'success' => true,
+            'latex' => $latex
+        ]);
+    }
+
+    /**
+     * Track template selection method
+     */
+    private function trackTemplateSelection(Request $request, string $templateName): void
+    {
+        $this->logger->info('Template selected: ' . $templateName);
+
+        // Create template usage record
+        $templateUsage = new TemplateUsage();
+        $templateUsage->setTemplateName($templateName);
+        $templateUsage->setSelectedAt(new \DateTime());
+
+        // If a user is logged in, associate with user
+        if ($this->getUser()) {
+            $templateUsage->setUser($this->getUser());
+        } else {
+            // For anonymous users, track by session
+            $sessionId = $request->getSession()->getId();
+            $templateUsage->setSessionId($sessionId);
+        }
+
+        // Save to database
+        $this->entityManager->persist($templateUsage);
+        $this->entityManager->flush();
+
+        $this->logger->info('Template selection recorded for template: ' . $templateName);
+    }
+
+    #[Route("/cv-generator/generate", name: "app_cv_generate", methods: ["POST"])]
+    public function generate(Request $request): Response
+    {
+        // Set memory limit and execution time
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 300);
+
+        $this->logger->info('CV Generation request received.');
+        $this->logger->info('Request method: ' . $request->getMethod());
+        $this->logger->info('Content type: ' . $request->headers->get('Content-Type'));
+        $this->logger->info('User: Mohamed-abidi-95, timestamp: ' . (new \DateTime())->format('Y-m-d H:i:s'));
+
+        try {
+            // Déboguer les données du formulaire
+            $allFormData = $request->request->all();
+            $this->logger->info('All form data: ' . json_encode(array_keys($allFormData)));
+
+            // --- Get Form Data ---
+            $formData = $request->request->all();
+
+            // --- Get Template and Photo ---
+            $templateType = $request->request->get('template', 'elegant'); // Default to elegant template
+
+            // Track template selection
+            $this->trackTemplateSelection($request, $templateType);
+
+            $photoData = $request->request->get('photoData', ''); // Base64 encoded photo data
+
+            // --- Get LaTeX formulas if any ---
+            $latexFormulas = $request->request->get('latexFormulas', '[]');
+            $formData['latexFormulas'] = json_decode($latexFormulas, true) ?: [];
+
+            $this->logger->info('LaTeX formulas count: ' . count($formData['latexFormulas']));
+            $this->logger->info('Template selected (raw): ' . $templateType);
+
+            // Correction: s'assurer de la valeur correcte du template
+            $templateType = strtolower($templateType);
+            $this->logger->info('Template selected (normalized): ' . $templateType);
+
+            // --- Get Style Customization Data ---
+            $formData['backgroundColor'] = $request->request->get('backgroundColor', '#ffffff');
+            $formData['textColor'] = $request->request->get('textColor', '#000000');
+            $formData['selectedBackground'] = $request->request->get('selectedBackground', 'none');
+            $formData['selectedBackgroundType'] = $request->request->get('selectedBackgroundType', 'color');
+            $formData['selectedBackgroundColor'] = $request->request->get('selectedBackgroundColor', '#ffffff');
+
+            $this->logger->info('Background: ' . $formData['selectedBackground']);
+            $this->logger->info('Background Type: ' . $formData['selectedBackgroundType']);
+
+            // Déterminer quel template utiliser
+            if ($templateType === 'blue') {
+                $templateName = 'cv_template_blue.html.twig';
+            } elseif ($templateType === 'classic') {
+                $templateName = 'cv_template_classic.html.twig';
+            } else {
+                $templateName = 'cv_template_elegant.html.twig';
+            }
+
+            $this->logger->info('Template name chosen: ' . $templateName);
+
+            // Vérifier que le fichier existe réellement, en essayant différents chemins possibles
+            $possiblePaths = [
+                $this->getParameter('kernel.project_dir') . '/Templates/cv_generator/' . $templateName,
+                $this->getParameter('kernel.project_dir') . '/templates/cv_generator/' . $templateName,
+                $this->getParameter('kernel.project_dir') . '/templates/Templates/cv_generator/' . $templateName
+            ];
+
+            $templateFound = false;
+            $validTemplatePath = '';
+
+            foreach ($possiblePaths as $path) {
+                $this->logger->info("Checking template path: {$path}");
+                if (file_exists($path)) {
+                    $templateFound = true;
+                    $validTemplatePath = $path;
+                    $this->logger->info("Template found at: {$path}");
+                    break;
+                }
+            }
+
+            if (!$templateFound) {
+                throw new \Exception("Le fichier de template n'existe pas. Chemins vérifiés: " . implode(', ', $possiblePaths));
+            }
+
+            // Déterminer le chemin de rendu relatif en fonction du chemin absolu trouvé
+            $templateRenderPath = '';
+            $projectDir = $this->getParameter('kernel.project_dir');
+
+            if (strpos($validTemplatePath, $projectDir . '/Templates/') === 0) {
+                $templateRenderPath = 'Templates/cv_generator/' . $templateName;
+            } else if (strpos($validTemplatePath, $projectDir . '/templates/Templates/') === 0) {
+                $templateRenderPath = 'templates/Templates/cv_generator/' . $templateName;
+            } else {
+                $templateRenderPath = 'templates/cv_generator/' . $templateName;
+            }
+
+            $this->logger->info("Template render path: {$templateRenderPath}");
+
+            // --- Render HTML with Environment variable ---
+            $env = new \Twig\Environment(new \Twig\Loader\FilesystemLoader([
+                $this->getParameter('kernel.project_dir'),
+                $this->getParameter('kernel.project_dir') . '/templates',
+                $this->getParameter('kernel.project_dir') . '/Templates'
+            ]));
+
+            // Ajouter le support MathJax pour le rendu LaTeX
+            $html = $env->render($templateRenderPath, [
+                'data' => $formData,
+                'photoData' => $photoData,
+                'generatedDate' => new \DateTime(),
+                'debug_template' => $templateType,
+                'includeMathJax' => true // Ajouter cette option pour activer MathJax
+            ]);
+
+            // Ajouter MathJax si nécessaire et si des formules LaTeX sont présentes
+            if (!empty($formData['latexFormulas'])) {
+                $mathjaxCdn = '<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>';
+                $html = str_replace('</head>', $mathjaxCdn . '</head>', $html);
+            }
+
+            // Generate PDF
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('isRemoteEnabled', true);
+
+            // Option importante pour que Dompdf prenne en compte le JavaScript
+            $options->set('isJavascriptEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4');
+            $dompdf->render();
+
+            // Générez un nom de fichier significatif
+            $filename = ($formData['firstName'] ?? 'CV') . '-' . ($formData['lastName'] ?? 'Generated') . '-' . (new \DateTime())->format('Y-m-d') . '.pdf';
+
+            // Retournez la réponse PDF
+            $response = new Response($dompdf->output());
+            $disposition = HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename);
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', $disposition);
+
+            return $response;
+
+        } catch (\Throwable $e) {
+            $this->logger->error("Error generating PDF: {$e->getMessage()}", ['exception' => $e]);
+            $this->logger->error("Full exception details: " . get_class($e) . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Retourner une réponse d'erreur avec plus de détails
+            return new Response(
+                '<html><body>
+            <h1>Une erreur s\'est produite</h1>
+            <p>' . htmlspecialchars($e->getMessage()) . '</p>
+            <p><a href="/cv-content-editor" class="btn btn-primary">Retourner à l\'éditeur</a></p>
+            <hr>
+            <h3>Détails techniques (environnement de développement uniquement)</h3>
+            <pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>
+            <h4>Données formulaire reçues:</h4>
+            <pre>' . htmlspecialchars(print_r($request->request->all(), true)) . '</pre>
+            <hr>
+            <p>Date: ' . (new \DateTime())->format('Y-m-d H:i:s') . '</p>
+            <p>User: Mohamed-abidi-95</p>
+        </body></html>',
+                500,
+                ['Content-Type' => 'text/html']
+            );
+        }
+    }
+
+    #[Route("/cv-generator/test-pdf", name: "app_cv_test_pdf")]
+    public function testPdf(): Response
+    {
+        // --- Test PDF Logic (remains mostly the same) ---
+        try {
+            // Ajout d'un test LaTeX simple
+            $html = '<!DOCTYPE html>
+            <html>
+            <head>
+                <title>Test PDF</title>
+                <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+            </head>
+            <body>
+                <h1>Test PDF OK</h1>
+                <p>Generated: '.(new \DateTime())->format('Y-m-d H:i:s').'</p>
+                <p>Test LaTeX: $$\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$$</p>
+            </body>
+            </html>';
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('isRemoteEnabled', true);
+            $options->set('isJavascriptEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4');
+            $dompdf->render();
+
+            $response = new Response($dompdf->output());
+            $disposition = HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, 'test.pdf');
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', $disposition);
+            return $response;
+        } catch (\Throwable $e) {
+            $this->logger->error("Error in test PDF generation: {$e->getMessage()}", ['exception' => $e]);
+            return new Response('<html><body><h1>Test PDF Error</h1><p>'.htmlspecialchars($e->getMessage()).'</p><pre>'.htmlspecialchars($e->getTraceAsString()).'</pre></body></html>', 500, ['Content-Type' => 'text/html']);
+        }
+    }
+
+    #[Route("/cv-template-debug", name: "app_cv_template_debug")]
+    public function templateDebug(Request $request): Response
+    {
+        // Obtenir le type de template à partir de la requête ou utiliser classique par défaut
+        $templateType = $request->query->get('template', 'classic');
+
+        // Track template selection
+        $this->trackTemplateSelection($request, $templateType);
+
+        // Déterminer quel template utiliser
+        if ($templateType === 'blue') {
+            $templateName = 'cv_template_blue.html.twig';
+        } elseif ($templateType === 'classic') {
+            $templateName = 'cv_template_classic.html.twig';
+        } else {
+            $templateName = 'cv_template_elegant.html.twig';
+        }
+
+        // Données de test
+        $sampleData = [
+            'firstName' => 'Test',
+            'lastName' => 'Debug',
+            'position' => 'Développeur Test',
+            'email' => 'test@debug.com',
+            'textColor' => '#000000',
+            'selectedBackgroundColor' => '#ffffff',
+            'selectedBackground' => 'none',
+            'selectedBackgroundType' => 'color',
+            // Ajouter des formules LaTeX de test
+            'latexFormulas' => [
+                ['formula' => '\sum_{i=1}^{n} i = \frac{n(n+1)}{2}', 'position' => 'skills'],
+                ['formula' => 'E = mc^2', 'position' => 'additionalInfo']
+            ]
+        ];
+
+        return $this->render('Templates/cv_generator/' . $templateName, [
+            'data' => $sampleData,
+            'photoData' => '/images/logo.png',
+            'generatedDate' => new \DateTime(),
+            'includeMathJax' => true
+        ]);
+    }
+
+    #[Route("/cv-generator/debug-form", name: "app_cv_debug_form", methods: ["POST"])]
+    public function debugForm(Request $request): Response
+    {
+        // --- Debug Form Logic (remains the same) ---
+        try {
+            return new Response('<html><body><h1>Form Debug</h1><pre>' . print_r($request->request->all(), true) . '</pre></body></html>', 200, ['Content-Type' => 'text/html']);
+        } catch (\Throwable $e) {
+            return new Response('Error: ' . $e->getMessage(), 500);
+        }
+    }
+
+    #[Route("/cv-template-test/{template}", name: "app_cv_template_test")]
+    public function templateTest($template = 'classic', Request $request): Response
+    {
+        // Track template selection
+        $this->trackTemplateSelection($request, $template);
+
+        $formData = [
+            'firstName' => 'Test',
+            'lastName' => 'Debug',
+            'position' => 'Développeur Test',
+            'textColor' => '#000000',
+            'selectedBackgroundColor' => '#ffffff',
+            'selectedBackground' => 'none',
+            'selectedBackgroundType' => 'color',
+            // Ajouter des formules LaTeX de test
+            'latexFormulas' => [
+                ['formula' => '\sum_{i=1}^{n} i = \frac{n(n+1)}{2}', 'position' => 'skills'],
+                ['formula' => 'E = mc^2', 'position' => 'additionalInfo']
+            ]
+        ];
+
+        if ($template === 'blue') {
+            $templateName = 'cv_template_blue.html.twig';
+        } elseif ($template === 'classic') {
+            $templateName = 'cv_template_classic.html.twig';
+        } else {
+            $templateName = 'cv_template_elegant.html.twig';
+        }
+
+        return $this->render('Templates/cv_generator/' . $templateName, [
+            'data' => $formData,
+            'photoData' => null,
+            'generatedDate' => new \DateTime(),
+            'includeMathJax' => true
+        ]);
+    }
+
+    #[Route("/cv-template-elegant", name: "app_cv_template_elegant")]
+    public function elegantTemplate(Request $request): Response
+    {
+        // Track template selection
+        $this->trackTemplateSelection($request, 'elegant');
+
+        // Cette route sert à rendre le template élégant pour affichage/debug
+        $sampleData = [
+            'firstName' => 'Mohamed', 'lastName' => 'Abidi',
+            'position' => 'Développeur Full Stack',
+            'email' => 'mohamed.abidi@example.com', 'phone' => '+216 55 123 456',
+            'address' => '15 Avenue Habib Bourguiba', 'city' => 'Tunis', 'country' => 'Tunisie',
+            'github' => 'github.com/mohamed-abidi-95', 'linkedin' => 'linkedin.com/in/mohamed-abidi-95',
+            'additionalInfo' => 'Développeur passionné avec 5 ans d\'expérience dans le développement web.',
+            'skills' => ['JavaScript', 'React.js', 'Node.js', 'HTML/CSS', 'PHP', 'MySQL', 'Git'],
+            'languages' => ['Arabe', 'Français', 'Anglais'],
+            'languageLevels' => ['Langue maternelle', 'Courant', 'Avancé'],
+            'experience' => [
+                [
+                    'position' => 'Développeur Full Stack Senior',
+                    'company' => 'Tech Solutions Tunisie',
+                    'location' => 'Tunis, Tunisie',
+                    'startDate' => '01/2022',
+                    'endDate' => 'Présent',
+                    'description' => 'Direction d\'une équipe de développeurs pour construire et lancer le produit phare de l\'entreprise'
+                ]
+            ],
+            'education' => [
+                [
+                    'degree' => 'Diplôme d\'Ingénieur en Informatique',
+                    'institution' => 'École d\'Ingénieurs ESPRIT',
+                    'location' => 'Tunis, Tunisie',
+                    'startDate' => '09/2018',
+                    'endDate' => '06/2023',
+                    'description' => 'Diplômé avec mention. Spécialisation en technologies web et principes d\'ingénierie logicielle.'
+                ]
+            ],
+            'projects' => [
+                [
+                    'name' => 'Plateforme E-commerce',
+                    'description' => 'Développé une plateforme e-commerce complète avec traitement sécurisé des paiements et gestion des stocks.',
+                    'technologies' => 'React.js, Node.js, Express, MongoDB'
+                ]
+            ],
+            // Ajouter des formules LaTeX d'exemple
+            'latexFormulas' => [
+                ['formula' => '\sum_{i=1}^{n} i = \frac{n(n+1)}{2}', 'position' => 'skills'],
+                ['formula' => 'E = mc^2', 'position' => 'projects']
+            ]
+        ];
+
+        // Pour le debug/démonstration, charger le logo ESPRIT
+        $photoData = '/images/logo.png';
+
+        return $this->render('Templates/cv_generator/cv_template_elegant.html.twig', [
+            'data' => $sampleData,
+            'photoData' => $photoData,
+            'generatedDate' => new \DateTime(),
+            'includeMathJax' => true
+        ]);
+    }
+
+    // Nouvelle route pour le test de l'éditeur LaTeX
+    #[Route("/test-latex-editor", name: "app_test_latex_editor")]
+    public function testLatexEditor(Request $request): Response
+    {
+        // Obtenir le moteur LaTeX préféré de l'utilisateur (par défaut: pdflatex)
+        $engine = $request->query->get('engine', 'pdflatex');
+
+        // Générer un exemple de code LaTeX pour l'affichage
+        $exampleLatexCode = $this->generateExampleLatexCode();
+
+        // Récupérer une liste des formules LaTeX récemment utilisées (simulé)
+        $recentFormulas = [
+            ['formula' => '\sum_{i=1}^{n} i = \frac{n(n+1)}{2}', 'name' => 'Somme des entiers'],
+            ['formula' => 'E = mc^2', 'name' => 'Équation d\'Einstein'],
+            ['formula' => '\oint_C \vec{E} \cdot d\vec{l} = -\frac{d\Phi_B}{dt}', 'name' => 'Loi de Faraday']
+        ];
+
+        // Déterminer si le service LatexPdfGenerator est disponible
+        $latexServiceAvailable = $this->latexPdfGenerator !== null;
+
+        // Vérifier si ModernCV est installé sur le système (pour information seulement)
+        $moderncvInstalled = false;
+        try {
+            $process = new Process(['kpsewhich', 'moderncv.cls']);
+            $process->run();
+            $moderncvInstalled = $process->isSuccessful() && !empty($process->getOutput());
+        } catch (\Exception $e) {
+            $this->logger->warning('Impossible de vérifier si ModernCV est installé: ' . $e->getMessage());
+        }
+
+        // Générer le code de tous les templates disponibles
+        $templates = [
+            'standard' => $this->generateStandardCVTemplate('Mohamed', 'Abidi', 'Développeur Full Stack'),
+            'classic' => $this->generateModernCVTemplate('Mohamed', 'Abidi', 'Développeur Full Stack', '+216 xx xxx xxx', 'mohamed.abidi@example.com'),
+            'elegant' => $this->generateElegantCVTemplate('Mohamed', 'Abidi', 'Développeur Full Stack', '+216 xx xxx xxx', 'mohamed.abidi@example.com')
+        ];
+
+        return $this->render('cv_generator/test_latex_editor.html.twig', [
+            'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+            'username' => 'Mohamed-abidi-95',
+            'engine' => $engine,
+            'exampleLatexCode' => $exampleLatexCode,
+            'recentFormulas' => $recentFormulas,
+            'latexServiceAvailable' => $latexServiceAvailable,
+            'moderncvInstalled' => $moderncvInstalled,
+            'templates' => $templates
+        ]);
+    }
+
+    /**
+     * Génère un exemple de code LaTeX pour l'affichage dans l'interface
+     */
+    private function generateExampleLatexCode(): string
+    {
+        return "% !TEX program = xelatex
+\\documentclass[11pt,a4paper,sans]{moderncv}
+
+% Style et couleur
+\\moderncvstyle{classic}
+\\moderncvcolor{blue}
+
+% Packages nécessaires
+\\usepackage{fontspec}
+\\usepackage{wasysym}
+\\usepackage[scale=0.75]{geometry}
+
+% Informations personnelles
+\\name{Mohamed}{Abidi}
+\\title{Développeur Full Stack}
+\\phone{+216 55 123 456}
+\\email{mohamed.abidi@example.com}
+\\social[linkedin]{mohamed-abidi}
+\\social[github]{Mohamed-abidi-95}
+
+\\begin{document}
+
+\\makecvtitle
+
+\\section{Expérience professionnelle}
+\\cventry{2023--Présent}{Développeur Web Full Stack}{Société XYZ}{Tunis}{}{
+\\begin{itemize}
+\\item Développement d'applications web avec Symfony et React
+\\item Intégration de services tiers et APIs \\smiley{}
+\\item Optimisation des performances et refactoring de code \\checkbox{}
+\\end{itemize}}
+
+\\cventry{2021--2023}{Développeur Junior}{ABC Tech}{Tunis}{}{
+\\begin{itemize}
+\\item Maintenance et développement de sites web
+\\item Mise en place d'outils de déploiement continu
+\\end{itemize}}
+
+\\section{Formation}
+\\cventry{2020--2022}{Master en Génie Logiciel}{ESPRIM}{Tunis}{}{}
+\\cventry{2017--2020}{Licence en Informatique}{Université de Tunis}{Tunis}{}{}
+
+\\section{Compétences techniques}
+\\cvitem{Langages}{PHP, JavaScript, HTML, CSS, SQL}
+\\cvitem{Frameworks}{Symfony, React, Vue.js, Bootstrap}
+\\cvitem{Outils}{Git, Docker, VS Code, PHPStorm}
+\\cvitem{Bases de données}{MySQL, PostgreSQL, MongoDB}
+
+\\section{Langues}
+\\cvitemwithcomment{Arabe}{Langue maternelle}{}
+\\cvitemwithcomment{Français}{Courant}{C1}
+\\cvitemwithcomment{Anglais}{Professionnel}{B2}
+
+\\end{document}";
+    }
+
+    /**
+     * Génère un template CV standard en utilisant la classe article
+     */
+    private function generateStandardCVTemplate(string $name, string $surname, string $title): string
+    {
+        $latexCode = "\\documentclass[a4paper,11pt]{article}\n";
+        $latexCode .= "\\usepackage[utf8]{inputenc}\n";
+        $latexCode .= "\\usepackage[T1]{fontenc}\n";
+        $latexCode .= "\\usepackage{geometry}\n";
+        $latexCode .= "\\usepackage{hyperref}\n";
+        $latexCode .= "\\usepackage{array}\n";
+        $latexCode .= "\\usepackage{xcolor}\n\n";
+
+        $latexCode .= "\\geometry{a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm}\n";
+        $latexCode .= "\\definecolor{linkcolor}{RGB}{0,0,238}\n";
+        $latexCode .= "\\hypersetup{colorlinks=true, linkcolor=linkcolor, urlcolor=linkcolor}\n\n";
+
+        $latexCode .= "\\begin{document}\n\n";
+
+        $latexCode .= "\\begin{center}\n";
+        $latexCode .= "    {\\huge\\textbf{" . $name . " " . $surname . "}}\\\\[0.5cm]\n";
+        $latexCode .= "    {\\large " . $title . "}\\\\[0.3cm]\n";
+        $latexCode .= "    \\begin{tabular}{r l}\n";
+        $latexCode .= "        Téléphone: & +216 xx xxx xxx \\\\\n";
+        $latexCode .= "        Email: & \\href{mailto:exemple@email.com}{exemple@email.com}\n";
+        $latexCode .= "    \\end{tabular}\n";
+        $latexCode .= "\\end{center}\n\n";
+
+        $latexCode .= "\\section*{Formation}\n";
+        $latexCode .= "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{2020--2022} & Master en Génie Logiciel, ESPRIM, Tunis \\\\\n";
+        $latexCode .= "    \\textbf{2017--2020} & Licence en Informatique, Université de Tunis, Tunis\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Expériences Professionnelles}\n";
+        $latexCode .= "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{2023--Présent} & \\textbf{Développeur Web Full Stack, Société XYZ, Tunis} \\\\\n";
+        $latexCode .= "                         & \$\\bullet\$ Développement d'applications web avec Symfony et React \\\\\n";
+        $latexCode .= "                         & \$\\bullet\$ Intégration de services tiers et APIs \\\\\n";
+        $latexCode .= "                         & \$\\bullet\$ Optimisation des performances et refactoring de code \\\\\n";
+        $latexCode .= "    \\textbf{2021--2023} & \\textbf{Développeur Junior, ABC Tech, Tunis} \\\\\n";
+        $latexCode .= "                         & \$\\bullet\$ Maintenance et développement de sites web \\\\\n";
+        $latexCode .= "                         & \$\\bullet\$ Mise en place d'outils de déploiement continu\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Compétences}\n";
+        $latexCode .= "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    Langages: & PHP, JavaScript, HTML, CSS, SQL \\\\\n";
+        $latexCode .= "    Frameworks: & Symfony, React, Vue.js, Bootstrap \\\\\n";
+        $latexCode .= "    Outils: & Git, Docker, VS Code, PHPStorm \\\\\n";
+        $latexCode .= "    Bases de données: & MySQL, PostgreSQL, MongoDB\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Langues}\n";
+        $latexCode .= "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    Arabe: & Langue maternelle \\\\\n";
+        $latexCode .= "    Français: & Courant (C1) \\\\\n";
+        $latexCode .= "    Anglais: & Professionnel (B2)\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\end{document}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Génère un template CV élégant
+     */
+    private function generateElegantCVTemplate(string $name, string $surname, string $title, string $phone, string $email): string
+    {
+        $latexCode = "\\documentclass[a4paper,11pt]{article}\n";
+        $latexCode .= "\\usepackage[utf8]{inputenc}\n";
+        $latexCode .= "\\usepackage[T1]{fontenc}\n";
+        $latexCode .= "\\usepackage{geometry}\n";
+        $latexCode .= "\\usepackage{hyperref}\n";
+        $latexCode .= "\\usepackage{array}\n";
+        $latexCode .= "\\usepackage{xcolor}\n";
+        $latexCode .= "\\usepackage{enumitem}\n";
+        $latexCode .= "\\usepackage{titlesec}\n";
+        $latexCode .= "\\usepackage{fancyhdr}\n\n";
+
+        $latexCode .= "\\geometry{a4paper, margin=2cm}\n";
+        $latexCode .= "\\definecolor{accent}{RGB}{70,142,216}\n";
+        $latexCode .= "\\definecolor{lightaccent}{RGB}{230,240,250}\n";
+        $latexCode .= "\\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}\n\n";
+
+        $latexCode .= "\\titleformat{\\section}{\\Large\\bfseries}{}{0em}{\\textcolor{accent}{}} [\\titlerule]\n";
+        $latexCode .= "\\titlespacing*{\\section}{0pt}{12pt}{6pt}\n\n";
+
+        $latexCode .= "\\pagestyle{fancy}\n";
+        $latexCode .= "\\fancyhf{}\n";
+        $latexCode .= "\\renewcommand{\\headrulewidth}{0pt}\n";
+        $latexCode .= "\\fancyfoot[C]{\\thepage}\n\n";
+
+        $latexCode .= "\\begin{document}\n\n";
+
+        // En-tête élégante avec couleur d'accent
+        $latexCode .= "\\begin{center}\n";
+        $latexCode .= "    \\colorbox{lightaccent}{\\parbox{\\dimexpr\\textwidth-2\\fboxsep\\relax}{\n";
+        $latexCode .= "        \\begin{center}\n";
+        $latexCode .= "            {\\LARGE\\textcolor{accent}{\\textbf{" . $name . " " . $surname . "}}}\\\\[0.3cm]\n";
+        $latexCode .= "            {\\large " . $title . "}\\\\[0.2cm]\n";
+        $latexCode .= "            \\begin{tabular}{r l}\n";
+        $latexCode .= "                \\textcolor{accent}{\\textbf{Téléphone:}} & " . $phone . " \\\\\n";
+        $latexCode .= "                \\textcolor{accent}{\\textbf{Email:}} & \\href{mailto:" . $email . "}{" . $email . "}\n";
+        $latexCode .= "            \\end{tabular}\n";
+        $latexCode .= "        \\end{center}\n";
+        $latexCode .= "    }}\n";
+        $latexCode .= "\\end{center}\n\n";
+
+        $latexCode .= "\\section*{Profil}\n";
+        $latexCode .= "Développeur passionné avec une solide expérience en développement web Full Stack et une expertise particulière en technologies Symfony et React.\n\n";
+
+        $latexCode .= "\\section*{Formation}\n";
+        $latexCode .= "\\begin{tabular}{r p{13cm}}\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{2020--2022}} & \\textbf{Master en Génie Logiciel} \\\\\n";
+        $latexCode .= "    & ESPRIM, Tunis \\\\\n";
+        $latexCode .= "    & Spécialisation en développement web et architectures logicielles modernes \\\\[0.2cm]\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{2017--2020}} & \\textbf{Licence en Informatique} \\\\\n";
+        $latexCode .= "    & Université de Tunis, Tunis \\\\\n";
+        $latexCode .= "    & Mention très bien, projets en développement web et mobile\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Expériences Professionnelles}\n";
+        $latexCode .= "\\begin{tabular}{r p{13cm}}\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{2023--Présent}} & \\textbf{Développeur Web Full Stack} \\\\\n";
+        $latexCode .= "    & Société XYZ, Tunis \\\\\n";
+        $latexCode .= "    & \\begin{itemize}[leftmargin=*, nosep]\n";
+        $latexCode .= "        \\item Développement d'applications web avec Symfony 6 et React 18\n";
+        $latexCode .= "        \\item Implémentation d'API REST et GraphQL\n";
+        $latexCode .= "        \\item Optimisation des performances et mise en place de CI/CD\n";
+        $latexCode .= "      \\end{itemize} \\\\[0.2cm]\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{2021--2023}} & \\textbf{Développeur Junior} \\\\\n";
+        $latexCode .= "    & ABC Tech, Tunis \\\\\n";
+        $latexCode .= "    & \\begin{itemize}[leftmargin=*, nosep]\n";
+        $latexCode .= "        \\item Maintenance et développement de sites web e-commerce\n";
+        $latexCode .= "        \\item Migration d'applications vers des architectures modernes\n";
+        $latexCode .= "        \\item Participation aux revues de code et à l'amélioration des processus\n";
+        $latexCode .= "      \\end{itemize}\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Compétences}\n";
+        $latexCode .= "\\begin{tabular}{r p{13cm}}\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Langages:}} & PHP, JavaScript/TypeScript, HTML5, CSS3, SQL \\\\\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Frameworks:}} & Symfony, React, Vue.js, Next.js, Bootstrap, Tailwind CSS \\\\\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Outils:}} & Git, Docker, Kubernetes, CI/CD, VS Code, PHPStorm \\\\\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Bases de données:}} & MySQL, PostgreSQL, MongoDB, Redis\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Langues}\n";
+        $latexCode .= "\\begin{tabular}{r p{13cm}}\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Arabe:}} & Langue maternelle \\\\\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Français:}} & Courant (C1) \\\\\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{Anglais:}} & Professionnel (B2)\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\section*{Projets personnels}\n";
+        $latexCode .= "\\begin{tabular}{r p{13cm}}\n";
+        $latexCode .= "    \\textcolor{accent}{\\textbf{EsprimCareer}} & Plateforme web de génération de CV et de gestion de carrière \\\\\n";
+        $latexCode .= "    & Technologies utilisées : Symfony, React, LaTeX, Docker \\\\\n";
+        $latexCode .= "    & \\textit{Fonctionnalités : Génération de CV professionnels avec support LaTeX, gestion de profils, intégration d'éditeurs avancés}\n";
+        $latexCode .= "\\end{tabular}\n\n";
+
+        $latexCode .= "\\vfill\n";
+        $latexCode .= "\\begin{center}\n";
+        $latexCode .= "    \\textit{Document généré par EsprimCareer - " . (new \DateTime())->format('Y-m-d') . "}\n";
+        $latexCode .= "\\end{center}\n\n";
+
+        $latexCode .= "\\end{document}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Méthode pour générer un CV avec ModernCV intégrée directement dans le code
+     * (sans dépendre de fichiers templates externes)
+     */
+    #[Route("/cv-generator/moderncv", name: "app_cv_moderncv")]
+    public function generateModernCV(Request $request): Response
+    {
+        // Track template selection
+        $this->trackTemplateSelection($request, 'moderncv');
+
+        if (!$this->latexPdfGenerator) {
+            return new Response("Le service LatexPdfGenerator n'est pas configuré correctement.", 500);
+        }
+
+        try {
+            // Récupération des données du formulaire ou utilisation de données par défaut
+            $firstName = $request->request->get('firstName', 'Mohamed');
+            $lastName = $request->request->get('lastName', 'Abidi');
+            $position = $request->request->get('position', 'Développeur Full Stack');
+            $phone = $request->request->get('phone', '+216 xx xxx xxx');
+            $email = $request->request->get('email', 'mohamed.abidi@example.com');
+
+            // Génération du code LaTeX directement dans le code
+            $latexCode = $this->generateModernCVTemplate($firstName, $lastName, $position, $phone, $email);
+
+            // Convertir le code LaTeX en PDF
+            $documentId = uniqid('cv_');
+            $pdfPath = $this->latexPdfGenerator->convertLatexToPdf($latexCode, $documentId);
+
+            if (!$pdfPath || !file_exists($pdfPath)) {
+                throw new \Exception("Échec de la génération du PDF. Vérifiez le journal des erreurs.");
+            }
+
+            // Créer une réponse binaire
+            $response = new BinaryFileResponse($pdfPath);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $firstName . '-' . $lastName . '-CV-ModernCV.pdf'
+            );
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $this->logger->error("Error generating ModernCV PDF: {$e->getMessage()}", ['exception' => $e]);
+
+            // Retourner une réponse d'erreur avec plus de détails
+            return new Response(
+                '<html><body>
+                <h1>Erreur lors de la génération du CV ModernCV</h1>
+                <p>' . htmlspecialchars($e->getMessage()) . '</p>
+                <p><a href="/cv" class="btn btn-primary">Retourner au générateur de CV</a></p>
+                <hr>
+                <h3>Détails techniques (environnement de développement uniquement)</h3>
+                <pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>
+                </body></html>',
+                500,
+                ['Content-Type' => 'text/html']
+            );
+        }
+    }
+
+    /**
+     * Méthode pour prévisualiser le CV avec ModernCV intégré directement dans le code
+     */
+    #[Route("/cv-generator/moderncv/preview", name: "app_cv_moderncv_preview")]
+    public function previewModernCV(Request $request): Response
+    {
+        // Track template selection
+        $this->trackTemplateSelection($request, 'moderncv_preview');
+
+        if (!$this->latexPdfGenerator) {
+            return new Response("Le service LatexPdfGenerator n'est pas configuré correctement.", 500);
+        }
+
+        try {
+            // Récupération des données du formulaire ou utilisation de données par défaut
+            $firstName = 'Mohamed';
+            $lastName = 'Abidi';
+            $position = 'Développeur Full Stack';
+            $phone = '+216 xx xxx xxx';
+            $email = 'mohamed.abidi@example.com';
+
+            // Génération du code LaTeX directement dans le code
+            $latexCode = $this->generateModernCVTemplate($firstName, $lastName, $position, $phone, $email);
+
+            // Convertir le code LaTeX en PDF
+            $documentId = uniqid('cv_preview_');
+            $pdfPath = $this->latexPdfGenerator->convertLatexToPdf($latexCode, $documentId);
+
+            if (!$pdfPath || !file_exists($pdfPath)) {
+                throw new \Exception("Échec de la prévisualisation du PDF. Vérifiez le journal des erreurs.");
+            }
+
+            // Obtenir le nom du fichier à partir du chemin
+            $filenameParts = explode('/', $pdfPath);
+            $filename = end($filenameParts);
+
+            // Génération de l'URL pour visualiser le PDF
+            $pdfUrl = $this->generateUrl('app_latex_view_pdf', ['filename' => $filename]);
+
+            return $this->render('Templates/cv/preview.html.twig', [
+                'pdf_url' => $pdfUrl,
+                'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+                'username' => 'Mohamed-abidi-95'
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logger->error("Error previewing ModernCV PDF: {$e->getMessage()}", ['exception' => $e]);
+
+            return $this->render('Templates/cv/error.html.twig', [
+                'error' => $e->getMessage(),
+                'current_time' => new \DateTime('now', new \DateTimeZone('UTC')),
+                'username' => 'Mohamed-abidi-95'
+            ]);
+        }
+    }
+
+    /**
+     * Méthode pour générer le template ModernCV directement dans le code PHP
+     * Cette méthode remplace l'utilisation du fichier template externe
+     */
+    private function generateModernCVTemplate(string $name, string $surname, string $title, string $phone, string $email): string
+    {
+        // Les expériences et autres données peuvent être passées en paramètres supplémentaires au besoin
+        $experiences = $this->formatExperiencesForLatexString();
+        $education = $this->formatEducationForLatexString();
+        $skills = $this->formatSkillsForLatexString();
+        $languages = $this->formatLanguagesForLatexString();
+
+        // Utiliser la concaténation de chaînes au lieu de Heredoc
+        $latexCode = "\\documentclass[11pt,a4paper]{article}\n";
+        $latexCode .= "\\usepackage[utf8]{inputenc}\n";
+        $latexCode .= "\\usepackage[T1]{fontenc}\n";
+        $latexCode .= "\\usepackage{geometry}\n";
+        $latexCode .= "\\usepackage{array}\n";
+        $latexCode .= "\\usepackage{xcolor}\n";
+        $latexCode .= "\\usepackage{hyperref}\n";
+        $latexCode .= "\\usepackage{enumitem}\n";
+        $latexCode .= "\\usepackage{titlesec}\n\n";
+
+        $latexCode .= "\\geometry{a4paper, margin=2cm}\n";
+        $latexCode .= "\\definecolor{accent}{RGB}{0,100,200}\n";
+        $latexCode .= "\\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}\n\n";
+
+        $latexCode .= "\\titleformat{\\section}{\\Large\\bfseries}{}{0em}{\\textcolor{accent}{}}[\\titlerule]\n";
+        $latexCode .= "\\titlespacing*{\\section}{0pt}{12pt}{6pt}\n\n";
+
+        $latexCode .= "\\begin{document}\n\n";
+
+        $latexCode .= "\\begin{center}\n";
+        $latexCode .= "    {\\huge\\textbf{" . $name . " " . $surname . "}}\\\\[0.5cm]\n";
+        $latexCode .= "    {\\large " . $title . "}\\\\[0.3cm]\n";
+        $latexCode .= "    \\begin{tabular}{r l}\n";
+        $latexCode .= "        Téléphone: & " . $phone . " \\\\\n";
+        $latexCode .= "        Email: & \\href{mailto:" . $email . "}{" . $email . "}\n";
+        $latexCode .= "    \\end{tabular}\n";
+        $latexCode .= "\\end{center}\n\n";
+
+        $latexCode .= "\\section*{Formation}\n" . $education . "\n\n";
+        $latexCode .= "\\section*{Expériences Professionnelles}\n" . $experiences . "\n\n";
+        $latexCode .= "\\section*{Compétences}\n" . $skills . "\n\n";
+        $latexCode .= "\\section*{Langues}\n" . $languages . "\n\n";
+
+        $latexCode .= "\\end{document}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Méthode utilitaire pour formater les expériences en texte LaTeX
+     */
+    private function formatExperiencesForLatexString(): string
+    {
+        // Données hardcodées, à remplacer par des données dynamiques au besoin
+        $latexCode = "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{2023--Présent} & \\textbf{Développeur Web Full Stack, Société XYZ, Tunis} \\\\\n";
+        $latexCode .= "                          & \\begin{itemize}[leftmargin=*]\n";
+        $latexCode .= "                             \\item Développement d'applications web avec Symfony et React\n";
+        $latexCode .= "                             \\item Intégration de services tiers et APIs\n";
+        $latexCode .= "                             \\item Optimisation des performances et refactoring de code\n";
+        $latexCode .= "                            \\end{itemize} \\\\[0.2cm]\n";
+        $latexCode .= "    \\textbf{2021--2023} & \\textbf{Développeur Junior, ABC Tech, Tunis} \\\\\n";
+        $latexCode .= "                          & \\begin{itemize}[leftmargin=*]\n";
+        $latexCode .= "                             \\item Maintenance et développement de sites web\n";
+        $latexCode .= "                             \\item Mise en place d'outils de déploiement continu\n";
+        $latexCode .= "                            \\end{itemize}\n";
+        $latexCode .= "\\end{tabular}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Méthode utilitaire pour formater l'éducation en texte LaTeX
+     */
+    private function formatEducationForLatexString(): string
+    {
+        // Données hardcodées, à remplacer par des données dynamiques au besoin
+        $latexCode = "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{2020--2022} & \\textbf{Master en Génie Logiciel} \\\\\n";
+        $latexCode .= "                        & ESPRIM, Tunis \\\\[0.2cm]\n";
+        $latexCode .= "    \\textbf{2017--2020} & \\textbf{Licence en Informatique} \\\\\n";
+        $latexCode .= "                        & Université de Tunis, Tunis\n";
+        $latexCode .= "\\end{tabular}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Méthode utilitaire pour formater les compétences en texte LaTeX
+     */
+    private function formatSkillsForLatexString(): string
+    {
+        // Données hardcodées, à remplacer par des données dynamiques au besoin
+        $latexCode = "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{Langages:} & PHP, JavaScript, HTML, CSS, SQL \\\\\n";
+        $latexCode .= "    \\textbf{Frameworks:} & Symfony, React, Vue.js, Bootstrap \\\\\n";
+        $latexCode .= "    \\textbf{Outils:} & Git, Docker, VS Code, PHPStorm \\\\\n";
+        $latexCode .= "    \\textbf{Bases de données:} & MySQL, PostgreSQL, MongoDB\n";
+        $latexCode .= "\\end{tabular}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * Méthode utilitaire pour formater les langues en texte LaTeX
+     */
+    private function formatLanguagesForLatexString(): string
+    {
+        // Données hardcodées, à remplacer par des données dynamiques au besoin
+        $latexCode = "\\begin{tabular}{r p{12cm}}\n";
+        $latexCode .= "    \\textbf{Arabe:} & Langue maternelle \\\\\n";
+        $latexCode .= "    \\textbf{Français:} & Courant (C1) \\\\\n";
+        $latexCode .= "    \\textbf{Anglais:} & Professionnel (B2)\n";
+        $latexCode .= "\\end{tabular}\n";
+
+        return $latexCode;
+    }
+
+    /**
+     * ANCIENNES méthodes de formatage maintenues pour compatibilité
+     * Ces méthodes peuvent être utilisées si vous avez besoin de générer des
+     * données dans un format particulier pour d'autres parties de votre application
+     */
+    private function formatExperiencesForLatex(array $formData): array
+    {
+        $experiences = [];
+
+        // Récupération des expériences depuis le formulaire ou utilisation de données par défaut
+        if (isset($formData['experience']) && is_array($formData['experience'])) {
+            foreach ($formData['experience'] as $exp) {
+                $period = ($exp['startDate'] ?? '') . '--' . ($exp['endDate'] ?? 'Présent');
+                $experiences[] = [
+                    'period' => $period,
+                    'position' => $exp['position'] ?? '',
+                    'company' => $exp['company'] ?? '',
+                    'location' => $exp['location'] ?? '',
+                    'descriptions' => [$exp['description'] ?? '']
+                ];
+            }
+        } else {
+            // Données par défaut
+            $experiences = [
+                [
+                    'period' => '2023--Présent',
+                    'position' => 'Développeur Web Full Stack',
+                    'company' => 'Société XYZ',
+                    'location' => 'Tunis',
+                    'descriptions' => ['Développement d\'applications web avec Symfony et React']
+                ]
+            ];
+        }
+
+        return $experiences;
+    }
+
+    private function formatEducationForLatex(array $formData): array
+    {
+        $education = [];
+
+        // Récupération de l'éducation depuis le formulaire ou utilisation de données par défaut
+        if (isset($formData['education']) && is_array($formData['education'])) {
+            foreach ($formData['education'] as $edu) {
+                $period = ($edu['startDate'] ?? '') . '--' . ($edu['endDate'] ?? '');
+                $education[] = [
+                    'period' => $period,
+                    'degree' => $edu['degree'] ?? '',
+                    'institution' => $edu['institution'] ?? '',
+                    'location' => $edu['location'] ?? ''
+                ];
+            }
+        } else {
+            // Données par défaut
+            $education = [
+                [
+                    'period' => '2020--2022',
+                    'degree' => 'Master en Génie Logiciel',
+                    'institution' => 'ESPRIM',
+                    'location' => 'Tunis'
+                ]
+            ];
+        }
+
+        return $education;
+    }
+
+    private function formatSkillsForLatex(array $formData): array
+    {
+        $skills = [];
+
+        // Récupération des compétences depuis le formulaire ou utilisation de données par défaut
+        if (isset($formData['skills']) && is_array($formData['skills'])) {
+            $skillsList = implode(', ', $formData['skills']);
+            $skills[] = [
+                'category' => 'Compétences techniques',
+                'list' => $skillsList
+            ];
+        } else {
+            // Données par défaut
+            $skills = [
+                [
+                    'category' => 'Langages',
+                    'list' => 'PHP, JavaScript, HTML, CSS, SQL'
+                ],
+                [
+                    'category' => 'Frameworks',
+                    'list' => 'Symfony, React, Vue.js, Bootstrap'
+                ]
+            ];
+        }
+
+        return $skills;
+    }
+
+    private function formatLanguagesForLatex(array $formData): array
+    {
+        $languages = [];
+
+        // Récupération des langues depuis le formulaire ou utilisation de données par défaut
+        if (isset($formData['languages']) && isset($formData['languageLevels']) &&
+            is_array($formData['languages']) && is_array($formData['languageLevels'])) {
+
+            foreach ($formData['languages'] as $key => $lang) {
+                $level = $formData['languageLevels'][$key] ?? '';
+                $languages[] = [
+                    'language' => $lang,
+                    'level' => $level,
+                    'certification' => ''
+                ];
+            }
+        } else {
+            // Données par défaut
+            $languages = [
+                [
+                    'language' => 'Arabe',
+                    'level' => 'Langue maternelle',
+                    'certification' => ''
+                ],
+                [
+                    'language' => 'Français',
+                    'level' => 'Courant',
+                    'certification' => 'C1'
+                ]
+            ];
+        }
+
+        return $languages;
+    }
+
+    /**
+     * API endpoint to track template selection via AJAX
+     */
+    #[Route("/api/track-template", name: "api_track_template", methods: ["POST"])]
+    public function apiTrackTemplate(Request $request): Response
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $templateName = $data['template'] ?? null;
+
+            if (!$templateName) {
+                return $this->json(['success' => false, 'error' => 'Template name is required'], 400);
+            }
+
+            // Track the selection
+            $this->trackTemplateSelection($request, $templateName);
+
+            return $this->json(['success' => true, 'message' => 'Template selection recorded']);
+        } catch (\Exception $e) {
+            $this->logger->error("Error tracking template: {$e->getMessage()}", ['exception' => $e]);
+            return $this->json(['success' => false, 'error' => 'An error occurred'], 500);
+        }
+    }
+
+    /**
+     * Route for viewing template analytics
+     */
+    #[Route("/admin/template-analytics", name: "app_template_analytics")]
+    public function templateAnalytics(Request $request): Response
+    {
+        // Redirect to the TemplateAnalyticsController
+        return $this->redirectToRoute('app_template_analytics_dashboard');
+    }
+}
+==================================================
+
+Fichier: src\Service\LatexService.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Service\LatexService.php
+-----
+<?php
+
+namespace App\Service;
+
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Filesystem\Filesystem;
+use Psr\Log\LoggerInterface;
+
+class LatexService
+{
+    private string $projectDir;
+    private string $tempDir;
+    private string $outputDir;
+    private LoggerInterface $logger;
+
+    public function __construct(string $projectDir, LoggerInterface $logger)
+    {
+        $this->projectDir = $projectDir;
+        $this->tempDir = $projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'temp';
+        $this->outputDir = $projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'output';
+        $this->logger = $logger;
+
+        // Créer les répertoires s'ils n'existent pas
+        $this->ensureDirectoriesExist();
+    }
+
+    /**
+     * Convertit un code LaTeX en PDF
+     *
+     * @param string $latexCode Le code LaTeX à convertir
+     * @param string $engine Le moteur LaTeX à utiliser ('pdflatex', 'xelatex', 'lualatex')
+     * @return string|null Le chemin vers le fichier PDF généré ou null en cas d'erreur
+     * @throws \RuntimeException Si la compilation échoue
+     */
+    public function convertLatexToPdf(string $latexCode, string $engine = 'pdflatex'): ?string
+    {
+        // Valider le moteur LaTeX choisi
+        if (!in_array($engine, ['pdflatex', 'xelatex', 'lualatex'])) {
+            $this->logger->error("Moteur LaTeX non valide: {$engine}");
+            throw new \InvalidArgumentException("Moteur LaTeX non valide: {$engine}");
+        }
+
+        // Générer un ID unique pour ce document
+        $documentId = uniqid('latex_');
+
+        // Créer un fichier temporaire avec le code LaTeX
+        // Utiliser DIRECTORY_SEPARATOR pour la compatibilité Windows
+        $latexFilePath = $this->tempDir . DIRECTORY_SEPARATOR . $documentId . '.tex';
+
+        // Écrire le contenu dans le fichier temporaire
+        file_put_contents($latexFilePath, $latexCode);
+
+        $this->logger->info('Fichier LaTeX créé: ' . basename($latexFilePath));
+
+        try {
+            // Configuration du processus pour Windows
+            $command = [
+                $engine,
+                '-interaction=nonstopmode',
+                '-halt-on-error',
+                '-output-directory=' . $this->tempDir,
+                $latexFilePath
+            ];
+
+            $this->logger->info("Exécution de la commande: " . implode(' ', $command));
+
+            // Créer le processus
+            $process = new Process($command);
+
+            // Configurer le répertoire de travail (important sous Windows)
+            $process->setWorkingDirectory(dirname($latexFilePath));
+
+            // Paramètres pour éviter les timeouts sur les documents complexes
+            $process->setTimeout(60); // 60 secondes max
+            $process->setIdleTimeout(10); // 10 secondes d'inactivité max
+
+            // Exécuter le processus
+            $process->run();
+
+            // Vérifier le résultat de la première exécution
+            if (!$process->isSuccessful()) {
+                $this->logger->error('Erreur lors de la compilation LaTeX', [
+                    'document_id' => $documentId,
+                    'stdout' => $process->getOutput(),
+                    'stderr' => $process->getErrorOutput(),
+                    'exit_code' => $process->getExitCode()
+                ]);
+
+                // Nettoyer les fichiers temporaires en cas d'erreur
+                $this->cleanup($documentId);
+
+                // Extraire et lancer une exception avec un message d'erreur utile
+                throw new \RuntimeException($this->extractLatexError($process->getErrorOutput()));
+            }
+
+            // Si première exécution réussie, exécuter une seconde fois pour les références
+            $this->logger->info("Seconde exécution pour les références...");
+            $process->run();
+
+            // Vérifier si le PDF a été créé
+            $pdfPath = $this->tempDir . DIRECTORY_SEPARATOR . $documentId . '.pdf';
+            if (!file_exists($pdfPath)) {
+                $this->logger->error('PDF non généré après compilation', [
+                    'document_id' => $documentId,
+                    'path' => $pdfPath
+                ]);
+
+                // Nettoyer les fichiers temporaires
+                $this->cleanup($documentId);
+
+                return null;
+            }
+
+            // Déplacer le PDF vers le répertoire de sortie
+            $outputPath = $this->outputDir . DIRECTORY_SEPARATOR . $documentId . '.pdf';
+            $filesystem = new Filesystem();
+            try {
+                $filesystem->rename($pdfPath, $outputPath, true);
+            } catch (\Exception $e) {
+                // En cas d'échec de déplacement (rare), essayer la copie
+                $this->logger->warning("Échec du déplacement, tentative de copie: " . $e->getMessage());
+                if (!copy($pdfPath, $outputPath)) {
+                    $this->logger->error("Échec de copie du PDF");
+                    // Nettoyer les fichiers temporaires
+                    $this->cleanup($documentId);
+                    throw new \RuntimeException("Impossible de déplacer/copier le PDF généré");
+                }
+            }
+
+            $this->logger->info('PDF généré avec succès: ' . basename($outputPath));
+
+            // Nettoyer les fichiers temporaires
+            $this->cleanup($documentId);
+
+            return $outputPath;
+
+        } catch (ProcessFailedException $e) {
+            $this->logger->error('ProcessFailedException: ' . $e->getMessage());
+            // Nettoyer les fichiers temporaires en cas d'exception
+            $this->cleanup($documentId);
+            throw new \RuntimeException("Échec du processus LaTeX: " . $e->getMessage());
+
+        } catch (\Exception $e) {
+            $this->logger->error('Exception générale: ' . $e->getMessage());
+            // Nettoyer les fichiers temporaires en cas d'exception
+            $this->cleanup($documentId);
+            throw $e;
+        }
+
+        return null;
+    }
+
+    /**
+     * Nettoie les fichiers temporaires g��nérés
+     */
+    private function cleanup(string $documentId): void
+    {
+        // Extensions des fichiers à supprimer
+        $extensions = ['tex', 'aux', 'log', 'out', 'toc', 'lof', 'lot', 'nav', 'snm', 'fls', 'fdb_latexmk'];
+
+        foreach ($extensions as $ext) {
+            $file = $this->tempDir . DIRECTORY_SEPARATOR . $documentId . '.' . $ext;
+            if (file_exists($file)) {
+                try {
+                    unlink($file);
+                    $this->logger->debug('Fichier temporaire supprimé: ' . basename($file));
+                } catch (\Exception $e) {
+                    $this->logger->warning('Impossible de supprimer le fichier temporaire: ' . basename($file));
+                }
+            }
+        }
+    }
+
+    /**
+     * S'assure que les répertoires nécessaires existent
+     */
+    private function ensureDirectoriesExist(): void
+    {
+        // Méthode spécifique pour Windows pour créer les répertoires imbriqués
+        $this->createDirRecursive($this->tempDir);
+        $this->createDirRecursive($this->outputDir);
+    }
+
+    /**
+     * Crée un répertoire de manière récursive (compatible Windows)
+     */
+    private function createDirRecursive(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+                $this->logger->error("Impossible de créer le répertoire: {$dir}");
+                throw new \RuntimeException("Impossible de créer le répertoire: {$dir}");
+            }
+            $this->logger->info('Répertoire créé: ' . $dir);
+        }
+    }
+
+    /**
+     * Extrait un message d'erreur plus utile depuis la sortie d'erreur LaTeX
+     */
+    private function extractLatexError(string $errorOutput): string
+    {
+        // Chercher les erreurs fatales LaTeX
+        if (preg_match('/!(.+?)\.(\r?\n|\r)/', $errorOutput, $matches)) {
+            return "Erreur LaTeX: " . trim($matches[1]);
+        }
+
+        // Chercher les erreurs de package/classe
+        if (preg_match('/(\w+) Error: (.+?)(\r?\n|\r)/', $errorOutput, $matches)) {
+            return trim($matches[1] . ' Error: ' . $matches[2]);
+        }
+
+        // Chercher les erreurs de fichier introuvable
+        if (preg_match('/! LaTeX Error: File `(.+?)\'+ not found/', $errorOutput, $matches)) {
+            return "Fichier LaTeX introuvable: " . $matches[1] . ". Vérifiez que tous les packages nécessaires sont installés.";
+        }
+
+        // Chercher les erreurs de syntaxe
+        if (preg_match('/! Missing (\w+) inserted/', $errorOutput, $matches)) {
+            return "Erreur de syntaxe LaTeX: " . $matches[0];
+        }
+
+        // Chercher les erreurs d'environnement
+        if (preg_match('/! LaTeX Error: (\\\\begin\{\w+\}.*?)(\r?\n|\r)/', $errorOutput, $matches)) {
+            return "Erreur d'environnement LaTeX: " . $matches[1];
+        }
+
+        // Si l'erreur est trop longue ou non reconnue, la tronquer
+        if (strlen($errorOutput) > 500) {
+            return 'Erreur de compilation LaTeX: ' . substr(preg_replace('/[\r\n]+/', ' ', $errorOutput), 0, 500) . '...';
+        }
+
+        // Message par défaut
+        return 'Erreur de compilation LaTeX. Vérifiez votre code LaTeX.';
+    }
+
+    /**
+     * Crée les dossiers nécessaires pour LaTeX dans PowerShell
+     *
+     * @return bool Succès de la création
+     */
+    public function createDirectoriesWithPowerShell(): bool
+    {
+        try {
+            // Chemin pour créer var/latex/temp
+            $tempPath = $this->projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'temp';
+
+            // Chemin pour créer var/latex/output
+            $outputPath = $this->projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'output';
+
+            // Commandes PowerShell pour créer les répertoires
+            $process = new Process(['powershell', '-Command', "
+                if (-not (Test-Path -Path '$tempPath')) {
+                    New-Item -ItemType Directory -Path '$tempPath' -Force
+                    Write-Output \"Répertoire créé: $tempPath\"
+                }
+                if (-not (Test-Path -Path '$outputPath')) {
+                    New-Item -ItemType Directory -Path '$outputPath' -Force
+                    Write-Output \"Répertoire créé: $outputPath\"
+                }
+            "]);
+
+            $process->run();
+
+            if ($process->isSuccessful()) {
+                $this->logger->info('Répertoires créés avec succès via PowerShell');
+                return true;
+            } else {
+                $this->logger->error('Échec de la création des répertoires via PowerShell: ' . $process->getErrorOutput());
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Exception lors de la création des répertoires: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Vérifie si pdflatex est disponible et installe MiKTeX si nécessaire
+     *
+     * @return bool True si pdflatex est disponible
+     */
+    public function checkAndInstallLatex(): bool
+    {
+        try {
+            // Vérifier si pdflatex est installé
+            $process = new Process(['pdflatex', '--version']);
+            $process->run();
+
+            if ($process->isSuccessful()) {
+                $this->logger->info('pdflatex est installé: ' . trim($process->getOutput()));
+                return true;
+            }
+
+            $this->logger->warning('pdflatex n\'est pas installé. Essayez d\'installer MiKTeX manuellement.');
+
+            return false;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la vérification de pdflatex: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Exécute un test de compilation LaTeX simple
+     *
+     * @return array Informations sur le résultat du test
+     */
+    public function runLatexTest(): array
+    {
+        $result = [
+            'success' => false,
+            'message' => '',
+            'pdf_path' => null,
+            'error' => null
+        ];
+
+        // Code LaTeX minimal
+        $latexCode = '\documentclass{article}
+\begin{document}
+Hello World! This is a LaTeX test.
+\end{document}';
+
+        try {
+            $pdfPath = $this->convertLatexToPdf($latexCode);
+
+            if ($pdfPath !== null && file_exists($pdfPath)) {
+                $result['success'] = true;
+                $result['message'] = 'Test réussi! PDF généré avec succès.';
+                $result['pdf_path'] = $pdfPath;
+            } else {
+                $result['message'] = 'Échec de la génération du PDF de test.';
+            }
+        } catch (\Exception $e) {
+            $result['error'] = $e->getMessage();
+            $result['message'] = 'Exception lors du test: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Vérifie si LaTeX est installé et renvoie des informations sur l'installation
+     *
+     * @return array Informations sur l'installation LaTeX
+     */
+    public function getLatexInfo(): array
+    {
+        $info = [
+            'installed' => false,
+            'version' => null,
+            'engines' => [],
+            'error' => null
+        ];
+        
+        try {
+            // Vérifier si pdflatex est installé
+            $process = new Process(['pdflatex', '--version']);
+            $process->run();
+            
+            if ($process->isSuccessful()) {
+                $info['installed'] = true;
+                $output = $process->getOutput();
+                $firstLine = strtok($output, "\r\n");
+                $info['version'] = $firstLine;
+                $info['engines'][] = 'pdflatex';
+                
+                // Vérifier xelatex
+                $processXe = new Process(['xelatex', '--version']);
+                $processXe->run();
+                if ($processXe->isSuccessful()) {
+                    $info['engines'][] = 'xelatex';
+                }
+                
+                // Vérifier lualatex
+                $processLua = new Process(['lualatex', '--version']);
+                $processLua->run();
+                if ($processLua->isSuccessful()) {
+                    $info['engines'][] = 'lualatex';
+                }
+            }
+        } catch (\Exception $e) {
+            $info['error'] = $e->getMessage();
+        }
+        
+        return $info;
+    }
+}
+
+==================================================
+
+Fichier: src\Controller\LatexController.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Controller\LatexController.php
+-----
+<?php
+
+namespace App\Controller;
+
+use App\Service\LatexService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Filesystem\Filesystem;
+use Psr\Log\LoggerInterface;
+
+class LatexController extends AbstractController
+{
+    private LatexService $latexService;
+    private LoggerInterface $logger;
+    private string $outputDir;
+    private string $tempDir;
+    private string $projectDir;
+
+    public function __construct(LatexService $latexService, LoggerInterface $logger, string $projectDir = null)
+    {
+        $this->latexService = $latexService;
+        $this->logger = $logger;
+
+        // Ne pas appeler getParameter() dans le constructeur!
+        if ($projectDir === null) {
+            // Utilisez cette astuce pour obtenir le chemin du projet
+            $this->projectDir = dirname(__DIR__, 2); // Remonte de 2 niveaux depuis src/Controller
+        } else {
+            $this->projectDir = $projectDir;
+        }
+
+        // Définir les chemins sans appeler getParameter()
+        $this->tempDir = $this->projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'temp';
+        $this->outputDir = $this->projectDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'latex' . DIRECTORY_SEPARATOR . 'output';
+
+        // Créer les répertoires nécessaires
+        $this->ensureDirectoriesExist();
+    }
+
+    /**
+     * S'assure que les répertoires nécessaires existent
+     */
+    private function ensureDirectoriesExist(): void
+    {
+        // Méthode pour Windows
+        $varDir = $this->projectDir . DIRECTORY_SEPARATOR . 'var';
+        $latexDir = $varDir . DIRECTORY_SEPARATOR . 'latex';
+        $tempDir = $this->tempDir;
+        $outputDir = $this->outputDir;
+
+        $dirs = [$varDir, $latexDir, $tempDir, $outputDir];
+
+        foreach ($dirs as $dir) {
+            if (!is_dir($dir)) {
+                if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+                    if ($this->logger) {
+                        $this->logger->error("Impossible de créer le répertoire: " . $dir);
+                    }
+                } else {
+                    if ($this->logger) {
+                        $this->logger->info("Répertoire créé: " . $dir);
+                    }
+                }
+            }
+        }
+    }
+
+    #[Route('/latex', name: 'app_latex')]
+    public function index(): Response
+    {
+        return $this->render('latex/index.html.twig');
+    }
+
+    #[Route('/latex/convert', name: 'app_latex_convert', methods: ['POST'])]
+    public function convertLatex(Request $request): Response
+    {
+        $latexCode = $request->request->get('latex', '');
+
+        if (empty($latexCode)) {
+            $this->addFlash('error', 'Le code LaTeX ne peut pas être vide.');
+            return $this->redirectToRoute('app_latex');
+        }
+
+        // Sanitize input
+        $latexCode = $this->sanitizeLatexInput($latexCode);
+
+        try {
+            $pdfPath = $this->latexService->convertLatexToPdf($latexCode);
+
+            if ($pdfPath === null || !file_exists($pdfPath)) {
+                $this->addFlash('error', 'Erreur lors de la conversion du code LaTeX en PDF.');
+                $this->logger->error('PDF non généré pour conversion LaTeX');
+                return $this->redirectToRoute('app_latex');
+            }
+
+            $response = new BinaryFileResponse($pdfPath);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                'document.pdf'
+            );
+
+            // Planifier le nettoyage des fichiers temporaires dans 1 heure
+            $this->cleanupOldFiles();
+
+            return $response;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la conversion LaTeX: ' . $e->getMessage());
+            $this->addFlash('error', 'Erreur: ' . $e->getMessage());
+            return $this->redirectToRoute('app_latex');
+        }
+    }
+
+    #[Route('/latex/preview', name: 'app_latex_preview', methods: ['POST'])]
+    public function previewLatex(Request $request): JsonResponse
+    {
+        // Débogage
+        $this->logger->info('Requête de prévisualisation LaTeX reçue');
+
+        // Vérifier si la requête est Ajax ou standard
+        $isAjax = $request->isXmlHttpRequest();
+        $contentType = $request->headers->get('Content-Type');
+        $this->logger->info('Type de requête: ' . ($isAjax ? 'Ajax' : 'Standard') . ', Content-Type: ' . $contentType);
+
+        // Obtenir le code LaTeX selon la méthode
+        if (str_contains($contentType, 'application/json')) {
+            $data = json_decode($request->getContent(), true);
+            $latexCode = $data['latex'] ?? '';
+            $this->logger->info('Données JSON reçues');
+        } else {
+            $latexCode = $request->request->get('latex', '');
+            $this->logger->info('Données de formulaire reçues');
+        }
+
+        if (empty($latexCode)) {
+            $this->logger->warning('Code LaTeX vide reçu');
+            return $this->json(['success' => false, 'error' => 'Le code LaTeX ne peut pas être vide.']);
+        }
+
+        // Log la taille du code LaTeX reçu
+        $this->logger->info('Taille du code LaTeX reçu: ' . strlen($latexCode) . ' caractères');
+
+        // Sanitize input
+        $latexCode = $this->sanitizeLatexInput($latexCode);
+
+        try {
+            $this->logger->info('Début de la conversion LaTeX vers PDF');
+            $pdfPath = $this->latexService->convertLatexToPdf($latexCode);
+
+            if ($pdfPath === null || !file_exists($pdfPath)) {
+                $this->logger->error('Échec de génération du PDF de prévisualisation');
+                return $this->json(['success' => false, 'error' => 'Erreur lors de la conversion du code LaTeX en PDF.']);
+            }
+
+            $this->logger->info('PDF généré avec succès: ' . $pdfPath);
+            $pdfUrl = $this->generateUrl('app_latex_view_pdf', ['filename' => basename($pdfPath)]);
+
+            return $this->json([
+                'success' => true,
+                'pdfUrl' => $pdfUrl
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Exception lors de la prévisualisation: ' . $e->getMessage());
+            return $this->json([
+                'success' => false,
+                'error' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    #[Route('/latex/view/{filename}', name: 'app_latex_view_pdf', methods: ['GET'])]
+    public function viewPdf(string $filename): Response
+    {
+        // Validation de sécurité du nom de fichier
+        if (!preg_match('/^[a-zA-Z0-9_-]+\.pdf$/', $filename)) {
+            $this->logger->warning('Tentative d\'accès à un fichier PDF avec un nom invalide: ' . $filename);
+            throw $this->createNotFoundException('Le fichier PDF demandé est invalide.');
+        }
+
+        $pdfPath = $this->outputDir . DIRECTORY_SEPARATOR . $filename;
+
+        if (!file_exists($pdfPath)) {
+            $this->logger->warning('Tentative d\'accès à un fichier PDF inexistant: ' . $filename);
+            throw $this->createNotFoundException('Le fichier PDF n\'existe pas.');
+        }
+
+        $response = new BinaryFileResponse($pdfPath);
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE);
+        $response->headers->set('Content-Type', 'application/pdf');
+
+        return $response;
+    }
+
+    #[Route('/latex/upload', name: 'app_latex_upload', methods: ['POST'])]
+    public function uploadLatexFile(Request $request): Response
+    {
+        $uploadedFile = $request->files->get('latex_file');
+
+        if (!$uploadedFile) {
+            $this->addFlash('error', 'Aucun fichier n\'a été téléchargé.');
+            return $this->redirectToRoute('app_latex');
+        }
+
+        // Vérifier l'extension
+        $extension = $uploadedFile->getClientOriginalExtension();
+        if ($extension !== 'tex') {
+            $this->addFlash('error', 'Le fichier doit être un fichier .tex');
+            return $this->redirectToRoute('app_latex');
+        }
+
+        try {
+            // Lire le contenu du fichier
+            $latexCode = file_get_contents($uploadedFile->getPathname());
+
+            // Sanitize le contenu
+            $latexCode = $this->sanitizeLatexInput($latexCode);
+
+            // Convertir en PDF
+            $pdfPath = $this->latexService->convertLatexToPdf($latexCode);
+
+            if ($pdfPath === null) {
+                $this->addFlash('error', 'Erreur lors de la conversion du fichier LaTeX.');
+                return $this->redirectToRoute('app_latex');
+            }
+
+            // Renvoyer le PDF
+            $response = new BinaryFileResponse($pdfPath);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                str_replace('.tex', '.pdf', $uploadedFile->getClientOriginalName())
+            );
+
+            return $response;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors du traitement du fichier LaTeX: ' . $e->getMessage());
+            $this->addFlash('error', 'Erreur: ' . $e->getMessage());
+            return $this->redirectToRoute('app_latex');
+        }
+    }
+
+    /**
+     * Route pour le diagnostic LaTeX
+     */
+    #[Route('/latex/diagnostic', name: 'app_latex_diagnostic')]
+    public function diagnostic(): Response
+    {
+        $diagnosticData = [
+            'latex_installed' => false,
+            'latex_version' => 'Non disponible',
+            'directories' => [
+                'temp' => [
+                    'path' => $this->tempDir,
+                    'exists' => is_dir($this->tempDir),
+                    'writable' => is_dir($this->tempDir) && is_writable($this->tempDir)
+                ],
+                'output' => [
+                    'path' => $this->outputDir,
+                    'exists' => is_dir($this->outputDir),
+                    'writable' => is_dir($this->outputDir) && is_writable($this->outputDir)
+                ]
+            ],
+            'test_result' => null,
+            'engine' => 'pdflatex'
+        ];
+
+        // Vérifier LaTeX
+        try {
+            $process = new \Symfony\Component\Process\Process(['pdflatex', '--version']);
+            $process->run();
+            $diagnosticData['latex_installed'] = $process->isSuccessful();
+
+            if ($process->isSuccessful()) {
+                // Extraire la version
+                $output = $process->getOutput();
+                $firstLine = strtok($output, "\r\n");
+                $diagnosticData['latex_version'] = $firstLine;
+
+                // Exécuter un test
+                $diagnosticData['test_result'] = $this->runLatexTest();
+            }
+        } catch (\Exception $e) {
+            $diagnosticData['error'] = $e->getMessage();
+        }
+
+        return $this->render('latex/diagnostic.html.twig', $diagnosticData);
+    }
+
+    /**
+     * Exécute un test de compilation LaTeX simple
+     */
+    private function runLatexTest(): array
+    {
+        $result = [
+            'success' => false,
+            'output' => '',
+            'error' => '',
+            'pdf_path' => null
+        ];
+
+        $latexCode = '\documentclass{article}
+\begin{document}
+Ceci est un test de compilation LaTeX.
+\end{document}';
+
+        try {
+            $pdfPath = $this->latexService->convertLatexToPdf($latexCode);
+
+            if ($pdfPath && file_exists($pdfPath)) {
+                $result['success'] = true;
+                $result['pdf_path'] = $pdfPath;
+                $result['filename'] = basename($pdfPath);
+            }
+        } catch (\Exception $e) {
+            $result['error'] = $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Méthode utilitaire pour sanitizer les entrées LaTeX
+     */
+    private function sanitizeLatexInput(string $latexCode): string
+    {
+        // Liste des commandes à bloquer pour la sécurité
+        $dangerousCommands = [
+            '\\input', '\\include', '\\write18', '\\immediate', '\\pipe', '\\openout',
+            '\\catcode', '\\shell', '\\def\\', '\\edef\\', '\\gdef\\', '\\read'
+        ];
+
+        foreach ($dangerousCommands as $command) {
+            $latexCode = str_replace($command, '\\textbackslash ' . substr($command, 1), $latexCode);
+        }
+
+        return $latexCode;
+    }
+
+    /**
+     * Nettoie les anciens fichiers PDF générés
+     */
+    private function cleanupOldFiles(): void
+    {
+        try {
+            $now = time();
+            $maxAge = 3600 * 24; // 24 heures
+
+            $files = glob($this->outputDir . DIRECTORY_SEPARATOR . '*.pdf');
+            if ($files) {
+                foreach ($files as $file) {
+                    if ($now - filemtime($file) > $maxAge) {
+                        @unlink($file);
+                        $this->logger->info('PDF temporaire supprimé: ' . basename($file));
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('Erreur lors du nettoyage des fichiers: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Route pour API Latex - ajouter une formule
+     */
+    #[Route('/latex/api/add-formula', name: 'app_latex_add_formula', methods: ['POST'])]
+    public function addLatexFormula(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $formula = $data['formula'] ?? '';
+        $position = $data['position'] ?? 'generic';
+
+        if (empty($formula)) {
+            return $this->json([
+                'success' => false,
+                'error' => 'La formule ne peut pas être vide'
+            ]);
+        }
+
+        // Valider la formule LaTeX (simple vérification)
+        $openBraces = substr_count($formula, '{');
+        $closeBraces = substr_count($formula, '}');
+
+        if ($openBraces !== $closeBraces) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Formule LaTeX invalide: accolades non équilibrées'
+            ]);
+        }
+
+        // Simuler l'enregistrement dans une base de données
+        return $this->json([
+            'success' => true,
+            'formula' => $formula,
+            'position' => $position,
+            'id' => uniqid('formula_')
+        ]);
+    }
+
+    /**
+     * Pour lier à l'éditeur de CV
+     */
+    #[Route('/latex/edit-for-cv', name: 'app_latex_edit_for_cv')]
+    public function editForCv(Request $request): Response
+    {
+        $position = $request->query->get('position', '');
+
+        return $this->render('latex/edit_for_cv.html.twig', [
+            'position' => $position,
+            'target' => $request->query->get('target', '_parent')
+        ]);
+    }
+}
+
+==================================================
+
+Fichier: public\assets\styles\latex_editor.css
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\assets\styles\latex_editor.css
+-----
+==================================================
+
+Fichier: Templates\cv_generator\test_latex_editor.html.twig
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\test_latex_editor.html.twig
+-----
+{% extends 'base.html.twig' %}
+
+{% block title %}Test Éditeur LaTeX{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .latex-preview {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+            min-height: 50px;
+        }
+
+        .formula-list {
+            margin-top: 20px;
+        }
+
+        .formula-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+        }
+
+        .moderncv-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+
+        .code-box {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .tab-content {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-top: 0;
+            border-radius: 0 0 .25rem .25rem;
+        }
+
+        .engine-card {
+            transition: transform 0.3s ease;
+        }
+
+        .engine-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .badge-engine {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .engine-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #6c757d;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container test-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Test de l'Éditeur LaTeX</h1>
+            <span class="text-muted small">{{ current_time|date('Y-m-d H:i:s') }} UTC</span>
+        </div>
+
+        <p>Cette page vous permet de tester l'éditeur LaTeX et d'explorer les différentes façons d'intégrer LaTeX dans votre CV.</p>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button id="open-latex-button" class="btn btn-primary">
+                <i class="fas fa-square-root-alt"></i> Ouvrir l'éditeur LaTeX
+            </button>
+
+            <div>
+                <span class="badge bg-info">Utilisateur: {{ username }}</span>
+            </div>
+        </div>
+
+        <h3>Prévisualisation</h3>
+        <div id="latex-preview" class="latex-preview">
+            Aucune formule LaTeX insérée pour l'instant.
+        </div>
+
+        <h3>Formules enregistrées</h3>
+        <div id="formula-list" class="formula-list">
+            <p id="no-formulas-message">Aucune formule enregistrée.</p>
+        </div>
+
+        <div class="action-buttons">
+            <button id="clear-formulas" class="btn btn-danger">Effacer toutes les formules</button>
+        </div>
+
+        <!-- Nouvelle section pour ModernCV -->
+        <div class="moderncv-section">
+            <h2><i class="fas fa-file-pdf"></i> Générer un CV avec ModernCV</h2>
+            <p>Découvrez notre nouvelle fonctionnalité de génération de CV professionnel avec différents moteurs LaTeX et le package ModernCV.</p>
+
+            <ul class="nav nav-tabs" id="latexTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="example-tab" data-bs-toggle="tab" data-bs-target="#example" type="button" role="tab" aria-controls="example" aria-selected="true">Exemple</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="template-tab" data-bs-toggle="tab" data-bs-target="#template" type="button" role="tab" aria-controls="template" aria-selected="false">Template</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="wasysym-tab" data-bs-toggle="tab" data-bs-target="#wasysym" type="button" role="tab" aria-controls="wasysym" aria-selected="false">Symboles wasysym</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="engines-tab" data-bs-toggle="tab" data-bs-target="#engines" type="button" role="tab" aria-controls="engines" aria-selected="false">Moteurs LaTeX</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="latexTabsContent">
+                <div class="tab-pane fade show active" id="example" role="tabpanel" aria-labelledby="example-tab">
+                    <h4>Code LaTeX d'exemple pour ModernCV</h4>
+                    <div class="code-box">
+                        <pre><code class="language-tex">{{ exampleLatexCode|raw }}</code></pre>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="template" role="tabpanel" aria-labelledby="template-tab">
+                    <h4>Contenu de votre template LaTeX</h4>
+                    <div class="code-box">
+                        <pre><code class="language-tex">{{ templates.classic|raw }}</code></pre>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="wasysym" role="tabpanel" aria-labelledby="wasysym-tab">
+                    <h4>Exemples de symboles disponibles avec wasysym</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-group">
+                                <li class="list-group-item"><code>\\smiley{}</code> - ☺</li>
+                                <li class="list-group-item"><code>\\frownie{}</code> - ☹</li>
+                                <li class="list-group-item"><code>\\checkbox{}</code> - ☑</li>
+                                <li class="list-group-item"><code>\\Square{}</code> - □</li>
+                                <li class="list-group-item"><code>\\CheckedBox{}</code> - ☒</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group">
+                                <li class="list-group-item"><code>\\XBox{}</code> - ☒</li>
+                                <li class="list-group-item"><code>\\officialsymbol{}</code> - ®</li>
+                                <li class="list-group-item"><code>\\currency{}</code> - ¤</li>
+                                <li class="list-group-item"><code>\\diameter{}</code> - ⌀</li>
+                                <li class="list-group-item"><code>\\phone{}</code> - ☎</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nouveau onglet pour les moteurs LaTeX -->
+                <div class="tab-pane fade" id="engines" role="tabpanel" aria-labelledby="engines-tab">
+                    <h4>Choisir un moteur LaTeX</h4>
+                    <p>Nous prenons en charge deux moteurs LaTeX différents pour répondre à tous vos besoins :</p>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 engine-card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">pdfLaTeX</h5>
+                                    <span class="badge bg-light text-dark badge-engine">Standard</span>
+                                </div>
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf engine-icon"></i>
+                                    <h5>Moteur standard</h5>
+                                    <p class="card-text">Compatible avec la majorité des environnements LaTeX.</p>
+                                    <hr>
+                                    <h6>Avantages</h6>
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Hautement compatible</li>
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Performances rapides</li>
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Stable et éprouvé</li>
+                                    </ul>
+                                    <h6>Limitations</h6>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item"><i class="fas fa-times text-danger"></i> Support limité pour les polices avancées</li>
+                                        <li class="list-group-item"><i class="fas fa-times text-danger"></i> Gestion complexe des caractères non-latins</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ path('app_cv_moderncv_preview', {'engine': 'pdflatex'}) }}" class="btn btn-outline-primary" target="_blank">
+                                            <i class="fas fa-eye"></i> Prévisualiser avec pdfLaTeX
+                                        </a>
+                                        <a href="{{ path('app_cv_moderncv', {'engine': 'pdflatex'}) }}" class="btn btn-primary">
+                                            <i class="fas fa-download"></i> Télécharger avec pdfLaTeX
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 engine-card">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">XeLaTeX</h5>
+                                    <span class="badge bg-warning badge-engine">Avancé</span>
+                                </div>
+                                <div class="card-body text-center">
+                                    <i class="fas fa-font engine-icon"></i>
+                                    <h5>Moteur moderne</h5>
+                                    <p class="card-text">Support avancé pour les polices et les langues internationales.</p>
+                                    <hr>
+                                    <h6>Avantages</h6>
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Polices OpenType et TrueType</li>
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Support multilingue avancé</li>
+                                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Utilisation des polices du système</li>
+                                    </ul>
+                                    <h6>Limitations</h6>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item"><i class="fas fa-times text-danger"></i> Nécessite XeLaTeX installé sur le serveur</li>
+                                        <li class="list-group-item"><i class="fas fa-times text-danger"></i> Performances légèrement plus lentes</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ path('app_cv_moderncv_preview', {'engine': 'xelatex'}) }}" class="btn btn-outline-info" target="_blank">
+                                            <i class="fas fa-eye"></i> Prévisualiser avec XeLaTeX
+                                        </a>
+                                        <a href="{{ path('app_cv_moderncv', {'engine': 'xelatex'}) }}" class="btn btn-info">
+                                            <i class="fas fa-download"></i> Télécharger avec XeLaTeX
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Si vous rencontrez des problèmes avec un moteur, essayez l'autre. XeLaTeX est recommandé pour les documents nécessitant des polices spéciales ou des langues non-latines.
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-start gap-3 mt-4">
+                <div class="dropdown me-2">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="engineDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog"></i> Choisir le moteur LaTeX
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="engineDropdown">
+                        <li><a class="dropdown-item" href="{{ path('app_cv_moderncv', {'engine': 'pdflatex'}) }}">
+                                <i class="fas fa-file-pdf me-2"></i> pdfLaTeX (standard)
+                            </a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_cv_moderncv', {'engine': 'xelatex'}) }}">
+                                <i class="fas fa-font me-2"></i> XeLaTeX (polices avancées)
+                            </a></li>
+                    </ul>
+                </div>
+
+                <a href="{{ path('app_cv_moderncv_preview') }}" class="btn btn-info" target="_blank">
+                    <i class="fas fa-eye"></i> Prévisualiser le CV
+                </a>
+                <a href="{{ path('app_cv_moderncv') }}" class="btn btn-success">
+                    <i class="fas fa-download"></i> Télécharger le CV
+                </a>
+            </div>
+
+            <div class="mt-3 alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Ce que nous avons fait récemment</h5>
+                <ul>
+                    <li>Ajouté le package <code>wasysym</code> pour résoudre l'erreur "Command requires wasysym package"</li>
+                    <li>Amélioré le service <code>LatexPdfGenerator</code> pour supporter à la fois pdfLaTeX et XeLaTeX</li>
+                    <li>Créé des templates spécifiques pour chaque moteur LaTeX</li>
+                    <li>Configuré les routes pour prévisualiser et télécharger les CV générés avec le moteur de votre choix</li>
+                    <li>Ajouté un support pour intégrer vos formules LaTeX dans un CV professionnel</li>
+                </ul>
+                <p class="timestamp text-end mb-0">Mis à jour le: {{ current_time|date('Y-m-d H:i:s') }} par {{ username }}</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Ajout d'un highlight de syntaxe pour mieux visualiser le code LaTeX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const openButton = document.getElementById('open-latex-button');
+            const preview = document.getElementById('latex-preview');
+            const formulaList = document.getElementById('formula-list');
+            const noFormulasMessage = document.getElementById('no-formulas-message');
+            const clearButton = document.getElementById('clear-formulas');
+
+            // Initialiser highlight.js pour la coloration syntaxique du code
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+
+            // Charger les formules existantes depuis localStorage
+            const loadFormulas = () => {
+                const storedFormulas = localStorage.getItem('latex_formulas');
+                const formulas = storedFormulas ? JSON.parse(storedFormulas) : [];
+
+                if (formulas.length > 0) {
+                    noFormulasMessage.style.display = 'none';
+                    formulaList.innerHTML = '';
+
+                    formulas.forEach((formula, index) => {
+                        const formulaItem = document.createElement('div');
+                        formulaItem.className = 'formula-item';
+
+                        const formulaContent = document.createElement('div');
+                        formulaContent.innerHTML = '$$' + formula + '$$';
+
+                        const formulaActions = document.createElement('div');
+                        formulaActions.className = 'mt-2 d-flex justify-content-between align-items-center';
+
+                        const formulaText = document.createElement('code');
+                        formulaText.className = 'me-2';
+                        formulaText.textContent = formula;
+                        formulaText.style.fontSize = '0.8rem';
+                        formulaText.style.color = '#666';
+
+                        const buttonGroup = document.createElement('div');
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.className = 'btn btn-sm btn-outline-danger ms-2';
+                        deleteButton.innerHTML = '<i class="fas fa-trash"></i> Supprimer';
+                        deleteButton.onclick = () => removeFormula(index);
+
+                        formulaActions.appendChild(formulaText);
+                        buttonGroup.appendChild(deleteButton);
+                        formulaActions.appendChild(buttonGroup);
+                        formulaItem.appendChild(formulaContent);
+                        formulaItem.appendChild(formulaActions);
+                        formulaList.appendChild(formulaItem);
+                    });
+
+                    // Rendre les formules avec MathJax
+                    if (window.MathJax) {
+                        MathJax.typesetPromise([formulaList]);
+                    }
+                } else {
+                    noFormulasMessage.style.display = 'block';
+                    formulaList.innerHTML = '';
+                    formulaList.appendChild(noFormulasMessage);
+                }
+            };
+
+            // Supprimer une formule
+            const removeFormula = (index) => {
+                const storedFormulas = localStorage.getItem('latex_formulas');
+                const formulas = storedFormulas ? JSON.parse(storedFormulas) : [];
+
+                formulas.splice(index, 1);
+                localStorage.setItem('latex_formulas', JSON.stringify(formulas));
+                loadFormulas();
+            };
+
+            // Ouvrir l'éditeur LaTeX
+            openButton.addEventListener('click', function() {
+                window.open('/latex', 'LaTeXEditor', 'width=800,height=600');
+            });
+
+            // Récupérer la formule LaTeX depuis localStorage
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'latex_formula') {
+                    const formula = localStorage.getItem('latex_formula');
+                    if (formula) {
+                        // Afficher dans la prévisualisation
+                        preview.innerHTML = '$$' + formula + '$$';
+
+                        // Stocker dans la liste des formules
+                        const storedFormulas = localStorage.getItem('latex_formulas');
+                        const formulas = storedFormulas ? JSON.parse(storedFormulas) : [];
+                        formulas.push(formula);
+                        localStorage.setItem('latex_formulas', JSON.stringify(formulas));
+
+                        // Rendre avec MathJax
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([preview]);
+                        }
+
+                        // Supprimer la formule temporaire
+                        localStorage.removeItem('latex_formula');
+
+                        // Recharger la liste des formules
+                        loadFormulas();
+                    }
+                }
+            });
+
+            // Écouter les événements de message
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'latex_insert') {
+                    const formula = event.data.latex;
+
+                    // Afficher dans la prévisualisation
+                    preview.innerHTML = '$$' + formula + '$$';
+
+                    // Stocker dans la liste des formules
+                    const storedFormulas = localStorage.getItem('latex_formulas');
+                    const formulas = storedFormulas ? JSON.parse(storedFormulas) : [];
+                    formulas.push(formula);
+                    localStorage.setItem('latex_formulas', JSON.stringify(formulas));
+
+                    // Rendre avec MathJax
+                    if (window.MathJax) {
+                        MathJax.typesetPromise([preview]);
+                    }
+
+                    // Recharger la liste des formules
+                    loadFormulas();
+                }
+            });
+
+            // Effacer toutes les formules
+            clearButton.addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir supprimer toutes les formules?')) {
+                    localStorage.removeItem('latex_formulas');
+                    preview.innerHTML = 'Aucune formule LaTeX insérée pour l\'instant.';
+                    loadFormulas();
+                }
+            });
+
+            // Charger les formules existantes au chargement de la page
+            loadFormulas();
+        });
+    </script>
+{% endblock %}
+==================================================
+
+Fichier: Templates\latex\cv_template_xe.tex
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\latex\cv_template_xe.tex
+-----
+% !TEX program = xelatex
+\documentclass[11pt,a4paper,sans]{moderncv}
+
+% Style et couleur
+\moderncvstyle{classic}
+\moderncvcolor{blue}
+
+% Packages nécessaires
+\usepackage[scale=0.75]{geometry}
+\usepackage{fontspec}
+\usepackage{wasysym}
+
+% Informations personnelles
+\name{{{name}}}{{{surname}}}
+\title{{{title}}}
+\phone{{{phone}}}
+\email{{{email}}}
+
+% Si vous avez besoin d'activer les icônes sociales, décommentez ces lignes
+% \social[linkedin]{{{linkedin}}}
+% \social[github]{{{github}}}
+
+\begin{document}
+
+    \makecvtitle
+
+    \section{Expérience professionnelle}
+    {{#experiences}}
+    {{/experiences}}
+
+    \section{Formation}
+    {{#education}}
+    {{/education}}
+
+    \section{Compétences techniques}
+    {{#skills}}
+    {{/skills}}
+
+    \section{Langues}
+    {{#languages}}
+    {{/languages}}
+
+\end{document}
+==================================================
+
+Fichier: Templates\latex\cv_template.tex
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\latex\cv_template.tex
+-----
+% !TEX program = xelatex
+\documentclass[11pt,a4paper,sans]{moderncv}
+
+% Style et couleur
+\moderncvstyle{classic}
+\moderncvcolor{blue}
+
+% Packages nécessaires
+\usepackage{fontspec}
+\usepackage{wasysym}  % Ajout du package wasysym pour les symboles spéciaux
+\usepackage[scale=0.75]{geometry}
+
+% Informations personnelles
+\name{{{name}}}{{{surname}}}
+\title{{{title}}}
+\phone{{{phone}}}
+\email{{{email}}}
+
+% Si vous avez besoin d'activer les icônes sociales plus tard, décommentez ces lignes
+% \social[linkedin]{{{linkedin}}}
+% \social[github]{{{github}}}
+
+\begin{document}
+
+    \makecvtitle
+
+    \section{Expérience professionnelle}
+    {{#experiences}}
+    {{/experiences}}
+
+    \section{Formation}
+    {{#education}}
+    {{/education}}
+
+    \section{Compétences techniques}
+    {{#skills}}
+    {{/skills}}
+
+    \section{Langues}
+    {{#languages}}
+    {{/languages}}
+
+\end{document}
+==================================================
+
+Fichier: Templates\latex\cv_template_pdf.tex
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\latex\cv_template_pdf.tex
+-----
+\documentclass[11pt,a4paper,sans]{moderncv}
+
+% Style et couleur
+\moderncvstyle{classic}
+\moderncvcolor{blue}
+
+% Packages nécessaires pour pdfLaTeX
+\usepackage[scale=0.75]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{wasysym}
+
+% Informations personnelles
+\name{{{name}}}{{{surname}}}
+\title{{{title}}}
+\phone{{{phone}}}
+\email{{{email}}}
+
+% Si vous avez besoin d'activer les icônes sociales, décommentez ces lignes
+% \social[linkedin]{{{linkedin}}}
+% \social[github]{{{github}}}
+
+\begin{document}
+
+    \makecvtitle
+
+    \section{Expérience professionnelle}
+    {{#experiences}}
+    {{/experiences}}
+
+    \section{Formation}
+    {{#education}}
+    {{/education}}
+
+    \section{Compétences techniques}
+    {{#skills}}
+    {{/skills}}
+
+    \section{Langues}
+    {{#languages}}
+    {{/languages}}
+
+\end{document}
+==================================================
+
+Fichier: src\Service\LatexPdfGenerator.php
+Chemin complet: C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\src\Service\LatexPdfGenerator.php
+-----
+<?php
+// Last updated: 2025-05-04 21:15:00
+// Author: Mohamed-abidi-95
+// src/Service/LatexPdfGenerator.php
+namespace App\Service;
+
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Psr\Log\LoggerInterface;
+
+class LatexPdfGenerator
+{
+    private string $projectDir;
+    private LatexService $latexService;
+    private LoggerInterface $logger;
+    private string $tempDir;
+    private string $outputDir;
+
+    public function __construct(string $projectDir, LatexService $latexService, LoggerInterface $logger)
+    {
+        $this->projectDir = $projectDir;
+        $this->latexService = $latexService;
+        $this->logger = $logger;
+        $this->tempDir = $projectDir . '/var/latex/temp';
+        $this->outputDir = $projectDir . '/var/latex/output';
+    }
+
+    /**
+     * Génère un PDF à partir d'un template LaTeX avec un moteur au choix
+     *
+     * @param string $templateFile Nom du fichier template
+     * @param array $options Données à injecter dans le template
+     * @param string $engine Moteur LaTeX à utiliser ('pdflatex' ou 'xelatex')
+     * @return string Nom du fichier PDF généré
+     */
+
+    public function generatePdfFromTemplate(string $templateFile, array $options = [], string $engine = 'xelatex'): string
+    {
+        $this->ensureDirectoriesExist();
+
+        // Nom de fichier unique basé sur timestamp et identifiant unique
+        $timestamp = time();
+        $uniqueId = uniqid('cv_');
+        $outputFile = $this->outputDir . '/' . $uniqueId . '.pdf';
+
+        // Chemin vers le template LaTeX
+        $templatePath = $this->projectDir . '/Templates/latex/' . $templateFile;
+
+        // Vérifier que le template existe
+        if (!file_exists($templatePath)) {
+            // Essayer un chemin alternatif
+            $alternatePath = $this->projectDir . '/templates/latex/' . $templateFile;
+            if (file_exists($alternatePath)) {
+                $templatePath = $alternatePath;
+            } else {
+                throw new \RuntimeException("Template LaTeX non trouvé: " . $templatePath);
+            }
+        }
+
+        // Générer le contenu LaTeX personnalisé
+        if (!empty($options)) {
+            $content = file_get_contents($templatePath);
+
+            // Adapter le contenu en fonction du moteur LaTeX choisi
+            $content = $this->adaptTemplateForEngine($content, $engine);
+
+            // Remplacer les variables par leurs valeurs
+            $content = $this->processTemplate($content, $options);
+
+            // Écrire le contenu dans un fichier temporaire
+            $tempFile = $this->tempDir . '/temp_' . $uniqueId . '.tex';
+            file_put_contents($tempFile, $content);
+            $templatePath = $tempFile;
+
+            $this->logger->info("Fichier LaTeX temporaire créé: " . basename($tempFile));
+        }
+
+        try {
+            // Exécuter le moteur LaTeX
+            $this->logger->info("Génération du PDF avec {$engine}: " . basename($templatePath));
+            $pdfBaseName = $this->runLaTeXEngine($templatePath, $engine);
+
+            // Renommer avec le nom de sortie souhaité
+            $generatedPdf = $this->outputDir . '/' . $pdfBaseName . '.pdf';
+            if (file_exists($generatedPdf)) {
+                rename($generatedPdf, $outputFile);
+                $this->logger->info("PDF généré avec succès: " . basename($outputFile));
+                return basename($outputFile); // Retourner juste le nom du fichier
+            }
+
+            throw new \RuntimeException('PDF généré non trouvé: ' . $generatedPdf);
+        } catch (ProcessFailedException $e) {
+            $this->logger->error("Erreur lors de la génération du PDF: " . $e->getMessage());
+            throw new \RuntimeException('Échec de la génération du PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Adapte le template en fonction du moteur LaTeX utilisé
+     */
+    private function adaptTemplateForEngine(string $templateContent, string $engine): string
+    {
+        // Ajuster l'en-tête et les packages en fonction du moteur
+        if ($engine === 'xelatex') {
+            // Pour XeLaTeX, s'assurer que le template utilise fontspec
+            if (!str_contains($templateContent, 'fontspec')) {
+                $templateContent = preg_replace(
+                    '/\\\\documentclass/',
+                    "% !TEX program = xelatex\n\\\\documentclass",
+                    $templateContent,
+                    1
+                );
+
+                // Ajouter fontspec après geometry si pas déjà présent
+                if (!str_contains($templateContent, '\\usepackage{fontspec}')) {
+                    $templateContent = preg_replace(
+                        '/(\\\\usepackage\[[^\]]*\]\{geometry\})/',
+                        "$1\n\\\\usepackage{fontspec}",
+                        $templateContent
+                    );
+                }
+
+                // S'assurer que inputenc et fontenc sont supprimés ou commentés
+                $templateContent = preg_replace(
+                    '/\\\\usepackage(\[[^\]]*\])?\{inputenc\}/',
+                    '% \\\\usepackage$1{inputenc}',
+                    $templateContent
+                );
+                $templateContent = preg_replace(
+                    '/\\\\usepackage(\[[^\]]*\])?\{fontenc\}/',
+                    '% \\\\usepackage$1{fontenc}',
+                    $templateContent
+                );
+            }
+        } else {
+            // Pour pdfLaTeX, remplacer fontspec par inputenc et fontenc
+            $templateContent = preg_replace(
+                '/% !TEX program = xelatex/',
+                '% Template adapté pour pdfLaTeX',
+                $templateContent
+            );
+
+            if (str_contains($templateContent, '\\usepackage{fontspec}')) {
+                $templateContent = str_replace(
+                    '\\usepackage{fontspec}',
+                    "\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}",
+                    $templateContent
+                );
+            } else if (!str_contains($templateContent, 'inputenc') && !str_contains($templateContent, 'fontenc')) {
+                // Si ni fontspec ni inputenc/fontenc ne sont présents, ajouter inputenc et fontenc
+                $templateContent = preg_replace(
+                    '/(\\\\usepackage\[[^\]]*\]\{geometry\})/',
+                    "$1\n\\\\usepackage[utf8]{inputenc}\n\\\\usepackage[T1]{fontenc}",
+                    $templateContent
+                );
+            }
+        }
+
+        return $templateContent;
+    }
+
+    /**
+     * Traite le template en remplaçant les variables par les données
+     */
+    private function processTemplate(string $content, array $options): string
+    {
+        // Remplacer les variables simples
+        foreach ($options as $key => $value) {
+            if (!is_array($value)) {
+                $content = str_replace('{{{' . $key . '}}}', $this->escapeLatex($value), $content);
+            }
+        }
+
+        // Traiter les sections complexes
+
+        // Traitement des expériences professionnelles
+        if (isset($options['experiences'])) {
+            $experiencesContent = '';
+            foreach ($options['experiences'] as $exp) {
+                $period = $this->escapeLatex($exp['period'] ?? '');
+                $position = $this->escapeLatex($exp['position'] ?? '');
+                $company = $this->escapeLatex($exp['company'] ?? '');
+                $location = $this->escapeLatex($exp['location'] ?? '');
+
+                $descContent = '';
+                if (isset($exp['descriptions']) && is_array($exp['descriptions'])) {
+                    $descContent .= "\\begin{itemize}\n";
+                    foreach ($exp['descriptions'] as $desc) {
+                        $descContent .= "\\item " . $this->escapeLatex($desc) . "\n";
+                    }
+                    $descContent .= "\\end{itemize}";
+                }
+
+                $experiencesContent .= "\\cventry{" . $period . "}{" . $position . "}{" . $company . "}{" . $location . "}{}{" . $descContent . "}\n";
+            }
+            $content = str_replace('{{#experiences}}', $experiencesContent, $content);
+        }
+
+        // Traitement de la formation
+        if (isset($options['education'])) {
+            $educationContent = '';
+            foreach ($options['education'] as $edu) {
+                $period = $this->escapeLatex($edu['period'] ?? '');
+                $degree = $this->escapeLatex($edu['degree'] ?? '');
+                $institution = $this->escapeLatex($edu['institution'] ?? '');
+                $location = $this->escapeLatex($edu['location'] ?? '');
+                $description = isset($edu['description']) ? $this->escapeLatex($edu['description']) : '';
+
+                $educationContent .= "\\cventry{" . $period . "}{" . $degree . "}{" . $institution . "}{" . $location . "}{}{" . $description . "}\n";
+            }
+            $content = str_replace('{{#education}}', $educationContent, $content);
+        }
+
+        // Traitement des compétences
+        if (isset($options['skills'])) {
+            $skillsContent = '';
+            foreach ($options['skills'] as $skill) {
+                $category = $this->escapeLatex($skill['category'] ?? '');
+                $list = $this->escapeLatex($skill['list'] ?? '');
+
+                $skillsContent .= "\\cvitem{" . $category . "}{" . $list . "}\n";
+            }
+            $content = str_replace('{{#skills}}', $skillsContent, $content);
+        }
+
+        // Traitement des langues
+        if (isset($options['languages'])) {
+            $languagesContent = '';
+            foreach ($options['languages'] as $lang) {
+                $language = $this->escapeLatex($lang['language'] ?? '');
+                $level = $this->escapeLatex($lang['level'] ?? '');
+                $certification = $this->escapeLatex($lang['certification'] ?? '');
+
+                $languagesContent .= "\\cvitemwithcomment{" . $language . "}{" . $level . "}{" . $certification . "}\n";
+            }
+            $content = str_replace('{{#languages}}', $languagesContent, $content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * Exécute le moteur LaTeX pour générer le PDF
+     */
+    private function runLaTeXEngine(string $inputFile, string $engine): string
+    {
+        // Vérifier que le moteur est valide
+        if (!in_array($engine, ['pdflatex', 'xelatex', 'lualatex'])) {
+            throw new \InvalidArgumentException("Moteur LaTeX non pris en charge: " . $engine);
+        }
+
+        // Obtenir le nom de base du fichier sans extension
+        $baseFileName = pathinfo($inputFile, PATHINFO_FILENAME);
+
+        // Exécuter le moteur LaTeX deux fois pour résoudre les références
+        for ($i = 0; $i < 2; $i++) {
+            $process = new Process([
+                $engine,
+                '-interaction=nonstopmode',
+                '-output-directory=' . $this->outputDir,
+                $inputFile
+            ]);
+
+            // Configurer les limites de temps d'exécution
+            $process->setTimeout(60);
+            $process->setIdleTimeout(30);
+
+            // Exécuter la commande
+            $process->run();
+
+            // Vérifier les erreurs, mais autoriser un échec sur la première passe
+            if (!$process->isSuccessful() && $i === 1) {
+                $this->logger->error("Sortie d'erreur LaTeX: " . $process->getErrorOutput());
+                $this->logger->error("Sortie standard LaTeX: " . $process->getOutput());
+                throw new ProcessFailedException($process);
+            }
+        }
+
+        return $baseFileName;
+    }
+
+    /**
+     * Échappe les caractères spéciaux LaTeX
+     */
+    private function escapeLatex(string $text): string
+    {
+        $map = [
+            '#' => '\#',
+            '$' => '\$',
+            '%' => '\%',
+            '&' => '\&',
+            '_' => '\_',
+            '{' => '\{',
+            '}' => '\}',
+            '~' => '\textasciitilde{}',
+            '^' => '\textasciicircum{}',
+            '\\' => '\textbackslash{}',
+            '<' => '\textless{}',
+            '>' => '\textgreater{}'
+        ];
+
+        return str_replace(array_keys($map), array_values($map), $text);
+    }}
+
+
+==================================================
+
