@@ -1,0 +1,3862 @@
+C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\Templates\cv_generator\main.html.twig
+{% extends 'base.html.twig' %}
+
+{% block title %}CV Generator | ESPRIT{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- Modern Libraries -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/main-cv-generator.css') }}">
+{% endblock %}
+
+{% block body %}
+    <!-- Header with Progress Bar -->
+    <header class="cv-generator-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="{{ path('app_welcome') }}" class="header-logo">
+                    <img src="{{ asset('images/esprim.png') }}" alt="ESPRIT" class="logo-img">
+                    <span class="logo-text">CV Generator</span>
+                </a>
+                <div class="header-progress">
+                    <div class="progress-text">Progression: <span id="progress-percent">25</span>%</div>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="previewToggleBtn" class="btn btn-outline-primary" title="Prévisualiser votre CV">
+                        <i class="fas fa-eye"></i> Prévisualiser
+                    </button>
+                    <button id="saveProgressBtn" class="btn btn-outline-secondary" title="Sauvegarder votre progression">
+                        <i class="fas fa-save"></i> Sauvegarder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="row">
+                <!-- CV Form Section -->
+                <div class="col-lg-8">
+                    <div class="main-title-container">
+                        <h1 class="main-title">
+                            <span class="title-accent">ESPRIT</span> CV Generator
+                            <i class="fas fa-file-alt title-icon"></i>
+                        </h1>
+                        <p class="main-subtitle">Créez votre CV professionnel en quelques minutes</p>
+                    </div>
+
+                    <!-- Modern Stepper instead of Progress Tracking -->
+                    <div id="cv-stepper-container" class="mb-4"></div>
+
+                    <!-- Selected Template Banner -->
+                    <div class="selected-template-banner" id="selectedTemplateBanner">
+                        <div class="template-info">
+                            <div class="template-thumbnail">
+                                <img src="{{ asset('images/cvs/executive.jpg') }}" id="selectedTemplateImage" alt="Template sélectionné" class="template-thumb-img">
+                            </div>
+                            <div class="template-details">
+                                <h4>Template: <span id="selectedTemplateName">ESPRIT Original</span></h4>
+                                <p>Parfait pour les profils techniques et d'ingénierie</p>
+                            </div>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-sm btn-outline-primary" id="changeTemplateBtn">
+                                <i class="fas fa-exchange-alt"></i> Changer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CV Form -->
+                    <div class="card shadow cv-form-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title mb-0"><i class="fas fa-file-alt me-2"></i>Créez votre CV professionnel</h3>
+                            <div class="card-actions">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="aiAssistToggle">
+                                    <label class="form-check-label" for="aiAssistToggle">Assistant IA</label>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="autofillBtn" title="Pré-remplir avec des données d'exemple">
+                                    <i class="fas fa-magic me-1"></i> Exemple
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="cvForm" method="post" action="/cv-generator/generate" enctype="multipart/form-data" target="pdfDownloadFrame" class="needs-validation" novalidate>
+                                <!-- Hidden template input -->
+                                <input type="hidden" name="template" id="selectedTemplate" value="template1">
+
+                                <div class="form-sections">
+                                    <!-- Personal Information Section -->
+                                    <div class="form-section-page active" id="section-1">
+                                        <div class="section-header">
+                                            <h4 class="form-section-title">
+                                                <i class="fas fa-user"></i>
+                                                Informations personnelles
+                                            </h4>
+                                            <div class="section-completion">
+                                                <span class="completion-text">Obligatoire</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info fade-in">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Commencez par saisir vos informations personnelles de base.
+                                        </div>
+
+                                        <!-- Modern Profile Photo Upload -->
+                                        <div class="profile-photo-container">
+                                            <div class="profile-photo-wrapper">
+                                                <img src="{{ asset('images/default-avatar.png') }}" alt="Photo de profil" class="profile-photo" id="profilePhotoPreview">
+                                                <input type="file" id="photoUpload" name="photo" accept="image/*" class="d-none">
+                                            </div>
+                                            <p class="text-center mt-2 small text-muted">Cliquez sur la photo pour télécharger</p>
+                                        </div>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Prénom" required>
+                                                    <label for="firstName"><i class="fas fa-user-circle me-2"></i>Prénom</label>
+                                                    <div class="invalid-feedback">Veuillez indiquer votre prénom.</div>
+                                                    <div class="ai-suggestion" id="firstNameSuggestion"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Nom" required>
+                                                    <label for="lastName"><i class="fas fa-user-circle me-2"></i>Nom</label>
+                                                    <div class="invalid-feedback">Veuillez indiquer votre nom.</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="email" class="form-control" id="email" name="email" placeholder="Adresse e-mail" required>
+                                                    <label for="email"><i class="fas fa-envelope me-2"></i>Adresse e-mail</label>
+                                                    <div class="invalid-feedback">Veuillez indiquer une adresse e-mail valide.</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="Numéro de téléphone">
+                                                    <label for="phone"><i class="fas fa-phone me-2"></i>Numéro de téléphone</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="position" name="position" placeholder="Titre professionnel" required>
+                                                    <label for="position"><i class="fas fa-briefcase me-2"></i>Titre professionnel</label>
+                                                    <div class="invalid-feedback">Veuillez indiquer votre titre professionnel actuel ou souhaité.</div>
+                                                    <div class="form-text position-examples">Exemples : Développeur Full Stack, Ingénieur en Génie Civil, Chef de Projet Marketing</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="form-floating">
+                                                    <textarea class="form-control" id="address" name="address" placeholder="Adresse complète" style="height: 100px"></textarea>
+                                                    <label for="address"><i class="fas fa-map-marker-alt me-2"></i>Adresse complète</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="website" name="website" placeholder="Site web personnel">
+                                                    <label for="website"><i class="fas fa-globe me-2"></i>Site web personnel</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="linkedin" name="linkedin" placeholder="Profil LinkedIn">
+                                                    <label for="linkedin"><i class="fab fa-linkedin me-2"></i>Profil LinkedIn</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-floating">
+                                                    <textarea class="form-control" id="summary" name="summary" placeholder="Résumé professionnel" style="height: 150px"></textarea>
+                                                    <label for="summary"><i class="fas fa-comment me-2"></i>Résumé professionnel</label>
+                                                    <div class="form-text d-flex justify-content-between">
+                                                        <span>Résumez votre profil professionnel en quelques phrases percutantes</span>
+                                                        <span id="summaryCharCount">0</span>/500
+                                                    </div>
+                                                </div>
+                                                <div class="ai-suggestion mt-2" id="summarySuggestion">
+                                                    <div class="ai-badge"><i class="fas fa-robot"></i> Suggestion IA</div>
+                                                    <p>En vous basant sur votre titre, je peux vous suggérer un résumé professionnel. <button class="btn btn-sm btn-outline-primary generate-summary-btn">Générer un résumé</button></p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section Navigation -->
+                                        <div class="form-navigation-buttons d-flex justify-content-between mt-4 mb-2">
+                                            <button type="button" class="btn btn-outline-secondary prev-section" disabled>
+                                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                                            </button>
+                                            <button type="button" class="btn btn-primary next-section" data-next="2">
+                                                Suivant<i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Education Section -->
+                                    <div class="form-section-page" id="section-2">
+                                        <div class="section-header">
+                                            <h4 class="form-section-title">
+                                                <i class="fas fa-graduation-cap"></i>
+                                                Formation
+                                            </h4>
+                                            <div class="section-completion">
+                                                <span class="completion-text">Recommandé</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Ajoutez vos formations, en commençant par la plus récente.
+                                        </div>
+
+                                        <div id="educationEntries">
+                                            <!-- Empty state -->
+                                            <div class="empty-state" id="educationEmptyState">
+                                                <div class="empty-state-icon">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </div>
+                                                <h5>Aucune formation ajoutée</h5>
+                                                <p>Ajoutez vos qualifications académiques pour valoriser votre CV</p>
+                                                <button type="button" class="btn btn-primary" id="addFirstEducation">
+                                                    <i class="fas fa-plus me-2"></i>Ajouter une formation
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center mb-4" id="addMoreEducationBtnContainer" style="display: none;">
+                                            <button type="button" class="btn btn-outline-primary" id="addEducation">
+                                                <i class="fas fa-plus me-2"></i>Ajouter une autre formation
+                                            </button>
+                                        </div>
+
+                                        <div class="ai-suggestion mt-3 mb-3" id="educationSuggestion">
+                                            <div class="ai-badge"><i class="fas fa-robot"></i> Conseil IA</div>
+                                            <p>Pensez à inclure vos certifications et formations continues qui sont pertinentes pour le poste visé.</p>
+                                        </div>
+
+                                        <!-- Section Navigation -->
+                                        <div class="form-navigation-buttons d-flex justify-content-between mt-4 mb-2">
+                                            <button type="button" class="btn btn-outline-secondary prev-section" data-prev="1">
+                                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                                            </button>
+                                            <button type="button" class="btn btn-primary next-section" data-next="3">
+                                                Suivant<i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Experience Section -->
+                                    <div class="form-section-page" id="section-3">
+                                        <div class="section-header">
+                                            <h4 class="form-section-title">
+                                                <i class="fas fa-briefcase"></i>
+                                                Expérience professionnelle
+                                            </h4>
+                                            <div class="section-completion">
+                                                <span class="completion-text">Recommandé</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Ajoutez vos expériences professionnelles, en commençant par la plus récente.
+                                        </div>
+
+                                        <div id="experienceEntries">
+                                            <!-- Empty state -->
+                                            <div class="empty-state" id="experienceEmptyState">
+                                                <div class="empty-state-icon">
+                                                    <i class="fas fa-briefcase"></i>
+                                                </div>
+                                                <h5>Aucune expérience ajoutée</h5>
+                                                <p>Ajoutez vos expériences professionnelles pour mettre en valeur votre parcours</p>
+                                                <button type="button" class="btn btn-primary" id="addFirstExperience">
+                                                    <i class="fas fa-plus me-2"></i>Ajouter une expérience
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center mb-4" id="addMoreExperienceBtnContainer" style="display: none;">
+                                            <button type="button" class="btn btn-outline-primary" id="addExperience">
+                                                <i class="fas fa-plus me-2"></i>Ajouter une autre expérience
+                                            </button>
+                                        </div>
+
+                                        <div class="ai-suggestion mt-3 mb-3" id="experienceSuggestion">
+                                            <div class="ai-badge"><i class="fas fa-robot"></i> Conseil IA</div>
+                                            <p>Utilisez des verbes d'action pour décrire vos responsabilités et réalisations. <button class="btn btn-sm btn-outline-primary verb-examples-btn">Voir des exemples</button></p>
+                                        </div>
+
+                                        <!-- Section Navigation -->
+                                        <div class="form-navigation-buttons d-flex justify-content-between mt-4 mb-2">
+                                            <button type="button" class="btn btn-outline-secondary prev-section" data-prev="2">
+                                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                                            </button>
+                                            <button type="button" class="btn btn-primary next-section" data-next="4">
+                                                Suivant<i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Skills Section -->
+                                    <div class="form-section-page" id="section-4">
+                                        <div class="section-header">
+                                            <h4 class="form-section-title">
+                                                <i class="fas fa-tools"></i>
+                                                Compétences
+                                            </h4>
+                                            <div class="section-completion">
+                                                <span class="completion-text">Recommandé</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Ajoutez les compétences pertinentes pour le poste que vous visez.
+                                        </div>
+
+                                        <div class="card shadow-sm mb-4">
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="skillInput" class="form-label">
+                                                        <i class="fas fa-star me-2"></i>Ajouter des compétences
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="skillInput" placeholder="Saisissez une compétence et appuyez sur Entrée">
+                                                        <button class="btn btn-primary" type="button" id="addSkillBtn">
+                                                            <i class="fas fa-plus"></i> Ajouter
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-text">Appuyez sur Entrée après chaque compétence ou cliquez sur le bouton Ajouter</div>
+                                                </div>
+
+                                                <div id="skillsContainer" class="d-flex flex-wrap gap-2 mb-3">
+                                                    <!-- Skills will be added here via JavaScript -->
+                                                </div>
+
+                                                <div id="skillsEmptyState" class="empty-state" style="padding: 1.5rem;">
+                                                    <div class="empty-state-icon">
+                                                        <i class="fas fa-star"></i>
+                                                    </div>
+                                                    <h5>Aucune compétence ajoutée</h5>
+                                                    <p>Ajoutez des compétences qui mettent en valeur votre expertise professionnelle</p>
+                                                </div>
+
+                                                <!-- Skills Categories -->
+                                                <div class="skills-categories mt-4">
+                                                    <h5 class="mb-3"><i class="fas fa-layer-group me-2"></i>Catégories de compétences</h5>
+
+                                                    <ul class="nav nav-tabs" id="skillsTabs" role="tablist">
+                                                        <li class="nav-item" role="presentation">
+                                                            <button class="nav-link active" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical" type="button" role="tab" aria-controls="technical" aria-selected="true">Techniques</button>
+                                                        </li>
+                                                        <li class="nav-item" role="presentation">
+                                                            <button class="nav-link" id="soft-tab" data-bs-toggle="tab" data-bs-target="#soft" type="button" role="tab" aria-controls="soft" aria-selected="false">Transversales</button>
+                                                        </li>
+                                                        <li class="nav-item" role="presentation">
+                                                            <button class="nav-link" id="languages-tab" data-bs-toggle="tab" data-bs-target="#languages" type="button" role="tab" aria-controls="languages" aria-selected="false">Langues</button>
+                                                        </li>
+                                                        <li class="nav-item" role="presentation">
+                                                            <button class="nav-link" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" role="tab" aria-controls="tools" aria-selected="false">Logiciels</button>
+                                                        </li>
+                                                    </ul>
+
+                                                    <div class="tab-content mt-3" id="skillsTabsContent">
+                                                        <div class="tab-pane fade show active" id="technical" role="tabpanel" aria-labelledby="technical-tab">
+                                                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">JavaScript</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Python</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Java</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">HTML/CSS</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">SQL</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">React</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Node.js</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Angular</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Spring Boot</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane fade" id="soft" role="tabpanel" aria-labelledby="soft-tab">
+                                                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Communication</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Travail d'équipe</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Résolution de problèmes</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Gestion de projet</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Leadership</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Adaptabilité</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Organisation</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Gestion du temps</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane fade" id="languages" role="tabpanel" aria-labelledby="languages-tab">
+                                                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Français (Natif)</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Anglais (B2)</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Arabe (Courant)</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Espagnol (A2)</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Allemand (A1)</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Italien (B1)</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="tab-pane fade" id="tools" role="tabpanel" aria-labelledby="tools-tab">
+                                                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Microsoft Office</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Adobe Photoshop</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Adobe Illustrator</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">JIRA</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Trello</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Git</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Docker</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary quick-skill">Figma</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="ai-suggestion mt-3" id="skillsSuggestion">
+                                                    <div class="ai-badge"><i class="fas fa-robot"></i> Assistant IA</div>
+                                                    <p>Besoin de suggestions de compétences pertinentes pour votre profil ?</p>
+                                                    <button class="btn btn-sm btn-outline-primary suggest-skills-btn">Suggérer des compétences</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Additional Sections Tab Panel -->
+                                        <div class="card shadow-sm mb-4">
+                                            <div class="card-body">
+                                                <h5 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Sections additionnelles</h5>
+                                                <p class="text-muted mb-3">Enrichissez votre CV avec des sections complémentaires pour le personnaliser davantage</p>
+
+                                                <div class="additional-sections">
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="projectsSection">
+                                                        <label class="form-check-label" for="projectsSection">Projets personnels</label>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="certificationsSection">
+                                                        <label class="form-check-label" for="certificationsSection">Certifications</label>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="languagesSection">
+                                                        <label class="form-check-label" for="languagesSection">Langues</label>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="interestsSection">
+                                                        <label class="form-check-label" for="interestsSection">Centres d'intérêt</label>
+                                                    </div>
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="volunteeringSection">
+                                                        <label class="form-check-label" for="volunteeringSection">Bénévolat</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section Navigation -->
+                                        <div class="form-navigation-buttons d-flex justify-content-between mt-4 mb-2">
+                                            <button type="button" class="btn btn-outline-secondary prev-section" data-prev="3">
+                                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                                            </button>
+                                            <button type="button" class="btn btn-success" id="generateCVBtn">
+                                                <i class="fas fa-file-download me-2"></i>Générer mon CV
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tips and Help Section -->
+                    <div class="tips-section mt-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-lightbulb me-2"></i>Conseils pour un CV efficace</h5>
+                                <div class="tips-carousel">
+                                    <div class="tip active">
+                                        <p><strong>Personnalisez votre CV</strong> pour chaque candidature en mettant en avant les compétences les plus pertinentes pour le poste.</p>
+                                    </div>
+                                    <div class="tip">
+                                        <p><strong>Utilisez des mots-clés</strong> du secteur pour améliorer la visibilité de votre CV dans les systèmes de recrutement automatisés.</p>
+                                    </div>
+                                    <div class="tip">
+                                        <p><strong>Soyez concis</strong> et privilégiez les informations les plus récentes et pertinentes. Un CV de 1-2 pages est idéal.</p>
+                                    </div>
+                                </div>
+                                <div class="tips-navigation">
+                                    <span class="tip-dot active" data-index="0"></span>
+                                    <span class="tip-dot" data-index="1"></span>
+                                    <span class="tip-dot" data-index="2"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CV Preview Section -->
+                <div class="col-lg-4">
+                    <div class="cv-preview-wrapper">
+                        <div class="cv-preview" id="cvPreview">
+                            <div class="preview-header">
+                                <button class="preview-close" id="closePreviewBtn" aria-label="Fermer l'aperçu">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <h3 class="preview-title">Aperçu de votre CV</h3>
+                            </div>
+                            <div id="previewContent" class="green-template-preview">
+                                <!-- Preview content will be generated by JavaScript -->
+                                <div class="preview-header">
+                                    <h3 class="preview-name">Votre Nom</h3>
+                                    <p class="preview-title">Titre Professionnel</p>
+                                </div>
+                                <div class="preview-body">
+                                    <div class="preview-section">
+                                        <h4>Contact</h4>
+                                        <p><i class="fas fa-envelope"></i> email@exemple.com</p>
+                                        <p><i class="fas fa-phone"></i> +123 456 7890</p>
+                                        <p><i class="fas fa-map-marker-alt"></i> Votre adresse</p>
+                                    </div>
+                                    <div class="preview-section">
+                                        <h4>Profil</h4>
+                                        <p class="preview-summary">Résumé professionnel...</p>
+                                    </div>
+                                    <div class="preview-section">
+                                        <h4>Compétences</h4>
+                                        <div class="preview-skills">
+                                            <span class="skill-badge">JavaScript</span>
+                                            <span class="skill-badge">HTML/CSS</span>
+                                            <span class="skill-badge">Symfony</span>
+                                        </div>
+                                    </div>
+                                    <div class="preview-section">
+                                        <h4>Formation</h4>
+                                        <div class="preview-entry">
+                                            <h5>Diplôme</h5>
+                                            <h6>École | Période</h6>
+                                        </div>
+                                    </div>
+                                    <div class="preview-section">
+                                        <h4>Expérience</h4>
+                                        <div class="preview-entry">
+                                            <h5>Poste</h5>
+                                            <h6>Entreprise | Période</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="preview-actions">
+                                <button class="btn btn-outline-primary" id="printPreviewBtn">
+                                    <i class="fas fa-print me-2"></i>Imprimer
+                                </button>
+                                <button class="btn btn-primary" id="downloadPDFBtn">
+                                    <i class="fas fa-file-pdf me-2"></i>Télécharger PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Change Template Modal -->
+    <div class="modal fade" id="changeTemplateModal" tabindex="-1" aria-labelledby="changeTemplateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changeTemplateModalLabel"><i class="fas fa-palette me-2"></i>Changer de template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">Sélectionnez un nouveau template pour votre CV. Votre contenu sera conservé.</p>
+                    <div class="templates-grid">
+                        <div class="template-item" data-template="template1">
+                            <img src="{{ asset('images/cvs/executive.jpg') }}" alt="ESPRIT Original" class="template-preview-img">
+                            <div class="template-info">
+                                <h6>ESPRIT Original</h6>
+                                <p class="template-desc">Design moderne pour les profils techniques</p>
+                                <div class="template-badge template-badge-tech">Technique</div>
+                            </div>
+                        </div>
+                        <div class="template-item" data-template="template2">
+                            <img src="{{ asset('images/cvs/2.png') }}" alt="Executive" class="template-preview-img">
+                            <div class="template-info">
+                                <h6>Executive</h6>
+                                <p class="template-desc">Design élégant pour les profils management</p>
+                                <div class="template-badge template-badge-business">Business</div>
+                            </div>
+                        </div>
+                        <!-- Add more templates as needed -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmTemplateChangeBtn">Appliquer le template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Verbs Modal -->
+    <div class="modal fade" id="verbExamplesModal" tabindex="-1" aria-labelledby="verbExamplesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verbExamplesModalLabel"><i class="fas fa-bolt me-2"></i>Verbes d'action impactants</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Utilisez ces verbes d'action pour rendre les descriptions de vos expériences plus dynamiques et impactantes.</p>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Gestion</h6>
+                            <ul class="verb-list">
+                                <li>Diriger</li>
+                                <li>Superviser</li>
+                                <li>Coordonner</li>
+                                <li>Organiser</li>
+                                <li>Planifier</li>
+                            </ul>
+
+                            <h6>Réalisation</h6>
+                            <ul class="verb-list">
+                                <li>Accomplir</li>
+                                <li>Atteindre</li>
+                                <li>Exécuter</li>
+                                <li>Implémenter</li>
+                                <li>Réaliser</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Amélioration</h6>
+                            <ul class="verb-list">
+                                <li>Optimiser</li>
+                                <li>Améliorer</li>
+                                <li>Renforcer</li>
+                                <li>Restructurer</li>
+                                <li>Développer</li>
+                            </ul>
+
+                            <h6>Communication</h6>
+                            <ul class="verb-list">
+                                <li>Présenter</li>
+                                <li>Négocier</li>
+                                <li>Collaborer</li>
+                                <li>Conseiller</li>
+                                <li>Former</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-check-circle text-success me-2"></i>Votre CV est prêt !</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="success-animation">
+                        <lottie-player src="https://assets5.lottiefiles.com/packages/lf20_xwmj0hsk.json" background="transparent" speed="1" style="width: 150px; height: 150px; margin: 0 auto;" loop autoplay></lottie-player>
+                    </div>
+                    <h4 class="mb-3">Félicitations !</h4>
+                    <p class="mb-4">Votre CV a été généré avec succès. Vous pouvez maintenant le télécharger ou le partager.</p>
+
+                    <div class="download-options d-flex justify-content-center gap-3 mb-4">
+                        <button class="btn btn-primary download-btn">
+                            <i class="fas fa-file-pdf me-2"></i>Télécharger PDF
+                        </button>
+                        <button class="btn btn-outline-primary share-btn">
+                            <i class="fas fa-share-alt me-2"></i>Partager
+                        </button>
+                    </div>
+
+                    <div class="feedback-request">
+                        <p class="text-muted">Comment évalueriez-vous votre expérience ?</p>
+                        <div class="rating">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden iframe for PDF download -->
+    <iframe name="pdfDownloadFrame" style="display:none;"></iframe>
+
+    <!-- Success Notification -->
+    <div class="success-notification" id="successNotification">
+        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="success-message">CV généré avec succès !</div>
+    </div>
+
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="{{ asset('js/main-cv-generator.js') }}"></script>
+{% endblock %}
+
+	
+C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\css\main-cv-generator.css
+/* Variables CSS */
+:root {
+    --primary-color: #ff3a3a;
+    --primary-light: rgba(255, 58, 58, 0.1);
+    --primary-shadow: rgba(255, 58, 58, 0.3);
+    --primary-dark: #e12d2d;
+    --secondary-color: #2d3748;
+    --text-dark: #2d3748;
+    --text-medium: #4a5568;
+    --text-light: #718096;
+    --bg-gradient-start: #f9f9f7;
+    --bg-gradient-end: #ffffff;
+    --light-bg: #f9f9f7;
+    --white-bg: #ffffff;
+    --border-light: #edf2f7;
+    --border-color: #e2e8f0;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.08);
+    --info: #3498db;
+    --warning: #f1c40f;
+    --accent-color: #3498db;
+    --dark-bg: #1a202c;
+    --font-weight-bold: 700;
+    --font-weight-semibold: 600;
+    --font-weight-medium: 500;
+}
+
+/* Modern Stepper Styles */
+.cv-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 30px 0;
+}
+
+.stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.step-label {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.step-connector {
+    flex-grow: 1;
+    height: 3px;
+    background-color: #dee2e6;
+    margin: 0 15px;
+    z-index: 0;
+}
+
+.stepper-step.active .step-number {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.stepper-step.active .step-label {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.stepper-step.completed .step-number {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.stepper-step.completed + .step-connector {
+    background-color: #28a745;
+}
+
+/* Modern Card Animations */
+.form-section-page {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.form-section-page.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+.template-card {
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.template-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent 65%, rgba(255,255,255,0.2) 100%);
+    transition: all 0.3s;
+}
+
+.template-card:hover::after {
+    background: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.3) 100%);
+}
+
+.template-card.selected-template::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* Skill Autocomplete Styles */
+.skill-suggestions {
+    position: absolute;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.suggestion-item:hover {
+    background: var(--primary-light);
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    color: var(--text-medium);
+    transition: all 0.2s;
+}
+
+.drag-handle:hover {
+    color: var(--primary-color);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f8f9fa;
+}
+
+.sortable-chosen {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    transform: rotate(2deg);
+}
+
+/* Modern Photo Upload Styles */
+.profile-photo-container {
+    position: relative;
+    width: 180px;
+    margin: 0 auto 2rem;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-photo-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 150px;
+    height: 150px;
+    border: 5px solid var(--primary-light);
+    box-shadow: 0 5px 15px rgba(45, 55, 72, 0.1);
+}
+
+.profile-photo-wrapper::after {
+    content: '\f030';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 16px;
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.profile-photo-wrapper:hover::after {
+    opacity: 1;
+}
+
+.profile-photo-container.highlight {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px var(--primary-light), 0 0 20px rgba(0,0,0,0.1);
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-crop-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-crop-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.photo-crop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.photo-crop-body {
+    flex: 1;
+    min-height: 300px;
+    overflow: hidden;
+}
+
+.photo-crop-footer {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.crop-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Enhanced Preview Styles */
+.cv-preview {
+    width: 450px;
+    background: white;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 400px;
+    background-color: var(--white-bg);
+    border-left: 1px solid rgba(113, 128, 150, 0.2);
+    box-shadow: -4px 0 15px rgba(45, 55, 72, 0.1);
+    padding: 2rem;
+    overflow-y: auto;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.green-template-preview, .blue-template-preview {
+    font-family: 'Roboto', sans-serif;
+    color: var(--text-dark);
+}
+
+.green-template-preview .preview-header {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.green-template-preview .preview-body {
+    padding: 20px;
+}
+
+.blue-template-preview {
+    display: flex;
+}
+
+.blue-template-preview .preview-sidebar {
+    background: var(--info);
+    color: white;
+    padding: 20px;
+    width: 140px;
+    border-radius: 8px 0 0 8px;
+}
+
+.blue-template-preview .preview-main {
+    flex: 1;
+    padding: 20px;
+}
+
+.blue-template-preview header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--info);
+}
+
+.preview-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.skill-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.preview-entry {
+    margin-bottom: 10px;
+    padding-left: 10px;
+    border-left: 3px solid #ddd;
+}
+
+.green-template-preview .preview-entry {
+    border-left-color: #27ae60;
+}
+
+.blue-template-preview .preview-entry {
+    border-left-color: var(--info);
+}
+
+#previewContent {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.cv-preview.show {
+    transform: translateX(0);
+}
+
+.preview-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2.4rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.preview-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(113, 128, 150, 0.2);
+}
+
+.preview-section:last-child {
+    border-bottom: none;
+}
+
+.preview-section h5 {
+    color: var(--primary-color);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 1rem;
+}
+
+.preview-section h6 {
+    color: var(--text-dark);
+    font-weight: var(--font-weight-semibold);
+    margin-top: 0.5rem;
+}
+
+/* Preview panel profile photo */
+.preview-profile-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-light);
+    box-shadow: 0 3px 8px rgba(45, 55, 72, 0.1);
+    margin: 0 auto 1rem;
+    display: block;
+}
+
+/* Additional styles for enlarged icons and images */
+.fas, .far, .fab, .fa {
+    font-size: 200%; /* Double the icon size */
+    vertical-align: middle;
+}
+
+/* Adjust specific icons that need special handling */
+.btn i.fas, .btn i.far, .btn i.fab, .btn i.fa {
+    font-size: 150%; /* Slightly smaller for button icons to maintain button proportions */
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+/* Adjust button padding to accommodate larger icons */
+.btn {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fix form element alignment with larger icons */
+.form-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.7rem;
+}
+
+/* Even larger logo badge */
+.logo-badge {
+    width: 280px;
+    height: 280px;
+    border-width: 12px;
+    margin-bottom: 2rem;
+}
+
+/* Larger logo image inside the badge */
+.title-logo {
+    max-width: 220px;
+    max-height: 220px;
+}
+
+/* Larger title icon */
+.title-icon {
+    font-size: 5.5rem !important;
+    margin-left: 20px;
+}
+
+/* Adjust title container for larger elements */
+.main-title-container {
+    margin: 3.5rem auto 4rem;
+}
+
+/* Language badges styling like skill badges */
+.language-badge {
+    background-color: rgba(113, 128, 150, 0.1);
+    color: var(--text-dark);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.language-badge button {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    margin-left: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.language-badge:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* Template selection styling */
+.form-check-input[type="radio"] {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.25em;
+}
+
+.form-check-label {
+    padding-left: 0.5em;
+    font-weight: 500;
+}
+
+/* Template card highlight when selected */
+.template-card.selected-template .card {
+    border: 3px solid;
+    border-color: var(--info);
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+}
+
+/* Template card highlight for green */
+.template-card.selected-template-green .card {
+    border: 3px solid;
+    border-color: #27ae60;
+    box-shadow: 0 0 15px rgba(39, 174, 96, 0.3);
+}
+
+/* Debug info styling */
+details summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* New Animation Elements */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease forwards;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Modern form styles */
+.form-control, .form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: none;
+    border-color: var(--border-color);
+    transition: all 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem var(--primary-light);
+}
+
+.form-floating label {
+    padding: 0.75rem 1rem;
+}
+
+.form-floating .form-control:focus ~ label,
+.form-floating .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(0.85) translateY(-0.75rem) translateX(0.15rem);
+}
+
+/* Modern alert styling */
+.alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.alert-info {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #2980b9;
+}
+
+.alert-success {
+    background-color: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.alert-warning {
+    background-color: rgba(241, 196, 15, 0.1);
+    color: #f39c12;
+}
+
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+}
+
+/* Empty state styling */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin: 1.5rem 0;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-medium);
+    margin-bottom: 1.5rem;
+}
+
+/* Template Selection Styles from welcome.css */
+.template-selection-section {
+    padding: 80px 0;
+    background-color: #f8f9fb;
+}
+
+.modern-carousel-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+}
+
+.modern-carousel-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.modern-carousel-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.05);
+    border: none;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modern-carousel-arrow:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.carousel-counter {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.carousel-counter span:first-child {
+    color: var(--primary-color);
+}
+
+.modern-carousel-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: 520px;
+}
+
+.modern-carousel-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.6s ease-in-out;
+    transform: translateX(30px);
+}
+
+.modern-carousel-item.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    z-index: 1;
+}
+
+.modern-template-card {
+    display: flex;
+    background-color: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.template-preview-container {
+    width: 50%;
+    position: relative;
+    background-color: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.template-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+
+.template-preview-container:hover .template-preview {
+    transform: scale(1.03);
+}
+
+.template-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.template-preview-container:hover .template-overlay {
+    opacity: 1;
+}
+
+.preview-badge {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--primary-color);
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(10px);
+    transition: transform 0.3s ease;
+}
+
+.template-preview-container:hover .preview-badge {
+    transform: translateY(0);
+}
+
+.modern-template-details {
+    width: 50%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.template-header {
+    margin-bottom: 20px;
+}
+
+.template-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.template-rating {
+    color: #FF9800;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.rating-count {
+    color: #999;
+    margin-left: 5px;
+}
+
+.template-description {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.template-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.category-tag {
+    background-color: #f0f2f5;
+    color: #555;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.category-tag:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.template-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 15px;
+}
+
+.btn-template-preview, .btn-template-select {
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-template-preview {
+    background-color: #f0f2f5;
+    color: #555;
+    flex: 1;
+}
+
+.btn-template-preview:hover {
+    background-color: #e0e4e9;
+    color: #333;
+}
+
+.btn-template-select {
+    background-color: var(--primary-color);
+    color: white;
+    flex: 1;
+}
+
+.btn-template-select:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--primary-shadow);
+}
+
+.btn-template-select.selected {
+    background-color: #28a745;
+}
+
+.template-thumbnails {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.template-thumbnail {
+    width: 80px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+    border: 2px solid transparent;
+    padding: 0;
+}
+
+.template-thumbnail.active {
+    border-color: var(--primary-color);
+    opacity: 1;
+}
+
+.template-thumbnail:hover {
+    opacity: 1;
+}
+
+.thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Template feedback */
+.template-feedback {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-weight: 500;
+}
+
+.template-feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.template-feedback i {
+    margin-right: 8px;
+}
+
+.template-feedback.error {
+    background-color: #dc3545;
+}
+
+.template-feedback.info {
+    background-color: #17a2b8;
+}
+
+.template-feedback.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* Animation au défilement */
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.animate-on-scroll.animated {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 992px) {
+    .modern-template-card {
+        flex-direction: column;
+    }
+
+    .template-preview-container, .modern-template-details {
+        width: 100%;
+    }
+
+    .modern-carousel-wrapper {
+        height: 780px;
+    }
+
+    .template-preview-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-badge {
+        width: 180px; /* Adjusted for mobile */
+        height: 180px; /* Adjusted for mobile */
+        border-width: 8px; /* Adjusted for mobile */
+    }
+
+    .title-logo {
+        max-width: 140px; /* Adjusted for mobile */
+        max-height: 140px; /* Adjusted for mobile */
+    }
+
+    .title-icon {
+        font-size: 4rem !important; /* Adjusted for mobile */
+    }
+
+    /* Adjust icon sizes on mobile */
+    .fas, .far, .fab, .fa {
+        font-size: 160%; /* Slightly smaller on mobile */
+    }
+
+    .cv-preview {
+        width: 90%; /* Wider on mobile */
+    }
+
+    .profile-photo-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
+    .preview-profile-photo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .step-label {
+        display: none; /* Hide step labels on mobile */
+    }
+
+    .cv-stepper {
+        margin: 15px 0; /* Less margin on mobile */
+    }
+
+    .template-actions {
+        flex-direction: column;
+    }
+
+    .modern-carousel-wrapper {
+        height: 850px;
+    }
+
+    .filter-options {
+        justify-content: center;
+    }
+
+    .template-thumbnails {
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 10px;
+    }
+
+    .modern-carousel-controls {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 576px) {
+    .modern-carousel-wrapper {
+        height: 900px;
+    }
+
+    .template-preview-container {
+        height: 200px;
+    }
+
+    .modern-template-details {
+        padding: 20px;
+    }
+
+    .template-title {
+        font-size: 22px;
+    }
+
+    .template-description {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .category-tag {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .btn-template-preview, .btn-template-select {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+}
+
+/* Typographie */
+body, h1, h2, h3, h4, h5, h6, p, span, div {
+    font-family: 'Times New Roman', Times, serif !important;
+}
+
+/* Styles généraux */
+body {
+    background-color: var(--light-bg);
+    color: var(--text-medium);
+    line-height: 1.6;
+}
+/* Additional styles for enhanced UI */
+
+/* Header with Progress Bar */
+.cv-generator-header {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    margin-right: 10px;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.header-progress {
+    flex-grow: 1;
+    max-width: 400px;
+    margin: 0 20px;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--text-medium);
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Section Header Styling */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-completion {
+    background-color: #e9ecef;
+    color: var(--text-medium);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Selected Template Banner */
+.selected-template-banner {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.template-info {
+    display: flex;
+    align-items: center;
+}
+
+.template-thumbnail {
+    width: 60px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.template-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.template-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.template-details p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-medium);
+}
+
+/* CV Form Card */
+.cv-form-card {
+    border: none;
+    margin-bottom: 30px;
+}
+
+.cv-form-card .card-title {
+    font-weight: 600;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* AI Suggestion Styling */
+.ai-suggestion {
+    background-color: rgba(52, 152, 219, 0.05);
+    border-left: 3px solid var(--info);
+    padding: 15px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.ai-badge {
+    background-color: var(--info);
+    color: white;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.ai-suggestion p {
+    margin-bottom: 10px;
+}
+
+.position-examples {
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Tips Carousel */
+.tips-section {
+    margin-top: 30px;
+}
+
+.tips-carousel {
+    position: relative;
+    min-height: 80px;
+}
+
+.tip {
+    display: none;
+}
+
+.tip.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.tips-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.tip-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tip-dot.active {
+    background-color: var(--primary-color);
+    transform: scale(1.2);
+}
+
+/* Preview Enhancements */
+.cv-preview-wrapper {
+    position: sticky;
+    top: 100px;
+}
+
+.preview-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.preview-title {
+    margin: 0;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.preview-actions {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Templates Grid Modal */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.template-item {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.template-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+.template-item.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 58, 58, 0.2);
+}
+
+.template-preview-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.template-info {
+    padding: 10px;
+}
+
+.template-info h6 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.template-desc {
+    font-size: 12px;
+    color: var(--text-medium);
+    margin-bottom: 8px;
+}
+
+.template-badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.template-badge-tech {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+.template-badge-business {
+    background-color: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+/* Action Verb Modal */
+.verb-list {
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.verb-list li {
+    margin-bottom: 5px;
+    color: var(--text-medium);
+}
+
+/* Success Notification */
+.success-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    z-index: 1100;
+}
+
+.success-notification.show {
+    transform: translateX(0);
+}
+
+.success-icon {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+/* Generic Notification Toast */
+.notification-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    background-color: #fff;
+    max-width: 350px;
+}
+
+.notification-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notification-toast.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.notification-toast.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+.notification-toast.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.notification-toast.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-icon {
+    margin-right: 15px;
+    font-size: 20px;
+}
+
+/* Feedback Modal */
+.success-animation {
+    margin-bottom: 20px;
+}
+
+.download-options {
+    margin-bottom: 20px;
+}
+
+.rating {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.rating .fa-star {
+    color: #ffc107;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rating .fa-star:hover {
+    transform: scale(1.2);
+}
+
+/* Additional Bootstrap 5 Tab Styling */
+.nav-tabs .nav-link {
+    color: var(--text-medium);
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 20px;
+}
+
+.nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus {
+    border-color: transparent;
+    isolation: isolate;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .cv-preview-wrapper {
+        display: none;
+    }
+
+    .cv-preview.show {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2000;
+        transform: none;
+    }
+
+    .header-progress {
+        margin: 10px 0;
+        max-width: 100%;
+    }
+
+    .header-content {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .templates-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .header-logo, .header-progress, .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* Additional styles for enhanced UI */
+
+/* Header with Progress Bar */
+.cv-generator-header {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    margin-right: 10px;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.header-progress {
+    flex-grow: 1;
+    max-width: 400px;
+    margin: 0 20px;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--text-medium);
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Section Header Styling */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-completion {
+    background-color: #e9ecef;
+    color: var(--text-medium);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Selected Template Banner */
+.selected-template-banner {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.template-info {
+    display: flex;
+    align-items: center;
+}
+
+.template-thumbnail {
+    width: 60px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.template-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.template-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.template-details p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-medium);
+}
+
+/* CV Form Card */
+.cv-form-card {
+    border: none;
+    margin-bottom: 30px;
+}
+
+.cv-form-card .card-title {
+    font-weight: 600;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* AI Suggestion Styling */
+.ai-suggestion {
+    background-color: rgba(52, 152, 219, 0.05);
+    border-left: 3px solid var(--info);
+    padding: 15px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.ai-badge {
+    background-color: var(--info);
+    color: white;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.ai-suggestion p {
+    margin-bottom: 10px;
+}
+
+.position-examples {
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Tips Carousel */
+.tips-section {
+    margin-top: 30px;
+}
+
+.tips-carousel {
+    position: relative;
+    min-height: 80px;
+}
+
+.tip {
+    display: none;
+}
+
+.tip.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.tips-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.tip-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tip-dot.active {
+    background-color: var(--primary-color);
+    transform: scale(1.2);
+}
+
+/* Preview Enhancements */
+.cv-preview-wrapper {
+    position: sticky;
+    top: 100px;
+}
+
+.preview-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.preview-title {
+    margin: 0;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.preview-actions {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Templates Grid Modal */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.template-item {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.template-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+.template-item.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 58, 58, 0.2);
+}
+
+.template-preview-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.template-info {
+    padding: 10px;
+}
+
+.template-info h6 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.template-desc {
+    font-size: 12px;
+    color: var(--text-medium);
+    margin-bottom: 8px;
+}
+
+.template-badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.template-badge-tech {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+.template-badge-business {
+    background-color: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+/* Action Verb Modal */
+.verb-list {
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.verb-list li {
+    margin-bottom: 5px;
+    color: var(--text-medium);
+}
+
+/* Success Notification */
+.success-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    z-index: 1100;
+}
+
+.success-notification.show {
+    transform: translateX(0);
+}
+
+.success-icon {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+/* Generic Notification Toast */
+.notification-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    background-color: #fff;
+    max-width: 350px;
+}
+
+.notification-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notification-toast.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.notification-toast.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+.notification-toast.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.notification-toast.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-icon {
+    margin-right: 15px;
+    font-size: 20px;
+}
+
+/* Feedback Modal */
+.success-animation {
+    margin-bottom: 20px;
+}
+
+.download-options {
+    margin-bottom: 20px;
+}
+
+.rating {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.rating .fa-star {
+    color: #ffc107;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rating .fa-star:hover {
+    transform: scale(1.2);
+}
+
+/* Additional Bootstrap 5 Tab Styling */
+.nav-tabs .nav-link {
+    color: var(--text-medium);
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 20px;
+}
+
+.nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus {
+    border-color: transparent;
+    isolation: isolate;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .cv-preview-wrapper {
+        display: none;
+    }
+
+    .cv-preview.show {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2000;
+        transform: none;
+    }
+
+    .header-progress {
+        margin: 10px 0;
+        max-width: 100%;
+    }
+
+    .header-content {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .templates-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .header-logo, .header-progress, .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+C:\Users\Sh-Pc\PhpstormProjects\EsprimCareer\public\js\cv-generator-main.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('CV Generator scripts initialized');
+
+    // Initialize stepper
+    const stepperContainer = document.getElementById('cv-stepper-container');
+    if (stepperContainer) {
+        initStepper();
+    }
+
+    // Initialize Form Navigation
+    initFormNavigation();
+
+    // Initialize Profile Photo Upload
+    initProfilePhotoUpload();
+
+    // Initialize Education Section
+    initEducationSection();
+
+    // Initialize Experience Section
+    initExperienceSection();
+
+    // Initialize Skills Section
+    initSkillsSection();
+
+    // Character Counter for Summary
+    initSummaryCounter();
+
+    // Autofill button functionality
+    initAutofillButton();
+
+    // Load selected template and initialize preview
+    initTemplatePreview();
+});
+
+/**
+ * Initialize the character counter for the summary textarea
+ */
+function initSummaryCounter() {
+    const summaryTextarea = document.getElementById('summary');
+    const summaryCharCount = document.getElementById('summaryCharCount');
+
+    if (summaryTextarea && summaryCharCount) {
+        summaryTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            summaryCharCount.textContent = count;
+
+            // Add visual feedback if over limit
+            if (count > 500) {
+                summaryCharCount.classList.add('text-danger');
+            } else {
+                summaryCharCount.classList.remove('text-danger');
+            }
+        });
+    }
+}
+
+/**
+ * Initialize the autofill button
+ */
+function initAutofillButton() {
+    const autofillBtn = document.getElementById('autofillBtn');
+    if (autofillBtn) {
+        autofillBtn.addEventListener('click', function() {
+            autofillForm();
+        });
+    }
+}
+
+/**
+ * Initialize template preview based on selected template
+ */
+function initTemplatePreview() {
+    // Get template from URL parameter or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const templateParam = urlParams.get('template');
+    const storedTemplate = localStorage.getItem('selectedTemplate');
+
+    // Use template from URL or localStorage
+    const selectedTemplate = templateParam || storedTemplate || 'template1'; // default to template1
+
+    console.log('Selected template:', selectedTemplate);
+
+    // Add the template ID to the form
+    const cvForm = document.getElementById('cvForm');
+    if (cvForm) {
+        // Check if template input already exists
+        let templateInput = cvForm.querySelector('input[name="template"]');
+
+        // If it doesn't exist, create it
+        if (!templateInput) {
+            templateInput = document.createElement('input');
+            templateInput.type = 'hidden';
+            templateInput.name = 'template';
+            cvForm.appendChild(templateInput);
+        }
+
+        // Set the template ID
+        templateInput.value = selectedTemplate;
+    }
+
+    // Update preview container with the selected template
+    updatePreviewForTemplate(selectedTemplate);
+
+    // Add form update listeners to keep the preview in sync with the form
+    addFormUpdateListeners(selectedTemplate);
+}
+
+/**
+ * Update the preview container with the appropriate template
+ * @param {string} templateId - The ID of the selected template
+ */
+function updatePreviewForTemplate(templateId) {
+    const previewContent = document.getElementById('previewContent');
+    if (!previewContent) return;
+
+    // Clear existing preview content
+    previewContent.innerHTML = '';
+
+    // Based on template ID, generate the appropriate preview
+    switch(templateId) {
+        case 'template1':
+            previewContent.innerHTML = createESPRITOriginalPreview();
+            previewContent.classList.add('green-template-preview');
+            break;
+        case 'template2':
+            previewContent.innerHTML = createExecutivePreview();
+            previewContent.classList.add('blue-template-preview');
+            break;
+        // Add more templates as needed
+        default:
+            previewContent.innerHTML = createESPRITOriginalPreview(); // Default to first template
+            previewContent.classList.add('green-template-preview');
+    }
+
+    // Show success message about the selected template
+    if (typeof window.showFeedback === 'function') {
+        window.showFeedback(`Template "${getTemplateNameById(templateId)}" chargé avec succès.`, 'success');
+    }
+}
+
+/**
+ * Get a friendly template name by its ID
+ * @param {string} templateId - The ID of the template
+ * @returns {string} The friendly name of the template
+ */
+function getTemplateNameById(templateId) {
+    const templates = {
+        'template1': 'ESPRIT Original',
+        'template2': 'Executive',
+        'template3': 'Moderne',
+        // Add more as needed
+    };
+
+    return templates[templateId] || 'Personnalisé';
+}
+
+/**
+ * Create preview HTML for ESPRIT Original template
+ * @returns {string} HTML for the preview
+ */
+function createESPRITOriginalPreview() {
+    return `
+        <div class="preview-header">
+            <h3 class="preview-name">Votre Nom</h3>
+            <p class="preview-title">Titre Professionnel</p>
+        </div>
+        <div class="preview-body">
+            <div class="preview-section">
+                <h4>Contact</h4>
+                <p><i class="fas fa-envelope"></i> email@exemple.com</p>
+                <p><i class="fas fa-phone"></i> +123 456 7890</p>
+                <p><i class="fas fa-map-marker-alt"></i> Votre adresse</p>
+            </div>
+            <div class="preview-section">
+                <h4>Profil</h4>
+                <p class="preview-summary">Résumé professionnel...</p>
+            </div>
+            <div class="preview-section">
+                <h4>Compétences</h4>
+                <div class="preview-skills">
+                    <span class="skill-badge">JavaScript</span>
+                    <span class="skill-badge">HTML/CSS</span>
+                    <span class="skill-badge">Symfony</span>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h4>Formation</h4>
+                <div class="preview-entry">
+                    <h5>Diplôme</h5>
+                    <h6>École | Période</h6>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h4>Expérience</h4>
+                <div class="preview-entry">
+                    <h5>Poste</h5>
+                    <h6>Entreprise | Période</h6>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Create preview HTML for Executive template
+ * @returns {string} HTML for the preview
+ */
+function createExecutivePreview() {
+    return `
+        <div class="preview-sidebar">
+            <div class="preview-photo-container">
+                <div class="preview-photo"></div>
+            </div>
+            <div class="preview-section">
+                <h4>Contact</h4>
+                <p><i class="fas fa-envelope"></i> email@exemple.com</p>
+                <p><i class="fas fa-phone"></i> +123 456 7890</p>
+                <p><i class="fas fa-map-marker-alt"></i> Votre adresse</p>
+            </div>
+            <div class="preview-section">
+                <h4>Compétences</h4>
+                <div class="preview-skills">
+                    <span class="skill-badge">Leadership</span>
+                    <span class="skill-badge">Management</span>
+                    <span class="skill-badge">Stratégie</span>
+                </div>
+            </div>
+        </div>
+        <div class="preview-main">
+            <header>
+                <h2 class="preview-name">Votre Nom</h2>
+                <p class="preview-title">Titre Professionnel</p>
+            </header>
+            <div class="preview-section">
+                <h4>Profil</h4>
+                <p class="preview-summary">Résumé professionnel...</p>
+            </div>
+            <div class="preview-section">
+                <h4>Expérience</h4>
+                <div class="preview-entry">
+                    <h5>Poste</h5>
+                    <h6>Entreprise | Période</h6>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h4>Formation</h4>
+                <div class="preview-entry">
+                    <h5>Diplôme</h5>
+                    <h6>École | Période</h6>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Add event listeners to form elements to update the preview in real-time
+ * @param {string} templateId - The ID of the selected template
+ */
+function addFormUpdateListeners(templateId) {
+    // Get form elements
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const position = document.getElementById('position');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    const address = document.getElementById('address');
+    const summary = document.getElementById('summary');
+    const photoPreview = document.getElementById('profilePhotoPreview');
+
+    // Create a function that updates the preview
+    const updatePreview = () => {
+        // Update name
+        const previewName = document.querySelector('.preview-name');
+        if (previewName && firstName && lastName) {
+            const fullName = `${firstName.value || ''} ${lastName.value || ''}`.trim();
+            previewName.textContent = fullName || 'Votre Nom';
+        }
+
+        // Update job title
+        const previewTitle = document.querySelector('.preview-title');
+        if (previewTitle && position) {
+            previewTitle.textContent = position.value || 'Titre Professionnel';
+        }
+
+        // Update email
+        updatePreviewContact('envelope', email ? email.value : null, 'email@exemple.com');
+
+        // Update phone
+        updatePreviewContact('phone', phone ? phone.value : null, '+123 456 7890');
+
+        // Update address
+        updatePreviewContact('map-marker-alt', address ? address.value : null, 'Votre adresse');
+
+        // Update summary
+        const previewSummary = document.querySelector('.preview-summary');
+        if (previewSummary && summary) {
+            previewSummary.textContent = summary.value || 'Résumé professionnel...';
+        }
+
+        // Update profile photo
+        const previewPhoto = document.querySelector('.preview-photo');
+        if (previewPhoto && photoPreview) {
+            previewPhoto.style.backgroundImage = `url('${photoPreview.src}')`;
+            previewPhoto.style.backgroundSize = 'cover';
+            previewPhoto.style.backgroundPosition = 'center';
+            previewPhoto.style.borderRadius = '50%';
+            previewPhoto.style.width = '120px';
+            previewPhoto.style.height = '120px';
+            previewPhoto.style.margin = '0 auto 1rem';
+        }
+    };
+
+    // Helper function to update contact info in preview
+    function updatePreviewContact(iconName, value, placeholder) {
+        const selector = `.preview-section p:has(i.fa-${iconName})`;
+        const contactElement = document.querySelector(selector);
+
+        if (contactElement) {
+            contactElement.innerHTML = `<i class="fas fa-${iconName}"></i> ${value || placeholder}`;
+        }
+    }
+
+    // Add input event listeners to form elements
+    const formElements = [firstName, lastName, position, email, phone, address, summary];
+    formElements.forEach(element => {
+        if (element) {
+            element.addEventListener('input', updatePreview);
+        }
+    });
+
+    // Special case for photo
+    if (photoPreview) {
+        const photoInput = document.getElementById('photoUpload');
+        if (photoInput) {
+            photoInput.addEventListener('change', updatePreview);
+        }
+    }
+
+    // Initialize the preview with current values
+    updatePreview();
+}
+
+// Function to initialize stepper
+function initStepper() {
+    const stepperContainer = document.getElementById('cv-stepper-container');
+
+    // Define steps
+    const steps = [
+        { id: 1, label: 'Personal Info' },
+        { id: 2, label: 'Education' },
+        { id: 3, label: 'Experience' },
+        { id: 4, label: 'Skills' }
+    ];
+
+    // Create stepper HTML
+    let stepperHTML = '<div class="cv-stepper">';
+
+    steps.forEach((step, index) => {
+        // Add step
+        stepperHTML += `
+            <div class="stepper-step ${step.id === 1 ? 'active' : ''}" data-step="${step.id}">
+                <div class="step-number">${step.id}</div>
+                <div class="step-label">${step.label}</div>
+            </div>
+        `;
+
+        // Add connector (except after last item)
+        if (index < steps.length - 1) {
+            stepperHTML += '<div class="step-connector"></div>';
+        }
+    });
+
+    stepperHTML += '</div>';
+    stepperContainer.innerHTML = stepperHTML;
+}
+
+// Function to initialize form navigation
+function initFormNavigation() {
+    // Next section buttons
+    const nextButtons = document.querySelectorAll('.next-section');
+    nextButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const nextSectionId = this.getAttribute('data-next');
+            if (nextSectionId) {
+                navigateToSection(nextSectionId);
+            }
+        });
+    });
+
+    // Previous section buttons
+    const prevButtons = document.querySelectorAll('.prev-section');
+    prevButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const prevSectionId = this.getAttribute('data-prev');
+            if (prevSectionId) {
+                navigateToSection(prevSectionId);
+            }
+        });
+    });
+}
+
+// Function to navigate to a specific form section
+function navigateToSection(sectionId) {
+    // Hide all sections
+    const sections = document.querySelectorAll('.form-section-page');
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Show target section
+    const targetSection = document.getElementById(`section-${sectionId}`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+
+    // Update stepper
+    updateStepperState(parseInt(sectionId));
+
+    // Scroll to top of form
+    const formTop = document.querySelector('.form-sections').offsetTop;
+    window.scrollTo({ top: formTop - 100, behavior: 'smooth' });
+}
+
+// Function to update stepper state
+function updateStepperState(currentStep) {
+    const stepperSteps = document.querySelectorAll('.stepper-step');
+
+    stepperSteps.forEach(step => {
+        const stepNumber = parseInt(step.getAttribute('data-step'));
+
+        // Remove all states
+        step.classList.remove('active', 'completed');
+
+        // Add appropriate state
+        if (stepNumber === currentStep) {
+            step.classList.add('active');
+        } else if (stepNumber < currentStep) {
+            step.classList.add('completed');
+        }
+    });
+}
+
+// Function to initialize profile photo upload
+function initProfilePhotoUpload() {
+    const photoWrapper = document.querySelector('.profile-photo-wrapper');
+    const photoInput = document.getElementById('photoUpload');
+    const photoPreview = document.getElementById('profilePhotoPreview');
+
+    if (photoWrapper && photoInput && photoPreview) {
+        photoWrapper.addEventListener('click', function() {
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                };
+
+                reader.readAsDataURL(this.files[0]);
+
+                // Add highlight effect
+                photoWrapper.parentElement.classList.add('highlight');
+                setTimeout(() => {
+                    photoWrapper.parentElement.classList.remove('highlight');
+                }, 800);
+            }
+        });
+    }
+}
+
+// Function to initialize education section
+function initEducationSection() {
+    // Initialize Add First Education button
+    const addFirstEducationBtn = document.getElementById('addFirstEducation');
+    if (addFirstEducationBtn) {
+        addFirstEducationBtn.addEventListener('click', function() {
+            addEducationEntry();
+            document.getElementById('educationEmptyState').style.display = 'none';
+            document.getElementById('addMoreEducationBtnContainer').style.display = 'block';
+        });
+    }
+
+    // Initialize Add Another Education button
+    const addEducationBtn = document.getElementById('addEducation');
+    if (addEducationBtn) {
+        addEducationBtn.addEventListener('click', function() {
+            addEducationEntry();
+        });
+    }
+}
+
+// Function to add a new education entry
+function addEducationEntry(data = {}) {
+    const educationEntries = document.getElementById('educationEntries');
+    const entryId = 'education-' + new Date().getTime();
+
+    const entryHTML = `
+        <div class="card shadow-sm mb-3 fade-in education-entry" id="${entryId}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Education Details</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-entry" title="Remove Entry">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary drag-handle ms-1" title="Reorder">
+                        <i class="fas fa-arrows-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="${entryId}-school" name="education[school][]" placeholder="School/University" value="${data.school || ''}" required>
+                            <label for="${entryId}-school"><i class="fas fa-university me-2"></i>School/University</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="${entryId}-degree" name="education[degree][]" placeholder="Degree/Certificate" value="${data.degree || ''}" required>
+                            <label for="${entryId}-degree"><i class="fas fa-graduation-cap me-2"></i>Degree/Certificate</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control date-picker" id="${entryId}-from" name="education[from][]" placeholder="From" value="${data.from || ''}">
+                            <label for="${entryId}-from"><i class="fas fa-calendar-alt me-2"></i>From</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control date-picker" id="${entryId}-to" name="education[to][]" placeholder="To" value="${data.to || ''}">
+                            <label for="${entryId}-to"><i class="fas fa-calendar-alt me-2"></i>To (or expected)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="${entryId}-description" name="education[description][]" placeholder="Description" style="height: 100px">${data.description || ''}</textarea>
+                            <label for="${entryId}-description"><i class="fas fa-align-left me-2"></i>Description</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add before the "Add More" button
+    educationEntries.insertAdjacentHTML('beforeend', entryHTML);
+
+    // Initialize event listeners for the new entry
+    const newEntry = document.getElementById(entryId);
+
+    // Remove button
+    newEntry.querySelector('.remove-entry').addEventListener('click', function() {
+        removeEntry(entryId, 'education');
+    });
+
+    // Initialize flatpickr for date fields if available
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr(`#${entryId}-from`, {
+            allowInput: true,
+            dateFormat: 'M Y'
+        });
+
+        flatpickr(`#${entryId}-to`, {
+            allowInput: true,
+            dateFormat: 'M Y'
+        });
+    }
+
+    // Update preview when education entry changes
+    const updatePreviewEducation = () => {
+        // Logic to update education in the preview
+        const selectedTemplate = document.querySelector('input[name="template"]').value || 'template1';
+        const previewEducationSection = document.querySelector('.preview-section:has(h4:contains("Formation"))');
+
+        if (previewEducationSection) {
+            // Clear existing entries
+            const entriesContainer = previewEducationSection.querySelector(':scope > div:not(h4)') || previewEducationSection;
+
+            // Get all education entries
+            const allEntries = document.querySelectorAll('.education-entry');
+
+            // Create new preview entries
+            allEntries.forEach(entry => {
+                const school = entry.querySelector('input[name="education[school][]"]').value || 'École';
+                const degree = entry.querySelector('input[name="education[degree][]"]').value || 'Diplôme';
+                const from = entry.querySelector('input[name="education[from][]"]').value || '';
+                const to = entry.querySelector('input[name="education[to][]"]').value || 'présent';
+
+                const period = from && to ? `${from} - ${to}` : (from ? `Depuis ${from}` : `Jusqu'à ${to}`);
+
+                const previewEntry = document.createElement('div');
+                previewEntry.className = 'preview-entry';
+                previewEntry.innerHTML = `
+                    <h5>${degree}</h5>
+                    <h6>${school} | ${period}</h6>
+                `;
+
+                entriesContainer.appendChild(previewEntry);
+            });
+        }
+    };
+
+    // Add change event to all inputs in this education entry
+    newEntry.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('change', updatePreviewEducation);
+    });
+
+    return entryId;
+}
+
+// Function to initialize experience section
+function initExperienceSection() {
+    // Initialize Add First Experience button
+    const addFirstExperienceBtn = document.getElementById('addFirstExperience');
+    if (addFirstExperienceBtn) {
+        addFirstExperienceBtn.addEventListener('click', function() {
+            addExperienceEntry();
+            document.getElementById('experienceEmptyState').style.display = 'none';
+            document.getElementById('addMoreExperienceBtnContainer').style.display = 'block';
+        });
+    }
+
+    // Initialize Add Another Experience button
+    const addExperienceBtn = document.getElementById('addExperience');
+    if (addExperienceBtn) {
+        addExperienceBtn.addEventListener('click', function() {
+            addExperienceEntry();
+        });
+    }
+}
+
+// Function to add a new experience entry
+function addExperienceEntry(data = {}) {
+    const experienceEntries = document.getElementById('experienceEntries');
+    const entryId = 'experience-' + new Date().getTime();
+
+    const entryHTML = `
+        <div class="card shadow-sm mb-3 fade-in experience-entry" id="${entryId}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Work Experience Details</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-entry" title="Remove Entry">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary drag-handle ms-1" title="Reorder">
+                        <i class="fas fa-arrows-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="${entryId}-company" name="experience[company][]" placeholder="Company" value="${data.company || ''}" required>
+                            <label for="${entryId}-company"><i class="fas fa-building me-2"></i>Company</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="${entryId}-position" name="experience[position][]" placeholder="Position" value="${data.position || ''}" required>
+                            <label for="${entryId}-position"><i class="fas fa-briefcase me-2"></i>Position</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control date-picker" id="${entryId}-from" name="experience[from][]" placeholder="From" value="${data.from || ''}">
+                            <label for="${entryId}-from"><i class="fas fa-calendar-alt me-2"></i>From</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control date-picker" id="${entryId}-to" name="experience[to][]" placeholder="To" value="${data.to || ''}">
+                            <label for="${entryId}-to"><i class="fas fa-calendar-alt me-2"></i>To (current if empty)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="${entryId}-current" name="experience[current][]" value="1" ${data.current ? 'checked' : ''}>
+                            <label class="form-check-label" for="${entryId}-current">
+                                <i class="fas fa-clock me-1"></i> Current position
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="${entryId}-description" name="experience[description][]" placeholder="Description" style="height: 100px">${data.description || ''}</textarea>
+                            <label for="${entryId}-description"><i class="fas fa-align-left me-2"></i>Description</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add before the "Add More" button
+    experienceEntries.insertAdjacentHTML('beforeend', entryHTML);
+
+    // Initialize event listeners for the new entry
+    const newEntry = document.getElementById(entryId);
+
+    // Remove button
+    newEntry.querySelector('.remove-entry').addEventListener('click', function() {
+        removeEntry(entryId, 'experience');
+    });
+
+    // Current checkbox logic
+    const currentCheckbox = newEntry.querySelector(`#${entryId}-current`);
+    const toField = newEntry.querySelector(`#${entryId}-to`);
+
+    currentCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            toField.value = '';
+            toField.disabled = true;
+            toField.parentElement.classList.add('opacity-50');
+        } else {
+            toField.disabled = false;
+            toField.parentElement.classList.remove('opacity-50');
+        }
+    });
+
+    // Initialize flatpickr for date fields if available
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr(`#${entryId}-from`, {
+            allowInput: true,
+            dateFormat: 'M Y'
+        });
+
+        flatpickr(`#${entryId}-to`, {
+            allowInput: true,
+            dateFormat: 'M Y'
+        });
+    }
+
+    // If current is checked, disable to field
+    if (currentCheckbox.checked) {
+        toField.value = '';
+        toField.disabled = true;
+        toField.parentElement.classList.add('opacity-50');
+    }
+
+    // Update preview when experience entry changes
+    const updatePreviewExperience = () => {
+        // Logic to update experience in the preview
+        const selectedTemplate = document.querySelector('input[name="template"]').value || 'template1';
+        const previewExperienceSection = document.querySelector('.preview-section:has(h4:contains("Expérience"))');
+
+        if (previewExperienceSection) {
+            // Clear existing entries
+            const entriesContainer = previewExperienceSection.querySelector(':scope > div:not(h4)') || previewExperienceSection;
+            entriesContainer.innerHTML = '';
+
+            // Get all experience entries
+            const allEntries = document.querySelectorAll('.experience-entry');
+
+            // Create new preview entries
+            allEntries.forEach(entry => {
+                const company = entry.querySelector('input[name="experience[company][]"]').value || 'Entreprise';
+                const position = entry.querySelector('input[name="experience[position][]"]').value || 'Poste';
+                const from = entry.querySelector('input[name="experience[from][]"]').value || '';
+                const to = entry.querySelector('input[name="experience[to][]"]').value || '';
+                const isCurrent = entry.querySelector('input[name="experience[current][]"]')?.checked || false;
+
+                const period = from && (to || isCurrent) ?
+                    `${from} - ${isCurrent ? 'présent' : to}` :
+                    (from ? `Depuis ${from}` : `Jusqu'à ${to}`);
+
+                const previewEntry = document.createElement('div');
+                previewEntry.className = 'preview-entry';
+                previewEntry.innerHTML = `
+                    <h5>${position}</h5>
+                    <h6>${company} | ${period}</h6>
+                `;
+
+                entriesContainer.appendChild(previewEntry);
+            });
+        }
+    };
+
+    // Add change event to all inputs in this experience entry
+    newEntry.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('change', updatePreviewExperience);
+
+        // Special handling for current position checkbox
+        if (input.id === `${entryId}-current`) {
+            input.addEventListener('change', function() {
+                updatePreviewExperience();
+            });
+        }
+    });
+
+    return entryId;
+}
+
+// Function to remove an entry (education or experience)
+function removeEntry(entryId, type) {
+    const entry = document.getElementById(entryId);
+
+    if (entry) {
+        // Fade out animation
+        entry.style.opacity = '0';
+        entry.style.transform = 'translateY(-20px)';
+
+        setTimeout(() => {
+            entry.remove();
+
+            // Check if there are any more entries
+            const entries = document.querySelectorAll(`.${type}-entry`);
+            if (entries.length === 0) {
+                document.getElementById(`${type}EmptyState`).style.display = 'block';
+                document.getElementById(`addMore${type.charAt(0).toUpperCase() + type.slice(1)}BtnContainer`).style.display = 'none';
+            }
+
+            // Update preview
+            if (type === 'education') {
+                // Update education preview
+                const event = new Event('change');
+                document.dispatchEvent(event);
+            } else if (type === 'experience') {
+                // Update experience preview
+                const event = new Event('change');
+                document.dispatchEvent(event);
+            }
+        }, 300);
+    }
+}
+
+// Function to initialize skills section
+function initSkillsSection() {
+    const skillInput = document.getElementById('skillInput');
+    const addSkillBtn = document.getElementById('addSkillBtn');
+    const skillsContainer = document.getElementById('skillsContainer');
+    const skillsEmptyState = document.getElementById('skillsEmptyState');
+    const quickSkillButtons = document.querySelectorAll('.quick-skill');
+
+    if (skillInput && addSkillBtn && skillsContainer) {
+        // Add skill function
+        const addSkill = (skillText) => {
+            // Don't add empty skills
+            if (!skillText.trim()) return;
+
+            // Create new skill badge
+            const skillBadge = document.createElement('div');
+            skillBadge.className = 'badge bg-primary fs-6 me-2 mb-2 d-flex align-items-center';
+            skillBadge.innerHTML = `
+                ${skillText}
+                <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove skill"></button>
+                <input type="hidden" name="skills[]" value="${skillText}">
+            `;
+
+            // Add remove button functionality
+            const removeBtn = skillBadge.querySelector('.btn-close');
+            removeBtn.addEventListener('click', function() {
+                skillBadge.remove();
+                updateSkillsEmptyState();
+                updateSkillsPreview();
+            });
+
+            // Add to container
+            skillsContainer.appendChild(skillBadge);
+
+            // Hide empty state
+            skillsEmptyState.style.display = 'none';
+
+            // Update preview
+            updateSkillsPreview();
+
+            // Clear input
+            skillInput.value = '';
+            skillInput.focus();
+        };
+
+        // Update empty state visibility
+        const updateSkillsEmptyState = () => {
+            if (skillsContainer.children.length === 0) {
+                skillsEmptyState.style.display = 'block';
+            } else {
+                skillsEmptyState.style.display = 'none';
+            }
+        };
+
+        // Update skills in preview
+        const updateSkillsPreview = () => {
+            const previewSkillsContainer = document.querySelector('.preview-skills');
+            if (previewSkillsContainer) {
+                // Clear existing skills
+                previewSkillsContainer.innerHTML = '';
+
+                // Get all skills
+                const skills = Array.from(skillsContainer.querySelectorAll('input[name="skills[]"]')).map(input => input.value);
+
+                // Add skills to preview
+                skills.forEach(skill => {
+                    const skillBadge = document.createElement('span');
+                    skillBadge.className = 'skill-badge';
+                    skillBadge.textContent = skill;
+                    previewSkillsContainer.appendChild(skillBadge);
+                });
+
+                // If no skills, add placeholder
+                if (skills.length === 0) {
+                    const placeholderSkills = ['JavaScript', 'HTML/CSS', 'Symfony'];
+                    placeholderSkills.forEach(skill => {
+                        const skillBadge = document.createElement('span');
+                        skillBadge.className = 'skill-badge';
+                        skillBadge.textContent = skill;
+                        previewSkillsContainer.appendChild(skillBadge);
+                    });
+                }
+            }
+        };
+
+        // Add via button click
+        addSkillBtn.addEventListener('click', function() {
+            addSkill(skillInput.value);
+        });
+
+        // Add via Enter key
+        skillInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill(this.value);
+            }
+        });
+
+        // Add quick skills
+        quickSkillButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                addSkill(this.textContent);
+            });
+        });
+    }
+}
+
+// Function for autofilling the form with sample data (for testing)
+function autofillForm() {
+    // Personal Information
+    document.getElementById('firstName').value = 'John';
+    document.getElementById('lastName').value = 'Doe';
+    document.getElementById('email').value = 'johndoe@exemple.com';
+    document.getElementById('phone').value = '+216 23 456 789';
+    document.getElementById('position').value = 'Développeur Logiciel Senior';
+    document.getElementById('address').value = '123 Rue Principale, Tunis 1000, Tunisie';
+    document.getElementById('website').value = 'www.johndoe-portfolio.com';
+    document.getElementById('linkedin').value = 'linkedin.com/in/johndoe';
+    document.getElementById('summary').value = 'Développeur logiciel avec plus de 8 ans d\'expérience dans le développement web, spécialisé dans les frameworks JavaScript et les systèmes backend. Excellentes compétences en résolution de problèmes et expérience en leadership d\'équipe. Passionné par les technologies innovantes et l\'optimisation des performances.';
+
+    // Trigger summary character counter
+    document.getElementById('summary').dispatchEvent(new Event('input'));
+
+    // Add education
+    document.getElementById('addFirstEducation').click();
+    const eduId = document.querySelector('.education-entry').id;
+    document.getElementById(`${eduId}-school`).value = 'ESPRIT - École Supérieure Privée d\'Ingénierie et de Technologies';
+    document.getElementById(`${eduId}-degree`).value = 'Diplôme d\'Ingénieur en Informatique';
+    document.getElementById(`${eduId}-from`).value = 'Sep 2014';
+    document.getElementById(`${eduId}-to`).value = 'Juin 2019';
+    document.getElementById(`${eduId}-description`).value = 'Diplômé avec mention. Spécialisation en génie logiciel et intelligence artificielle. Projet de fin d\'études sur le traitement du langage naturel.';
+
+    // Add a second education
+    document.getElementById('addEducation').click();
+    const eduId2 = document.querySelectorAll('.education-entry')[1].id;
+    document.getElementById(`${eduId2}-school`).value = 'Institut Supérieur de Gestion de Tunis';
+    document.getElementById(`${eduId2}-degree`).value = 'Licence en Informatique de Gestion';
+    document.getElementById(`${eduId2}-from`).value = 'Sep 2011';
+    document.getElementById(`${eduId2}-to`).value = 'Juin 2014';
+    document.getElementById(`${eduId2}-description`).value = 'Formation en informatique appliquée à la gestion d\'entreprise. Projet de fin d\'études sur les systèmes d\'information.';
+
+    // Add experience
+    document.getElementById('addFirstExperience').click();
+    const expId = document.querySelector('.experience-entry').id;
+    document.getElementById(`${expId}-company`).value = 'Tech Solutions Tunisie';
+    document.getElementById(`${expId}-position`).value = 'Développeur Senior';
+    document.getElementById(`${expId}-from`).value = 'Mar 2020';
+    document.getElementById(`${expId}-description`).value = 'Direction d\'une équipe de 5 développeurs travaillant sur des applications web utilisant React et Node.js. Implémentation de pipelines CI/CD et amélioration des performances des applications de 40%.';
+    document.getElementById(`${expId}-current`).checked = true;
+    document.getElementById(`${expId}-current`).dispatchEvent(new Event('change'));
+
+    // Add a second experience
+    document.getElementById('addExperience').click();
+    const expId2 = document.querySelectorAll('.experience-entry')[1].id;
+    document.getElementById(`${expId2}-company`).value = 'Innovate Tech SARL';
+    document.getElementById(`${expId2}-position`).value = 'Développeur Full Stack';
+    document.getElementById(`${expId2}-from`).value = 'Juin 2019';
+    document.getElementById(`${expId2}-to`).value = 'Fév 2020';
+    document.getElementById(`${expId2}-description`).value = 'Développement d\'applications web et mobiles pour divers clients. Technologies utilisées: JavaScript, PHP, MySQL, React, React Native.';
+
+    // Add skills
+    const skills = ['JavaScript', 'PHP', 'Symfony', 'React', 'Node.js', 'TypeScript', 'GraphQL', 'MySQL', 'Gestion de Projet', 'Leadership'];
+    const skillInput = document.getElementById('skillInput');
+
+    skills.forEach(skill => {
+        skillInput.value = skill;
+        document.getElementById('addSkillBtn').click();
+    });
+
+    // Navigate to first section to update display
+    navigateToSection(1);
+
+    // Show success message
+    if (typeof window.showFeedback === 'function') {
+        window.showFeedback('Formulaire pré-rempli avec des données de test', 'success');
+    }
+}
+
